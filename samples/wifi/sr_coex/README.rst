@@ -94,8 +94,8 @@ To enable different test modes, set up the following configuration parameters in
   For example, ``CONFIG_INTERVAL_MIN=80`` corresponds to an interval of 100 ms (80 x 1.25).
 * Wi-Fi connection: Set the following options appropriately as per the credentials of the access point used for this testing:
 
-  * :kconfig:option:`CONFIG_STA_SAMPLE_SSID`
-  * :kconfig:option:`CONFIG_STA_SAMPLE_PASSWORD`
+  * :kconfig:option:`CONFIG_STA_SSID`
+  * :kconfig:option:`CONFIG_STA_PASSWORD`
   * ``STA_KEY_MGMT_*``
   * :kconfig:option:`CONFIG_NET_CONFIG_PEER_IPV4_ADDR`
 

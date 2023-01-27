@@ -36,8 +36,12 @@ LOG_MODULE_REGISTER(coex, CONFIG_LOG_DEFAULT_LEVEL);
 #include "net_private.h"
 
 #include <zephyr_coex.h>
+#include <zephyr_coex_struct.h>
+
+#include "rpu_hw_if.h"
 
 #include "bt_throughput_test.h"
+#include "zephyr_fmac_main.h"
 
 #define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | \
 				NET_EVENT_WIFI_DISCONNECT_RESULT)
@@ -52,6 +56,7 @@ static struct sockaddr_in in4_addr_my = {
 
 static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
 static struct net_mgmt_event_callback net_addr_mgmt_cb;
+static uint32_t scan_result;
 
 static struct {
 	uint8_t connected :1;
@@ -63,6 +68,7 @@ K_SEM_DEFINE(wait_for_next, 0, 1);
 K_SEM_DEFINE(udp_callback, 0, 1);
 
 static void run_bt_benchmark(void);
+static int cmd_wifi_scan(void);
 
 K_THREAD_DEFINE(run_bt_traffic,
 		CONFIG_WIFI_THREAD_STACK_SIZE,
@@ -147,15 +153,73 @@ static void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb)
 	cmd_wifi_status();
 }
 
-static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				     uint32_t mgmt_event, struct net_if *iface)
+static void handle_wifi_scan_result(struct net_mgmt_event_callback *cb)
 {
+	const struct wifi_scan_result *entry =
+			(const struct wifi_scan_result *)cb->info;
+	uint8_t mac_string_buf[sizeof("xx:xx:xx:xx:xx:xx")];
+
+	
+	if (scan_result == 1U) {
+		LOG_INF("%-4s | %-32s %-5s | %-13s | %-4s | %-15s | %s\n",
+			"Num", "SSID", "(len)", "Chan (Band)", "RSSI", "Security", "BSSID");
+	}
+
+	LOG_INF("%-4d | %-32s %-5u | %-4u (%-6s) | %-4d | %-15s | %s\n",
+		scan_result, entry->ssid, entry->ssid_length, entry->channel,
+		wifi_band_txt(entry->band),
+		entry->rssi,
+		wifi_security_txt(entry->security),
+		((entry->mac_length) ?
+		net_sprint_ll_addr_buf(entry->mac, WIFI_MAC_ADDR_LEN, mac_string_buf,
+							 sizeof(mac_string_buf)) : ""));
+	scan_result++;
+
+	LOG_INF("Wi-Fi scan done for %d times\n", scan_result);
+	//k_sleep(K_SECONDS(10));
+	//LOG_INF("***********************************************************************************");
+	/* To make sure scan results available for both 2.4GHz and 5GHz. 
+		This callback gets triggered once for 2.4GHz and again for 5GHz scan completion */
+	if (!(scan_result%2)) {
+		cmd_wifi_scan();
+	}
+
+}
+
+static void handle_wifi_scan_done(struct net_mgmt_event_callback *cb)
+{
+	const struct wifi_status *status =
+			(const struct wifi_status *)cb->info;
+
+	if (status->status) {
+			LOG_ERR("Scan request failed (%d)\n", status->status);
+	} else {
+			LOG_INF("Scan request done\n");
+	}
+
+	scan_result = 0U;
+}
+
+static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
+				uint32_t mgmt_event, struct net_if *iface)
+{
+	const struct device *dev = iface->if_dev->dev;
+	struct wifi_nrf_vif_ctx_zep *vif_ctx_zep = NULL;
+	vif_ctx_zep = dev->data;
+
 	switch (mgmt_event) {
 	case NET_EVENT_WIFI_CONNECT_RESULT:
 		handle_wifi_connect_result(cb);
 		break;
 	case NET_EVENT_WIFI_DISCONNECT_RESULT:
 		handle_wifi_disconnect_result(cb);
+		break;
+	case NET_EVENT_WIFI_SCAN_RESULT:
+		vif_ctx_zep->scan_in_progress = 0;
+		handle_wifi_scan_result(cb);
+		break;
+	case NET_EVENT_WIFI_SCAN_DONE:
+		handle_wifi_scan_done(cb);
 		break;
 	default:
 		break;
@@ -192,7 +256,7 @@ static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 	params->timeout = SYS_FOREVER_MS;
 
 	/* SSID */
-	params->ssid = CONFIG_STA_SAMPLE_SSID;
+	params->ssid = CONFIG_STA_SSID;
 	params->ssid_length = strlen(params->ssid);
 
 #if defined(CONFIG_STA_KEY_MGMT_WPA2)
@@ -214,6 +278,16 @@ static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 	/* MFP (optional) */
 	params->mfp = WIFI_MFP_OPTIONAL;
 
+	return 0;
+}
+static int cmd_wifi_scan(void)
+{
+	struct net_if *iface = net_if_get_default();
+	if (net_mgmt(NET_REQUEST_WIFI_SCAN, iface, NULL, 0)) {
+		LOG_ERR("Scan request failed\n");
+		return -ENOEXEC;
+	}
+	//LOG_INF("Scan requested\n");
 	return 0;
 }
 
@@ -364,8 +438,10 @@ int main(void)
 	bool test_ble = IS_ENABLED(CONFIG_TEST_TYPE_BLE);
 #ifdef CONFIG_NRF700X_WIFI_BT_COEX
 	enum nrf_wifi_pta_wlan_op_band wlan_band;
-	bool separate_antennas = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
+	bool antenna_mode = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
 #endif /* CONFIG_NRF700X_WIFI_BT_COEX */
+
+	bool wifi_coex_enable;
 
 	memset(&context, 0, sizeof(context));
 
@@ -388,16 +464,31 @@ int main(void)
 	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
 	k_sleep(K_SECONDS(1));
 
-	LOG_INF("test_wlan = %d and test_ble = %d\n", test_wlan, test_ble);
+	LOG_INF("test_wlan = %d and test_ble = %d", test_wlan, test_ble);
 
 #ifdef CONFIG_NRF700X_WIFI_BT_COEX
 	/* Configure SR side (nRF5340 side) switch in nRF7002 DK */
-	ret = nrf_wifi_config_sr_switch(separate_antennas);
+	ret = nrf_wifi_config_sr_switch(antenna_mode);
 	if (ret != 0) {
 		LOG_ERR("Unable to configure SR side switch: %d\n", ret);
 		goto err;
 	}
 #endif /* CONFIG_NRF700X_WIFI_BT_COEX */
+
+	/* Reset Coexistence Hardware */
+	ret = nrf_wifi_coex_hw_reset();
+	if (ret != 0) {
+		LOG_ERR("Coexistence Hardware reset FAIL\n");
+		goto err;
+	}
+
+	/* Configure Coexistence Hardware non-PTA registers */
+	LOG_INF("Configuring non-PTA registers.");
+	ret = nrf_wifi_coex_config_non_pta(antenna_mode);
+	if (ret != 0) {
+		LOG_ERR("Configuring non-PTA registers of CoexHardware FAIL\n");
+		goto err;
+	}
 
 	if (test_wlan) {
 		/* Wi-Fi connection */
@@ -412,23 +503,14 @@ int main(void)
 		}
 
 #ifdef CONFIG_NRF700X_WIFI_BT_COEX
-		/* Configure Coexistence Hardware */
-		LOG_INF("\n");
-		LOG_INF("Configuring non-PTA registers.\n");
-		ret = nrf_wifi_coex_config_non_pta(separate_antennas);
-		if (ret != 0) {
-			LOG_ERR("Configuring non-PTA registers of CoexHardware FAIL\n");
-			goto err;
-		}
-
 		wlan_band = wifi_mgmt_to_pta_band(status.band);
 		if (wlan_band == NRF_WIFI_PTA_WLAN_OP_BAND_NONE) {
 			LOG_ERR("Invalid Wi-Fi band: %d\n", wlan_band);
 			goto err;
 		}
 
-		LOG_INF("Configuring PTA registers for %s\n", wifi_band_txt(status.band));
-		ret = nrf_wifi_coex_config_pta(wlan_band, separate_antennas);
+		LOG_INF("Configuring PTA registers for %s", wifi_band_txt(status.band));
+		ret = nrf_wifi_coex_config_pta(wlan_band, antenna_mode);
 		if (ret != 0) {
 			LOG_ERR("Failed to configure PTA coex hardware: %d\n", ret);
 			goto err;
@@ -438,13 +520,90 @@ int main(void)
 
 	if (test_ble) {
 		/* BLE connection */
-		LOG_INF("Configure BLE throughput test\n");
+		LOG_INF("Configure BLE throughput test");
 		ret = bt_throughput_test_init();
 		if (ret != 0) {
 			LOG_ERR("Failed to configure BLE throughput test: %d\n", ret);
 			goto err;
 		}
 	}
+
+
+	#if 0 /* Enable to test WLAN scan + BLE disconnection */
+	LOG_INF("*******************************");
+	LOG_INF("WiFi scan after BLE connection");
+	LOG_INF("*******************************");
+
+	cmd_wifi_scan();
+	#endif
+
+	#if 0 /* enable to test BLE only case with WLAN  powerdown/powerup case */
+	if (IS_ENABLED(CONFIG_RPU_ENABLE)) {
+		LOG_INF("***********");
+		LOG_INF("RPU enabled");
+		LOG_INF("***********");
+		rpu_enable();
+	} else {
+		LOG_INF("************");
+		LOG_INF("RPU disabled");
+		LOG_INF("************");
+		rpu_disable();
+	}
+	#endif 
+
+	#if 0 /* to test SPW case */
+
+		uint32_t device_req_window = NRF_WIFI_WLAN_DEVICE;
+		uint32_t window_start_or_end = NRF_WIFI_START_REQ_WINDOW;
+		uint32_t imp_of_request = NRF_WIFI_HIGHEST_IMPORTANCE;
+		uint32_t can_be_deferred = NRF_WIFI_NO;
+
+		LOG_INF("*****************************************");
+		LOG_INF("priority window for WLAN, after BLE connection");
+		LOG_INF("*****************************************");
+		
+		nrf_wifi_coex_allocate_spw(device_req_window,
+			window_start_or_end, imp_of_request, can_be_deferred);
+
+		///* set spw_duration to less than / equal / greater than SUPERVISION_TIMEOUT */
+		//uint64_t spw_duration = 10000;
+		//uint64_t stamp;
+		//int64_t delta;
+		//
+		///* get cycle stamp */
+		//stamp = k_uptime_get_32();
+		//
+		//delta = 0;
+		//while (true) {
+		//	if (k_uptime_get_32() - stamp > spw_duration) {
+		//		break;
+		//	}
+		//}
+
+		//delta = k_uptime_delta(&stamp);
+		//printk("total window duration %lld ms\n", delta);
+
+		//uint32_t time_in_seconds=10;
+		//k_sleep(K_SECONDS(time_in_seconds));
+		//printk("total window duration %d seconds\n", time_in_seconds);
+		//
+		//LOG_INF("**********************************");
+		//LOG_INF("Stopping priority window for WLAN");
+		//LOG_INF("**********************************");
+		//
+		//window_start_or_end = 0;
+		//nrf_wifi_coex_allocate_spw(device_req_window,
+		//	window_start_or_end, imp_of_request, can_be_deferred);
+	#endif
+
+	if (IS_ENABLED(CONFIG_WIFI_COEX_ENABLE)) {
+		wifi_coex_enable = 1;
+		LOG_INF("Wi-Fi posts requests to PTA");
+	} else {
+		wifi_coex_enable = 0;
+		LOG_INF("Wi-Fi doesn't post requests to PTA");
+	}
+	nrf_wifi_coex_enable(wifi_coex_enable);
 
 	if (test_wlan) {
 		struct zperf_upload_params params;
@@ -494,17 +653,16 @@ int main(void)
 
 	if (test_wlan) {
 		/* Wi-Fi disconnection */
-		LOG_INF("Disconnecting Wi-Fi\n");
+		LOG_INF("Disconnecting Wi-Fi");
 		wifi_disconnect();
 	}
 
 	if (test_ble) {
 		/* BLE disconnection */
-		LOG_INF("Disconnecting BLE\n");
+		LOG_INF("Disconnecting BLE");
 		bt_throughput_test_exit();
 	}
-	LOG_INF("\nCoexistence test complete\n");
-
+	LOG_INF("Coexistence test complete");
 	return 0;
 err:
 	return ret;
