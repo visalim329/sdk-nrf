@@ -150,4 +150,24 @@ config RPU_ENABLE
 	bool "Indicates if PRU is enable"
 	default y
 
+config BT_GAP_ADV_FAST_INT_MIN_2
+	int "BT GAP ADV interval min value. Each unit 0.625milliseconds"
+	default 160
+
+config BT_GAP_ADV_FAST_INT_MAX_2
+	int "BT GAP ADV interval max value. Each unit 0.625milliseconds"
+	default 240
+
+config BT_LE_SCAN_INTERVAL
+	int "BT LE Scan interval  value"
+	default 32
+
+config BT_LE_SCAN_WINDOW
+	int "BT LE Scan Window value"
+	default 16
+
+config COEX_HARDWARE_ENABLE
+	bool "Indicates if COEX hardware module enabled"
+	default y
+
 endmenu

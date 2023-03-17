@@ -58,28 +58,31 @@ static const struct gpio_dt_spec btrf_switch_spec =
 	GPIO_DT_SPEC_GET(NRF_RADIO_COEX_NODE, btrf_switch_gpios);
 
 /* PTA registers configuration of Coexistence Hardware */
-/* separate antenna configuration tables */
+/* Separate antenna configuration tables */
 
-/* 2.4GHz WLAN and SR overlap as default, to configure NO_WINDOW lookup */
+/* Both WLAN and SR operates in 2.4GHz. WLAN and SR frequency of operation overlaps */
 const uint16_t config_buffer_SEA1[] = {
-	0x0019, 0x00F6, 0x0008, 0x0062, 0x00F5,
-	0x00F5, 0x0019, 0x0019, 0x0074, 0x0074,
-	0x0008, 0x01E2, 0x00D5, 0x00D5, 0x01F6,
-	0x01F6, 0x0061, 0x0061, 0x01E2, 0x0008,
-	0x01F6, 0x01F6, 0x0019, 0x0019, 0x01E2,
-	0x0008, 0x00F5, 0x00F5, 0x00D5, 0x00D5,
-	0x0008, 0x01E2, 0x0051, 0x0051, 0x0074,
-	0x0074, 0x00F6, 0x0019, 0x0062, 0x0019,
+	0x0019, 0x00F6, 0x0008, 0x0062, 0x00F5, 
+	0x00F5, 0x0019, 0x0019, 0x0074, 0x0074, 
+	0x0008, 0x01E2, 0x00D5, 0x00D5, 0x01F6, 
+	0x01F6, 0x0061, 0x0061, 0x01E2, 0x0008, 
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0008, 
+	0x0008, 0x00F5, 0x00F5, 0x00D5, 0x00D5, 
+	0x0008, 0x01E2, 0x0051, 0x0051, 0x0074, 
+	0x0074, 0x00F6, 0x0019, 0x0062, 0x0019, 
 	0x00F6, 0x0008, 0x0062, 0x0008, 0x001A
 };
 
-/* 2.4GHz WLAN and SR non-overlap, to configure NO_WINDOW lookup */
+
+
+
+/* Both WLAN and SR operates in 2.4GHz. WLAN and SR frequency of operation doesn't overlap */
 const uint16_t config_buffer_SEA2[] = {
 	0x0019, 0x00F6, 0x0008, 0x0062, 0x00F5,
 	0x00F5, 0x0019, 0x0019, 0x0074, 0x01F6,
 	0x0060, 0x0060, 0x00D5, 0x00D5, 0x01F6,
 	0x01F6, 0x0061, 0x0019, 0x0060, 0x0060,
-	0x01F6, 0x01F6, 0x0019, 0x0019, 0x0060,
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0060,
 	0x0060, 0x00F5, 0x00F5, 0x00D5, 0x00D5,
 	0x0060, 0x0060, 0x0061, 0x0019, 0x0074,
 	0x01F6, 0x00F6, 0x0019, 0x00E2, 0x0019,
@@ -88,47 +91,34 @@ const uint16_t config_buffer_SEA2[] = {
 
 /* SR window */
 const uint16_t config_buffer_SEA3[] = {
-	0x01F8, 0x01E0, 0x01F4, 0x01E0, 0x01F4
+	0x01F8, 0x01E0, 0x01F4, 0x01E0, 0x0004	
 };
 
 /* WLAN window */
 const uint16_t config_buffer_SEA4[] = {
 	0x0012, 0x0000, 0x0011, 0x0000, 0x0011
 };
-/* WLAN in 5GHz, both windows, to configure NO_WINDOW lookup */
-const uint16_t config_buffer_SEA5[] = {
-	0x0019, 0x0076, 0x0008, 0x0062, 0x0075,
-	0x0075, 0x0061, 0x0061, 0x0074, 0x0074,
-	0x0060, 0x0060, 0x0055, 0x0055, 0x0044,
-	0x0044, 0x0051, 0x0051, 0x0040, 0x0040,
-	0x0044, 0x0044, 0x0061, 0x0061, 0x0040,
-	0x0040, 0x0075, 0x0075, 0x0055, 0x0055,
-	0x0060, 0x0060, 0x0051, 0x0051, 0x0074,
-	0x0074, 0x0076, 0x0019, 0x0062, 0x0019,
-	0x0076, 0x0008, 0x0062, 0x0008, 0x001A
-};
-
 /* Shared antenna configuration tables */
-/* Request posted before the transaction, to configure NO_WINDOW lookup */
+/* SR request posted before the transaction */
 const uint16_t config_buffer_SHA1[] = {
 	0x0019, 0x00F6, 0x0008, 0x00E2, 0x0015,
 	0x00F5, 0x0019, 0x0019, 0x0004, 0x01F6,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
 	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
-	0x01F6, 0x01F6, 0x0019, 0x0019, 0x01E2,
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
 	0x0008, 0x0015, 0x00F5, 0x00F5, 0x00F5,
 	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
 	0x01F6, 0x00F6, 0x0019, 0x00E2, 0x0019,
 	0x00F6, 0x0008, 0x00E2, 0x0008, 0x001A
 };
 
-/* Request posted during the transaction, to configure NO_WINDOW lookup */
+/* SR request posted during the transaction */
 const uint16_t config_buffer_SHA2[] = {
 	0x0019, 0x0016, 0x0008, 0x00E2, 0x0015,
 	0x0015, 0x0019, 0x0019, 0x0004, 0x0004,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
 	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
-	0x01F6, 0x01F6, 0x0019, 0x0019, 0x01E2,
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
 	0x0008, 0x0015, 0x0015, 0x00F5, 0x00F5,
 	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
 	0x0004, 0x00F6, 0x0019, 0x00E2, 0x0019,
@@ -137,24 +127,24 @@ const uint16_t config_buffer_SHA2[] = {
 
 /* SR window */
 const uint16_t config_buffer_SHA3[] = {
-	0x01F8, 0x01E0, 0x01F4, 0x01E0, 0x01F4
+	0x01F8, 0x01E0, 0x01F4, 0x01E0, 0x0004
 };
 
 /* WLAN window */
 uint16_t config_buffer_SHA4[] = {
 	0x0012, 0x0000, 0x0011, 0x0000, 0x0011
 };
-/* WLAN in 5GHz, both windows, to configure NO_WINDOW lookup */
-const uint16_t config_buffer_SHA5[] = {
-	0x0019, 0x0076, 0x0008, 0x0062, 0x0075,
+/* Shared/separate antennas, WLAN in 5GHz */
+const uint16_t config_buffer_5G[] = {
+	0x0039, 0x0076, 0x0028, 0x0062, 0x0075,
 	0x0075, 0x0061, 0x0061, 0x0074, 0x0074,
-	0x0060, 0x0060, 0x0055, 0x0055, 0x0044,
-	0x0044, 0x0051, 0x0051, 0x0040, 0x0040,
-	0x0044, 0x0044, 0x0061, 0x0061, 0x0040,
-	0x0040, 0x0075, 0x0075, 0x0055, 0x0055,
-	0x0060, 0x0060, 0x0051, 0x0051, 0x0074,
-	0x0074, 0x0076, 0x0019, 0x0062, 0x0019,
-	0x0076, 0x0008, 0x0062, 0x0008, 0x001A
+	0x0060, 0x0060, 0x0075, 0x0075, 0x0064,
+	0x0064, 0x0071, 0x0071, 0x0060, 0x0060,
+	0x0064, 0x0064, 0x0061, 0x0061, 0x0060,
+	0x0060, 0x0075, 0x0075, 0x0075, 0x0075,
+	0x0060, 0x0060, 0x0071, 0x0071, 0x0074,
+	0x0074, 0x0076, 0x0039, 0x0062, 0x0039,
+	0x0076, 0x0028, 0x0062, 0x0028, 0x003A
 };
 
 /* non-PTA register configuration of coexistence hardware */
@@ -219,7 +209,9 @@ int nrf_wifi_coex_config_non_pta(bool antenna_mode)
 	return 0;
 }
 
-int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, bool antenna_mode)
+int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, 
+							bool antenna_mode,
+							bool ble_role)
 {
 	enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
 	struct nrf_wifi_coex_ch_configuration params  = { 0 };
@@ -243,11 +235,17 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, bool ante
 			config_buffer_ptr = config_buffer_SEA1;
 		} else {
 			/* Shared antenna configuration */
-			config_buffer_ptr = config_buffer_SHA1;
+			if (ble_role) {
+				/* BLE role central */
+				config_buffer_ptr = config_buffer_SHA1;
+			} else {
+				/* BLE role peripheral */
+				config_buffer_ptr = config_buffer_SHA2;
+			}
 		}
 	} else if (wlan_band == NRF_WIFI_PTA_WLAN_OP_BAND_5_GHZ) {
 		/* WLAN operating in 5GHz */
-		config_buffer_ptr = config_buffer_SEA5;
+		config_buffer_ptr = config_buffer_5G;
 	} else {
 		return -EINVAL;
 	}
@@ -271,10 +269,81 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, bool ante
 	if (status != WIFI_NRF_STATUS_SUCCESS) {
 		return -1;
 	}
+//--------------------------------------- SR window 
+	if (antenna_mode) {
+		/* separate antennas configuration */
+		config_buffer_ptr = config_buffer_SEA3;
+	} else {
+		/* Shared antenna configuration */
+		config_buffer_ptr = config_buffer_SHA3;
+	}
+
+	/* Indicates offset from the base address of CH */
+	start_offset = ((EXT_SYS_WLANSYSCOEX_CH_SR_WINDOW_LOOKUP_0 -
+	EXT_SYS_WLANSYSCOEX_CH_CONTROL) >> 2);
+	/* Number of contiguous registers to be configured starting from base+offset */
+	num_reg_to_config = ((EXT_SYS_WLANSYSCOEX_CH_SR_WINDOW_LOOKUP_4 -
+	EXT_SYS_WLANSYSCOEX_CH_SR_WINDOW_LOOKUP_0) >> 2) + 1;
+
+	params.message_id = NRF_WIFI_HW_CONFIGURATION;
+	params.num_reg_to_config = num_reg_to_config;
+	params.hw_to_config = NRF_WIFI_COEX_HARDWARE;
+	params.hw_block_base_addr = CH_BASE_ADDRESS;
+
+	for (index = 0; index < num_reg_to_config; index++) {
+		params.configbuf[index] = (start_offset << COEX_REG_CFG_OFFSET_SHIFT) |
+			(*(config_buffer_ptr+index));
+		start_offset++;
+	}
+
+	cmd_len = (COEX_CONFIG_FIXED_PARAMS + num_reg_to_config) * sizeof(uint32_t);
+
+	status = wifi_nrf_fmac_conf_btcoex(rpu_ctx->rpu_ctx,
+					   (void *)(&params), cmd_len);
+
+	if (status != WIFI_NRF_STATUS_SUCCESS) {
+		return -1;
+	}
+//---------------------------------------------------------------------------------
+//--------------------------------------- WLAN window 
+	if (antenna_mode) {
+		/* separate antennas configuration */
+		config_buffer_ptr = config_buffer_SEA4;
+	} else {
+		/* Shared antenna configuration */
+		config_buffer_ptr = config_buffer_SHA4;
+	}
+
+	/* common for both SHA and SEA */
+	/* Indicates offset from the base address of CH */
+	start_offset = ((EXT_SYS_WLANSYSCOEX_CH_WLAN_WINDOW_LOOKUP_0 -
+	EXT_SYS_WLANSYSCOEX_CH_CONTROL) >> 2);
+	/* Number of contiguous registers to be configured starting from base+offset */
+	num_reg_to_config = ((EXT_SYS_WLANSYSCOEX_CH_WLAN_WINDOW_LOOKUP_4 -
+	EXT_SYS_WLANSYSCOEX_CH_WLAN_WINDOW_LOOKUP_0) >> 2) + 1;
+
+	params.message_id = NRF_WIFI_HW_CONFIGURATION;
+	params.num_reg_to_config = num_reg_to_config;
+	params.hw_to_config = NRF_WIFI_COEX_HARDWARE;
+	params.hw_block_base_addr = CH_BASE_ADDRESS;
+
+	for (index = 0; index < num_reg_to_config; index++) {
+		params.configbuf[index] = (start_offset << COEX_REG_CFG_OFFSET_SHIFT) |
+			(*(config_buffer_ptr+index));
+		start_offset++;
+	}
+
+	cmd_len = (COEX_CONFIG_FIXED_PARAMS + num_reg_to_config) * sizeof(uint32_t);
+
+	status = wifi_nrf_fmac_conf_btcoex(rpu_ctx->rpu_ctx,
+					   (void *)(&params), cmd_len);
+
+	if (status != WIFI_NRF_STATUS_SUCCESS) {
+		return -1;
+	}
 
 	return 0;
 }
-
 
 int nrf_wifi_config_sr_switch(bool antenna_mode)
 {
