@@ -23,7 +23,7 @@ enum nrf_wifi_pta_wlan_op_band {
 
 /**
  * @function   nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
- *             bool antenna_mode, bool ble_role)
+ *             bool antenna_mode, bool ble_role, bool wlan_role)
  *
  * @brief      Function used to configure PTA tables of coexistence hardware.
  *
@@ -32,12 +32,14 @@ enum nrf_wifi_pta_wlan_op_band {
  *             Indicates whether separate antenans are used or not.
  * @param[in]  ble_role
  *             Indicates whether BLE role is central or not.
+ @param[in]    wlan_role
+ *             Indicates whether WLAN role is server or not.
  * @return     Returns status of configuration.
  *             Returns zero upon successful configuration.
  *             Returns non-zero upon unsuccessful configuration.
  */
 int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, bool antenna_mode, 
-		bool ble_role);
+		bool ble_role, bool wlan_role);
 
 /**
  * @function   nrf_wifi_config_sr_switch(bool antenna_mode)

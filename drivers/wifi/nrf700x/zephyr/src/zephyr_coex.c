@@ -100,7 +100,7 @@ const uint16_t config_buffer_SEA4[] = {
 };
 /* Shared antenna configuration tables */
 /* SR request posted before the transaction */
-const uint16_t config_buffer_SHA1[] = {
+const uint16_t config_buffer_server_SHA1[] = {
 	0x0019, 0x00F6, 0x0008, 0x00E2, 0x0015,
 	0x00F5, 0x0019, 0x0019, 0x0004, 0x01F6,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
@@ -113,7 +113,33 @@ const uint16_t config_buffer_SHA1[] = {
 };
 
 /* SR request posted during the transaction */
-const uint16_t config_buffer_SHA2[] = {
+const uint16_t config_buffer_server_SHA2[] = {
+	0x0019, 0x0016, 0x0008, 0x00E2, 0x0015,
+	0x0015, 0x0019, 0x0019, 0x0004, 0x0004,
+	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
+	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
+	0x0008, 0x0015, 0x0015, 0x00F5, 0x00F5,
+	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
+	0x0004, 0x00F6, 0x0019, 0x00E2, 0x0019,
+	0x00F6, 0x0008, 0x00E2, 0x0008, 0x001A
+};
+
+/* SR request posted before the transaction */
+const uint16_t config_buffer_client_SHA1[] = {
+	0x0019, 0x00F6, 0x0008, 0x00E2, 0x0015,
+	0x00F5, 0x0019, 0x0019, 0x0004, 0x01F6,
+	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
+	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
+	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
+	0x0008, 0x0015, 0x00F5, 0x00F5, 0x00F5,
+	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
+	0x01F6, 0x00F6, 0x0019, 0x00E2, 0x0019,
+	0x00F6, 0x0008, 0x00E2, 0x0008, 0x001A
+};
+
+/* SR request posted during the transaction */
+const uint16_t config_buffer_client_SHA2[] = {
 	0x0019, 0x0016, 0x0008, 0x00E2, 0x0015,
 	0x0015, 0x0019, 0x0019, 0x0004, 0x0004,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
@@ -211,7 +237,7 @@ int nrf_wifi_coex_config_non_pta(bool antenna_mode)
 
 int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, 
 							bool antenna_mode,
-							bool ble_role)
+							bool ble_role, bool wlan_role)
 {
 	enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
 	struct nrf_wifi_coex_ch_configuration params  = { 0 };
@@ -235,13 +261,29 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
 			config_buffer_ptr = config_buffer_SEA1;
 		} else {
 			/* Shared antenna configuration */
-			if (ble_role) {
-				/* BLE role central */
-				config_buffer_ptr = config_buffer_SHA1;
+			if (wlan_role) {
+				/* WLAN role server */
+				if (ble_role) {
+					/* BLE role central */
+					LOG_INF("config_buffer_server_SHA1\n");
+					config_buffer_ptr = config_buffer_server_SHA1;
+				} else {
+					/* BLE role peripheral */
+					LOG_INF("config_buffer_server_SHA2\n");
+					config_buffer_ptr = config_buffer_server_SHA2;
+				}
 			} else {
-				/* BLE role peripheral */
-				config_buffer_ptr = config_buffer_SHA2;
-			}
+				/* WLAN role client */
+				if (ble_role) {
+					/* BLE role central */
+					LOG_INF("config_buffer_client_SHA1\n");
+					config_buffer_ptr = config_buffer_client_SHA1;
+				} else {
+					/* BLE role peripheral */
+					LOG_INF("config_buffer_client_SHA2\n");
+					config_buffer_ptr = config_buffer_client_SHA2;
+				}
+			}				
 		}
 	} else if (wlan_band == NRF_WIFI_PTA_WLAN_OP_BAND_5_GHZ) {
 		/* WLAN operating in 5GHz */
