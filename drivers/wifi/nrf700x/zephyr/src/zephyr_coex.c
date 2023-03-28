@@ -61,7 +61,7 @@ static const struct gpio_dt_spec btrf_switch_spec =
 /* Separate antenna configuration tables */
 
 /* Both WLAN and SR operates in 2.4GHz. WLAN and SR frequency of operation overlaps */
-const uint16_t config_buffer_SEA1[] = {
+const uint16_t config_buffer_client_SEA1[] = {
 	0x0019, 0x00F6, 0x0008, 0x0062, 0x00F5, 
 	0x00F5, 0x0019, 0x0019, 0x0074, 0x0074, 
 	0x0008, 0x01E2, 0x00D5, 0x00D5, 0x01F6, 
@@ -69,6 +69,19 @@ const uint16_t config_buffer_SEA1[] = {
 	0x0004, 0x0004, 0x0019, 0x0019, 0x0008, 
 	0x0008, 0x00F5, 0x00F5, 0x00D5, 0x00D5, 
 	0x0008, 0x01E2, 0x0051, 0x0051, 0x0074, 
+	0x0074, 0x00F6, 0x0019, 0x0062, 0x0019, 
+	0x00F6, 0x0008, 0x0062, 0x0008, 0x001A
+};
+
+/* Both WLAN and SR operates in 2.4GHz. WLAN and SR frequency of operation overlaps */
+const uint16_t config_buffer_server_SEA1[] = {
+	0x0019, 0x00F6, 0x0008, 0x0062, 0x00F5, 
+	0x00F5, 0x00E2, 0x00E2, 0x01F6, 0x01F6, 
+	0x01E2, 0x01E2, 0x00D5, 0x00D5, 0x01F6, 
+	0x01F6, 0x00E1, 0x0061, 0x01E2, 0x0008, 
+	0x0004, 0x0004, 0x00E1, 0x00E1, 0x0008, 
+	0x0008, 0x00F5, 0x00F5, 0x00D5, 0x00D5, 
+	0x01E2, 0x01E2, 0x00D1, 0x0051, 0x01F6, 
 	0x0074, 0x00F6, 0x0019, 0x0062, 0x0019, 
 	0x00F6, 0x0008, 0x0062, 0x0008, 0x001A
 };
@@ -100,33 +113,33 @@ const uint16_t config_buffer_SEA4[] = {
 };
 /* Shared antenna configuration tables */
 /* SR request posted before the transaction */
-const uint16_t config_buffer_server_SHA1[] = {
-	0x0019, 0x00F6, 0x0008, 0x00E2, 0x0015,
-	0x00F5, 0x0019, 0x0019, 0x0004, 0x01F6,
-	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
+const uint16_t config_buffer_server_central_SHA1[] = {
+	0x0019, 0x00F6, 0x0008, 0x00E2, 0x00F5,
+	0x00F5, 0x00E2, 0x00E2, 0x01F6, 0x01F6,
+	0x01E2, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
 	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
-	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
-	0x0008, 0x0015, 0x00F5, 0x00F5, 0x00F5,
-	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
+	0x0004, 0x0004, 0x00E2, 0x00E2, 0x0008,
+	0x0008, 0x00F5, 0x00F5, 0x00F5, 0x00F5,
+	0x01E2, 0x01E2, 0x00E1, 0x00E1, 0x01F6,
 	0x01F6, 0x00F6, 0x0019, 0x00E2, 0x0019,
 	0x00F6, 0x0008, 0x00E2, 0x0008, 0x001A
 };
 
 /* SR request posted during the transaction */
-const uint16_t config_buffer_server_SHA2[] = {
-	0x0019, 0x0016, 0x0008, 0x00E2, 0x0015,
-	0x0015, 0x0019, 0x0019, 0x0004, 0x0004,
+const uint16_t config_buffer_server_peripheral_SHA2[] = {
+	0x0019, 0x0016, 0x0008, 0x00E2, 0x00F5,
+	0x00F5, 0x0019, 0x0019, 0x01F6, 0x01F6,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
 	0x01F6, 0x00E1, 0x00E1, 0x01E2, 0x0008,
-	0x0004, 0x0004, 0x0019, 0x0019, 0x0008,
-	0x0008, 0x0015, 0x0015, 0x00F5, 0x00F5,
+	0x0004, 0x0004, 0x00E1, 0x00E1, 0x0008,
+	0x0008, 0x00F6, 0x00F6, 0x00F5, 0x00F5,
 	0x0008, 0x01E2, 0x00E1, 0x00E1, 0x0004,
 	0x0004, 0x00F6, 0x0019, 0x00E2, 0x0019,
 	0x00F6, 0x0008, 0x00E2, 0x0008, 0x001A
 };
 
 /* SR request posted before the transaction */
-const uint16_t config_buffer_client_SHA1[] = {
+const uint16_t config_buffer_client_central_SHA1[] = {
 	0x0019, 0x00F6, 0x0008, 0x00E2, 0x0015,
 	0x00F5, 0x0019, 0x0019, 0x0004, 0x01F6,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
@@ -139,7 +152,7 @@ const uint16_t config_buffer_client_SHA1[] = {
 };
 
 /* SR request posted during the transaction */
-const uint16_t config_buffer_client_SHA2[] = {
+const uint16_t config_buffer_client_peripheral_SHA2[] = {
 	0x0019, 0x0016, 0x0008, 0x00E2, 0x0015,
 	0x0015, 0x0019, 0x0019, 0x0004, 0x0004,
 	0x0008, 0x01E2, 0x00F5, 0x00F5, 0x01F6,
@@ -258,30 +271,36 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
 		/* WLAN operating in 2.4GHz */
 		if (antenna_mode) {
 			/* separate antennas configuration */
-			config_buffer_ptr = config_buffer_SEA1;
+			if (wlan_role) {
+				/* WLAN role server */
+				config_buffer_ptr = config_buffer_server_SEA1;
+			} else {
+				/* WLAN role client */
+				config_buffer_ptr = config_buffer_client_SEA1;
+			}
 		} else {
 			/* Shared antenna configuration */
 			if (wlan_role) {
 				/* WLAN role server */
 				if (ble_role) {
 					/* BLE role central */
-					LOG_INF("config_buffer_server_SHA1\n");
-					config_buffer_ptr = config_buffer_server_SHA1;
+					LOG_INF("config_buffer_server_central_SHA1\n");
+					config_buffer_ptr = config_buffer_server_central_SHA1;
 				} else {
 					/* BLE role peripheral */
-					LOG_INF("config_buffer_server_SHA2\n");
-					config_buffer_ptr = config_buffer_server_SHA2;
+					LOG_INF("config_buffer_server_peripheral_SHA2\n");
+					config_buffer_ptr = config_buffer_server_peripheral_SHA2;
 				}
 			} else {
 				/* WLAN role client */
 				if (ble_role) {
 					/* BLE role central */
-					LOG_INF("config_buffer_client_SHA1\n");
-					config_buffer_ptr = config_buffer_client_SHA1;
+					LOG_INF("config_buffer_client_central_SHA1\n");
+					config_buffer_ptr = config_buffer_client_central_SHA1;
 				} else {
 					/* BLE role peripheral */
-					LOG_INF("config_buffer_client_SHA2\n");
-					config_buffer_ptr = config_buffer_client_SHA2;
+					LOG_INF("config_buffer_client_peripheral_SHA2\n");
+					config_buffer_ptr = config_buffer_client_peripheral_SHA2;
 				}
 			}				
 		}

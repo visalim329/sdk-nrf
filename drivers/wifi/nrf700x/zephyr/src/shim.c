@@ -320,28 +320,37 @@ void *net_pkt_to_nbuf(struct net_pkt *pkt)
 
 void *net_pkt_from_nbuf(void *iface, void *frm)
 {
-	struct net_pkt *pkt;
+	struct net_pkt *pkt = NULL;
 	unsigned char *data;
 	unsigned int len;
 	struct nwb *nwb = frm;
+
+	if (!nwb) {
+		return NULL;
+	}
 
 	len = zep_shim_nbuf_data_size(nwb);
 
 	data = zep_shim_nbuf_data_get(nwb);
 
-	pkt = net_pkt_rx_alloc_with_buffer(iface, len, AF_UNSPEC, 0, K_MSEC(100));
+	/* FIXME: Adding a delay in case we run out of buffers is a good idea, but for some
+	 * reason this causes a crash in high traffic conditions with "wifi status" being run
+	 * in the background. Need to investigate further.
+	 */
+	pkt = net_pkt_rx_alloc_with_buffer(iface, len, AF_UNSPEC, 0, K_NO_WAIT);
 
 	if (!pkt) {
-		return NULL;
+		goto out;
 	}
 
 	if (net_pkt_write(pkt, data, len)) {
 		net_pkt_unref(pkt);
 		pkt = NULL;
+		goto out;
 	}
 
+out:
 	zep_shim_nbuf_free(nwb);
-
 	return pkt;
 }
 
@@ -640,7 +649,7 @@ static void zep_shim_irq_handler(const struct device *dev, struct gpio_callback 
 
 	intr_priv = (struct zep_shim_intr_priv *)cb;
 
-	k_work_schedule(&intr_priv->work, K_NO_WAIT);
+	k_work_schedule_for_queue(&zep_wifi_drv_q, &intr_priv->work, K_NO_WAIT);
 }
 
 static enum wifi_nrf_status zep_shim_bus_qspi_intr_reg(void *os_dev_ctx, void *callbk_data,

@@ -13,6 +13,7 @@
 #define __FMAC_CMD_H__
 
 #define WIFI_NRF_FMAC_STATS_RECV_TIMEOUT 50 /* ms */
+#define WIFI_NRF_FMAC_PS_CONF_EVNT_RECV_TIMEOUT 50 /* ms */
 #ifdef CONFIG_NRF700X_RADIO_TEST
 #define WIFI_NRF_FMAC_RF_TEST_EVNT_TIMEOUT 50 /* 5s */
 #endif /* CONFIG_NRF_WIFI_LOW_POWER */
@@ -38,10 +39,8 @@ enum wifi_nrf_status umac_cmd_init(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 
 enum wifi_nrf_status umac_cmd_deinit(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx);
 
-#ifndef CONFIG_NRF700X_REV_A
 enum wifi_nrf_status umac_cmd_btcoex(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 	void *cmd, unsigned int cmd_len);
-#endif
 
 enum wifi_nrf_status umac_cmd_he_ltf_gi(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 					unsigned char he_ltf,
@@ -49,10 +48,8 @@ enum wifi_nrf_status umac_cmd_he_ltf_gi(struct wifi_nrf_fmac_dev_ctx *fmac_dev_c
 					unsigned char enabled);
 
 #ifdef CONFIG_NRF700X_RADIO_TEST
-#ifndef CONFIG_NRF700X_REV_A
 enum wifi_nrf_status umac_cmd_prog_init(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 					struct nrf_wifi_radio_test_init_info *init_params);
-#endif /* !CONFIG_NRF700X_REV_A */
 
 enum wifi_nrf_status umac_cmd_prog_tx(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 				      struct rpu_conf_params *params);

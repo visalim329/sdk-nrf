@@ -12,7 +12,9 @@
 #include <stdlib.h>
 
 #include <zephyr/kernel.h>
+#ifdef CONFIG_NET_L2_ETHERNET
 #include <zephyr/net/ethernet.h>
+#endif
 #include <zephyr/logging/log.h>
 #include <zephyr/net/wifi_mgmt.h>
 
@@ -24,9 +26,7 @@
 #include <zephyr_wpa_supp_if.h>
 #endif /* CONFIG_WPA_SUPP */
 #ifndef CONFIG_NRF700X_RADIO_TEST
-#include <zephyr_disp_scan.h>
-#include <zephyr_twt.h>
-#include <zephyr_ps.h>
+#include <zephyr_wifi_mgmt.h>
 
 #endif /* !CONFIG_NRF700X_RADIO_TEST */
 
@@ -39,33 +39,41 @@ struct wifi_nrf_drv_priv_zep rpu_drv_priv_zep;
 
 #define MAX_RX_QUEUES 3
 
-#define TOTAL_TX_SIZE (CONFIG_TX_MAX_DATA_SIZE + TX_BUF_HEADROOM)
+#define TOTAL_TX_FRAMES \
+	(CONFIG_NRF700X_MAX_TX_TOKENS * CONFIG_NRF700X_MAX_TX_AGGREGATION)
+#define MAX_TX_FRAME_SIZE \
+	(CONFIG_NRF700X_TX_MAX_DATA_SIZE + TX_BUF_HEADROOM)
+#define TOTAL_TX_SIZE \
+	(TOTAL_TX_FRAMES * MAX_TX_FRAME_SIZE)
+#define TOTAL_RX_SIZE \
+	(CONFIG_NRF700X_RX_NUM_BUFS * CONFIG_NRF700X_RX_MAX_DATA_SIZE)
 
-BUILD_ASSERT(CONFIG_MAX_TX_TOKENS >= 1, "At least one TX token is required");
-BUILD_ASSERT(CONFIG_MAX_TX_AGGREGATION <= 16, "Max TX aggregation is 16");
-BUILD_ASSERT(CONFIG_RX_NUM_BUFS >= 1, "At least one RX buffer is required");
+BUILD_ASSERT(CONFIG_NRF700X_MAX_TX_TOKENS >= 1,
+	"At least one TX token is required");
+BUILD_ASSERT(CONFIG_NRF700X_MAX_TX_AGGREGATION <= 16,
+	"Max TX aggregation is 16");
+BUILD_ASSERT(CONFIG_NRF700X_RX_NUM_BUFS >= 1,
+	"At least one RX buffer is required");
 
-BUILD_ASSERT(RPU_PKTRAM_SIZE >=
-		((CONFIG_MAX_TX_AGGREGATION * CONFIG_MAX_TX_TOKENS * TOTAL_TX_SIZE) +
-		(CONFIG_RX_NUM_BUFS * CONFIG_RX_MAX_DATA_SIZE)),
+BUILD_ASSERT(RPU_PKTRAM_SIZE >= (TOTAL_TX_SIZE + TOTAL_RX_SIZE),
 		"Packet RAM overflow in Sheliak");
 
 static const unsigned char aggregation = 1;
 static const unsigned char wmm = 1;
 static const unsigned char max_num_tx_agg_sessions = 4;
-static const unsigned char max_num_rx_agg_sessions = 2;
+static const unsigned char max_num_rx_agg_sessions = 8;
 static const unsigned char reorder_buf_size = 64;
 static const unsigned char max_rxampdu_size = MAX_RX_AMPDU_SIZE_64KB;
 
-static const unsigned char max_tx_aggregation = CONFIG_MAX_TX_AGGREGATION;
+static const unsigned char max_tx_aggregation = CONFIG_NRF700X_MAX_TX_AGGREGATION;
 
-static const unsigned int rx1_num_bufs = CONFIG_RX_NUM_BUFS / MAX_RX_QUEUES;
-static const unsigned int rx2_num_bufs = CONFIG_RX_NUM_BUFS / MAX_RX_QUEUES;
-static const unsigned int rx3_num_bufs = CONFIG_RX_NUM_BUFS / MAX_RX_QUEUES;
+static const unsigned int rx1_num_bufs = CONFIG_NRF700X_RX_NUM_BUFS / MAX_RX_QUEUES;
+static const unsigned int rx2_num_bufs = CONFIG_NRF700X_RX_NUM_BUFS / MAX_RX_QUEUES;
+static const unsigned int rx3_num_bufs = CONFIG_NRF700X_RX_NUM_BUFS / MAX_RX_QUEUES;
 
-static const unsigned int rx1_buf_sz = CONFIG_RX_MAX_DATA_SIZE;
-static const unsigned int rx2_buf_sz = CONFIG_RX_MAX_DATA_SIZE;
-static const unsigned int rx3_buf_sz = CONFIG_RX_MAX_DATA_SIZE;
+static const unsigned int rx1_buf_sz = CONFIG_NRF700X_RX_MAX_DATA_SIZE;
+static const unsigned int rx2_buf_sz = CONFIG_NRF700X_RX_MAX_DATA_SIZE;
+static const unsigned int rx3_buf_sz = CONFIG_NRF700X_RX_MAX_DATA_SIZE;
 
 static const unsigned char rate_protection_type;
 #else
@@ -215,6 +223,31 @@ int wifi_nrf_reg_domain(const struct device *dev, struct wifi_reg_domain *reg_do
 err:
 	return ret;
 }
+
+void wifi_nrf_event_proc_get_power_save_info(void *vif_ctx,
+					     struct nrf_wifi_umac_event_power_save_info *ps_info,
+					     unsigned int event_len)
+{
+	struct wifi_nrf_vif_ctx_zep *vif_ctx_zep = NULL;
+
+	if (!vif_ctx || !ps_info) {
+		return;
+	}
+
+	vif_ctx_zep = vif_ctx;
+
+	vif_ctx_zep->ps_info->mode = ps_info->ps_mode;
+	vif_ctx_zep->ps_info->enabled = ps_info->enabled;
+	vif_ctx_zep->ps_info->num_twt_flows = ps_info->num_twt_flows;
+
+	for (int i = 0; i < ps_info->num_twt_flows; i++) {
+		memcpy(&vif_ctx_zep->ps_info->twt_flows[i],
+		       &ps_info->twt_flow_info[i],
+		       sizeof(struct wifi_twt_flow_info));
+	}
+
+	vif_ctx_zep->ps_config_info_evnt = true;
+}
 #endif /* !CONFIG_NRF700X_RADIO_TEST */
 
 enum wifi_nrf_status wifi_nrf_fmac_dev_add_zep(struct wifi_nrf_drv_priv_zep *drv_priv_zep)
@@ -325,6 +358,7 @@ static int wifi_nrf_drv_main_zep(const struct device *dev)
 	callbk_fns.twt_teardown_callbk_fn = wifi_nrf_event_proc_twt_teardown_zep;
 	callbk_fns.twt_sleep_callbk_fn = wifi_nrf_event_proc_twt_sleep_zep;
 	callbk_fns.event_get_reg = wifi_nrf_event_get_reg_zep;
+	callbk_fns.event_get_ps_info = wifi_nrf_event_proc_get_power_save_info;
 #ifdef CONFIG_WPA_SUPP
 	callbk_fns.scan_res_callbk_fn = wifi_nrf_wpa_supp_event_proc_scan_res;
 	callbk_fns.auth_resp_callbk_fn = wifi_nrf_wpa_supp_event_proc_auth_resp;
@@ -375,6 +409,9 @@ static const struct net_wifi_mgmt_offload wifi_offload_ops = {
 	.wifi_iface.set_config = wifi_nrf_if_set_config_zep,
 	.wifi_iface.get_capabilities = wifi_nrf_if_caps_get,
 	.wifi_iface.send = wifi_nrf_if_send,
+#ifdef CONFIG_NET_STATISTICS_ETHERNET
+	.wifi_iface.get_stats = wifi_nrf_eth_stats_get,
+#endif /* CONFIG_NET_STATISTICS_ETHERNET */
 	.scan = wifi_nrf_disp_scan_zep,
 #ifdef CONFIG_NET_STATISTICS_WIFI
 	.get_stats = wifi_nrf_stats_get,
@@ -383,6 +420,8 @@ static const struct net_wifi_mgmt_offload wifi_offload_ops = {
 	.set_twt = wifi_nrf_set_twt,
 	.set_power_save_mode = wifi_nrf_set_power_save_mode,
 	.reg_domain = wifi_nrf_reg_domain,
+	.get_power_save_config = wifi_nrf_get_power_save_config,
+	.set_power_save_timeout = wifi_nrf_set_power_save_timeout,
 };
 
 #ifdef CONFIG_WPA_SUPP
@@ -407,7 +446,7 @@ static const struct zep_wpa_supp_dev_ops wpa_supp_ops = {
 #endif /* !CONFIG_NRF700X_RADIO_TEST */
 
 
-#ifdef CONFIG_NETWORKING
+#ifdef CONFIG_NET_L2_ETHERNET
 ETH_NET_DEVICE_INIT(wlan0, /* name - token */
 		    "wlan0", /* driver name - dev->name */
 		    wifi_nrf_drv_main_zep, /* init_fn */

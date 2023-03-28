@@ -392,6 +392,10 @@ static int qspi_device_init(const struct device *dev)
 	nrfx_err_t res;
 	int ret = 0;
 
+	if (!IS_ENABLED(CONFIG_NRF700X_QSPI_LOW_POWER)) {
+		return 0;
+	}
+
 	qspi_lock(dev);
 
 	/* In multithreading, driver can call qspi_device_init more than once
@@ -417,6 +421,10 @@ static int qspi_device_init(const struct device *dev)
 static void qspi_device_uninit(const struct device *dev)
 {
 	bool last = true;
+
+	if (!IS_ENABLED(CONFIG_NRF700X_QSPI_LOW_POWER)) {
+		return;
+	}
 
 	qspi_lock(dev);
 
@@ -923,7 +931,7 @@ int qspi_RDSR2(const struct device *dev, uint8_t *rdsr2)
 int qspi_validate_rpu_wake_writecmd(const struct device *dev)
 {
 	int ret = 0;
-	uint8_t rdsr2;
+	uint8_t rdsr2 = 0;
 
 	for (int ii = 0; ii < 1; ii++) {
 		ret = qspi_RDSR2(dev, &rdsr2);
@@ -1235,27 +1243,34 @@ int qspi_cmd_sleep_rpu(const struct device *dev)
 	return ret;
 }
 
-// Encryption public API
+/* Encryption public API */
 
-int qspi_enable_encryption(void)
+int qspi_enable_encryption(uint8_t *key)
 {
 #if defined(CONFIG_SOC_SERIES_NRF53X)
-	nrfx_qspi_dma_encrypt(&qspi_config->p_cfg);
+	int err = 0;
 
-	qspi_cmd_encryption(&qspi_perip, &qspi_config->p_cfg);
+	if (qspi_config->encryption)
+		return -EALREADY;
+
+	memcpy(qspi_config->p_cfg.key, key, 16);
+
+	err = nrfx_qspi_dma_encrypt(&qspi_config->p_cfg);
+	if (err != NRFX_SUCCESS) {
+		LOG_ERR("nrfx_qspi_dma_encrypt failed: %d\n", err);
+		return -EIO;
+	}
+
+	err = qspi_cmd_encryption(&qspi_perip, &qspi_config->p_cfg);
+	if (err != 0) {
+		LOG_ERR("qspi_cmd_encryption failed: %d\n", err);
+		return -EIO;
+	}
 
 	qspi_config->encryption = true;
 
 	return 0;
-#endif
-}
-
-
-int qspi_configure_encryption(uint8_t *key)
-{
-#if defined(CONFIG_SOC_SERIES_NRF53X)
-	memcpy(qspi_config->p_cfg.key, key, 16);
-
-	return 0;
+#else
+	return -ENOTSUP;
 #endif
 }

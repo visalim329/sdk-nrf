@@ -217,7 +217,7 @@ static enum wifi_nrf_status wifi_nrf_fmac_fw_init(struct wifi_nrf_fmac_dev_ctx *
 	}
 	start_time_us = wifi_nrf_osal_time_get_curr_us(fmac_dev_ctx->fpriv->opriv);
 	while (!fmac_dev_ctx->fw_init_done) {
-		wifi_nrf_osal_sleep_ms(fmac_dev_ctx->fpriv->opriv, 100);
+		wifi_nrf_osal_sleep_ms(fmac_dev_ctx->fpriv->opriv, 1);
 #define MAX_INIT_WAIT (5 * 1000 * 1000)
 		if (wifi_nrf_osal_time_elapsed_us(fmac_dev_ctx->fpriv->opriv,
 						  start_time_us) >= MAX_INIT_WAIT) {
@@ -493,7 +493,7 @@ struct wifi_nrf_fmac_priv *wifi_nrf_fmac_init(struct nrf_wifi_data_config_params
 			      data_config,
 			      sizeof(fpriv->data_config));
 
-	fpriv->num_tx_tokens = CONFIG_MAX_TX_TOKENS;
+	fpriv->num_tx_tokens = CONFIG_NRF700X_MAX_TX_TOKENS;
 	fpriv->num_tx_tokens_per_ac = (fpriv->num_tx_tokens / WIFI_NRF_FMAC_AC_MAX);
 	fpriv->num_tx_tokens_spare = (fpriv->num_tx_tokens % WIFI_NRF_FMAC_AC_MAX);
 
@@ -523,7 +523,7 @@ struct wifi_nrf_fmac_priv *wifi_nrf_fmac_init(struct nrf_wifi_data_config_params
 			fpriv->rx_buf_pools[pool_idx].buf_sz + RX_BUF_HEADROOM;
 	}
 
-	hal_cfg_params.max_tx_frm_sz = CONFIG_TX_MAX_DATA_SIZE + TX_BUF_HEADROOM;
+	hal_cfg_params.max_tx_frm_sz = CONFIG_NRF700X_TX_MAX_DATA_SIZE + TX_BUF_HEADROOM;
 #endif /* !CONFIG_NRF700X_RADIO_TEST */
 
 	hal_cfg_params.max_cmd_size = MAX_NRF_WIFI_UMAC_CMD_SIZE;
@@ -848,7 +848,6 @@ out:
 	return status;
 }
 
-#ifndef CONFIG_NRF700X_REV_A
 enum wifi_nrf_status wifi_nrf_fmac_conf_btcoex(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 					       void *cmd, unsigned int cmd_len)
 {
@@ -858,10 +857,9 @@ enum wifi_nrf_status wifi_nrf_fmac_conf_btcoex(struct wifi_nrf_fmac_dev_ctx *fma
 
 	return status;
 }
-#endif
+
 
 #ifdef CONFIG_NRF700X_RADIO_TEST
-#ifndef CONFIG_NRF700X_REV_A
 enum wifi_nrf_status wifi_nrf_fmac_radio_test_init(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 						   struct rpu_conf_params *params)
 {
@@ -891,7 +889,6 @@ enum wifi_nrf_status wifi_nrf_fmac_radio_test_init(struct wifi_nrf_fmac_dev_ctx 
 
 	return status;
 }
-#endif /* !CONFIG_NRF700X_REV_A */
 
 
 enum wifi_nrf_status wifi_nrf_fmac_radio_test_prog_tx(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
@@ -1647,8 +1644,19 @@ enum wifi_nrf_status wifi_nrf_fmac_assoc(void *dev_ctx,
 	connect_common_info->valid_fields |=
 		NRF_WIFI_CONNECT_COMMON_INFO_USE_MFP_VALID;
 
+	connect_common_info->nrf_wifi_flags |=
+		NRF_WIFI_CMD_CONNECT_COMMON_INFO_USE_RRM;
+
 	connect_common_info->control_port =
 		assoc_info->control_port;
+
+	if (assoc_info->prev_bssid_flag) {
+		wifi_nrf_osal_mem_cpy(fmac_dev_ctx->fpriv->opriv,
+			connect_common_info->prev_bssid,
+			assoc_info->prev_bssid,
+			NRF_WIFI_ETH_ADDR_LEN);
+		connect_common_info->nrf_wifi_flags |= NRF_WIFI_CONNECT_COMMON_INFO_PREV_BSSID;
+	}
 
 	status = umac_cmd_cfg(fmac_dev_ctx,
 			      assoc_cmd,
@@ -3050,6 +3058,7 @@ out:
 }
 
 
+#define RPU_CMD_TIMEOUT_MS 10000
 enum wifi_nrf_status wifi_nrf_fmac_chg_vif_state(void *dev_ctx,
 						 unsigned char if_idx,
 						 struct nrf_wifi_umac_chg_vif_state_info *vif_info)
@@ -3058,7 +3067,7 @@ enum wifi_nrf_status wifi_nrf_fmac_chg_vif_state(void *dev_ctx,
 	struct nrf_wifi_umac_cmd_chg_vif_state *chg_vif_state_cmd = NULL;
 	struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx = NULL;
 	struct wifi_nrf_fmac_vif_ctx *vif_ctx = NULL;
-	unsigned int count = 100; /* used for handling timeout*/
+	unsigned int count = RPU_CMD_TIMEOUT_MS;
 
 	fmac_dev_ctx = dev_ctx;
 
@@ -3091,13 +3100,12 @@ enum wifi_nrf_status wifi_nrf_fmac_chg_vif_state(void *dev_ctx,
 			      sizeof(*chg_vif_state_cmd));
 
 	while (!vif_ctx->ifflags && (--count > 0))
-		wifi_nrf_osal_sleep_ms(fmac_dev_ctx->fpriv->opriv,
-				       100);
+		wifi_nrf_osal_sleep_ms(fmac_dev_ctx->fpriv->opriv, 1);
 
 	if (count == 0) {
 		wifi_nrf_osal_log_err(fmac_dev_ctx->fpriv->opriv,
 				      "%s: RPU is unresponsive for %d sec\n",
-				      __func__, (count * 100) / 1000);
+				      __func__, RPU_CMD_TIMEOUT_MS);
 		goto out;
 	}
 
@@ -3121,7 +3129,6 @@ out:
 }
 
 
-#ifndef CONFIG_NRF700X_REV_A
 enum wifi_nrf_status wifi_nrf_fmac_set_vif_macaddr(void *dev_ctx,
 						   unsigned char if_idx,
 						   unsigned char *mac_addr)
@@ -3173,7 +3180,6 @@ out:
 
 	return status;
 }
-#endif /* CONFIG_NRF700X_REV_A */
 
 enum wifi_nrf_status wifi_nrf_fmac_suspend(void *dev_ctx)
 {
@@ -3514,6 +3520,44 @@ out:
 	if (set_uapsdq_cmd) {
 		wifi_nrf_osal_mem_free(fmac_dev_ctx->fpriv->opriv,
 				       set_uapsdq_cmd);
+	}
+
+	return status;
+}
+
+
+enum wifi_nrf_status wifi_nrf_fmac_set_power_save_timeout(void *dev_ctx,
+							  unsigned char if_idx,
+							  int ps_timeout)
+{
+	enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
+	struct nrf_wifi_umac_cmd_set_power_save_timeout *set_ps_timeout_cmd = NULL;
+	struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx = NULL;
+
+	fmac_dev_ctx = dev_ctx;
+
+	set_ps_timeout_cmd = wifi_nrf_osal_mem_zalloc(fmac_dev_ctx->fpriv->opriv,
+					      sizeof(*set_ps_timeout_cmd));
+
+	if (!set_ps_timeout_cmd) {
+		wifi_nrf_osal_log_err(fmac_dev_ctx->fpriv->opriv,
+				      "%s: Unable to allocate memory\n", __func__);
+		goto out;
+	}
+
+	set_ps_timeout_cmd->umac_hdr.cmd_evnt = NRF_WIFI_UMAC_CMD_SET_POWER_SAVE_TIMEOUT;
+	set_ps_timeout_cmd->umac_hdr.ids.wdev_id = if_idx;
+	set_ps_timeout_cmd->umac_hdr.ids.valid_fields |=
+		NRF_WIFI_INDEX_IDS_WDEV_ID_VALID;
+	set_ps_timeout_cmd->timeout = ps_timeout;
+
+	status = umac_cmd_cfg(fmac_dev_ctx,
+			      set_ps_timeout_cmd,
+			      sizeof(*set_ps_timeout_cmd));
+out:
+	if (set_ps_timeout_cmd) {
+		wifi_nrf_osal_mem_free(fmac_dev_ctx->fpriv->opriv,
+				       set_ps_timeout_cmd);
 	}
 
 	return status;
@@ -3919,11 +3963,9 @@ enum wifi_nrf_status wifi_nrf_fmac_set_reg(struct wifi_nrf_fmac_dev_ctx *fmac_de
 	set_reg_cmd->valid_fields = NRF_WIFI_CMD_REQ_SET_REG_ALPHA2_VALID;
 
 	/* New feature in rev B patch */
-#ifndef CONFIG_NRF700X_REV_A
 	if (reg_info->force) {
 		set_reg_cmd->valid_fields |= NRF_WIFI_CMD_REQ_SET_REG_USER_REG_FORCE;
 	}
-#endif /* !CONFIG_NRF700X_REV_A */
 
 	status = umac_cmd_cfg(fmac_dev_ctx,
 			      set_reg_cmd,
@@ -3999,6 +4041,41 @@ enum wifi_nrf_status wifi_nrf_fmac_get_reg(struct wifi_nrf_fmac_dev_ctx *fmac_de
 err:
 	return WIFI_NRF_STATUS_FAIL;
 }
+
+enum wifi_nrf_status wifi_nrf_fmac_get_power_save_info(void *dev_ctx,
+						       unsigned char if_idx)
+{
+	enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
+	struct nrf_wifi_umac_cmd_get_power_save_info *get_ps_info_cmd = NULL;
+	struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx = NULL;
+
+	fmac_dev_ctx = dev_ctx;
+
+	get_ps_info_cmd = wifi_nrf_osal_mem_zalloc(fmac_dev_ctx->fpriv->opriv,
+						   sizeof(*get_ps_info_cmd));
+
+	if (!get_ps_info_cmd) {
+		wifi_nrf_osal_log_err(fmac_dev_ctx->fpriv->opriv,
+				      "%s: Unable to allocate memory\n", __func__);
+		goto out;
+	}
+
+	get_ps_info_cmd->umac_hdr.cmd_evnt = NRF_WIFI_UMAC_CMD_GET_POWER_SAVE_INFO;
+	get_ps_info_cmd->umac_hdr.ids.wdev_id = if_idx;
+	get_ps_info_cmd->umac_hdr.ids.valid_fields |=
+			NRF_WIFI_INDEX_IDS_WDEV_ID_VALID;
+
+	status = umac_cmd_cfg(fmac_dev_ctx,
+			      get_ps_info_cmd,
+			      sizeof(*get_ps_info_cmd));
+out:
+	if (get_ps_info_cmd) {
+		wifi_nrf_osal_mem_free(fmac_dev_ctx->fpriv->opriv,
+				       get_ps_info_cmd);
+	}
+
+	return status;
+}
 #endif /* !CONFIG_NRF700X_RADIO_TEST */
 
 enum wifi_nrf_status wifi_nrf_fmac_otp_mac_addr_get(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
@@ -4043,16 +4120,8 @@ enum wifi_nrf_status wifi_nrf_fmac_otp_mac_addr_get(struct wifi_nrf_fmac_dev_ctx
 	}
 
 	/* Check if a valid MAC address has been programmed in the OTP */
-#ifdef CONFIG_NRF700X_REV_A
-	if ((otp_mac_addr[0] == 0xFF) &&
-	    (otp_mac_addr[1] == 0xFF) &&
-	    (otp_mac_addr[2] == 0xFF) &&
-	    (otp_mac_addr[3] == 0xFF) &&
-	    (otp_mac_addr[4] == 0xFF) &&
-	    (otp_mac_addr[5] == 0xFF)) {
-#else
+
 	if (otp_info.flags & otp_mac_addr_flag_mask) {
-#endif /* !CONFIG_NRF700X_REV_A */
 		wifi_nrf_osal_log_info(fmac_dev_ctx->fpriv->opriv,
 				       "%s: MAC addr not programmed in OTP\n",
 				       __func__);
@@ -4129,7 +4198,6 @@ enum wifi_nrf_status wifi_nrf_fmac_rf_params_get(struct wifi_nrf_fmac_dev_ctx *f
 		goto out;
 	}
 
-#ifndef CONFIG_NRF700X_REV_A
 	if (!(otp_info.flags & (~CALIB_XO_FLAG_MASK))) {
 		wifi_nrf_osal_mem_cpy(fmac_dev_ctx->fpriv->opriv,
 				      &rf_params[NRF_WIFI_RF_PARAMS_OFF_CALIB_X0],
@@ -4213,7 +4281,6 @@ enum wifi_nrf_status wifi_nrf_fmac_rf_params_get(struct wifi_nrf_fmac_dev_ctx *f
 				      (char *)otp_info.info.calib + OTP_OFF_CALIB_TXP_BOFF_V,
 				      OTP_SZ_CALIB_TXP_BOFF_V);
 	}
-#endif /* !CONFIG_NRF700X_REV_A */
 
 	status = WIFI_NRF_STATUS_SUCCESS;
 out:
