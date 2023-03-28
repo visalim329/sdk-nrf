@@ -12,7 +12,7 @@
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int bt_throughput_test_init(void);
+int bt_throughput_test_init(bool ble_role);
 
 /**
  * @brief Run BLE throughput test

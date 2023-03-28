@@ -37,6 +37,11 @@
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
 
+extern uint8_t wait_for_ble_central_run;
+
+uint64_t ble_scan2conn_start_time;
+int64_t ble_scan2conn_time;  /* get cycle ble_adv2conn_start_time */
+
 static volatile bool data_length_req;
 static volatile bool test_ready;
 static struct bt_conn *default_conn;
@@ -222,8 +227,8 @@ static void scan_init(void)
 	struct bt_le_scan_param scan_param = {
 		.type = BT_LE_SCAN_TYPE_PASSIVE,
 		.options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
-		.interval = 0x0010,
-		.window = 0x0010,
+		.interval = CONFIG_BT_LE_SCAN_INTERVAL,
+		.window = CONFIG_BT_LE_SCAN_WINDOW,
 	};
 
 	struct bt_scan_init_param scan_init = {
@@ -264,8 +269,8 @@ static void adv_start(void)
 	struct bt_le_adv_param *adv_param =
 		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE |
 				BT_LE_ADV_OPT_ONE_TIME,
-				BT_GAP_ADV_FAST_INT_MIN_2,
-				BT_GAP_ADV_FAST_INT_MAX_2,
+				CONFIG_BT_GAP_ADV_FAST_INT_MIN_2,
+				CONFIG_BT_GAP_ADV_FAST_INT_MAX_2,
 				NULL);
 	int err;
 
@@ -346,10 +351,12 @@ static uint8_t throughput_read(const struct bt_throughput_metrics *met)
 
 static void throughput_received(const struct bt_throughput_metrics *met)
 {
+
 	static uint32_t kb;
 
 	if (met->write_len == 0) {
 		kb = 0;
+		wait_for_ble_central_run = 1;
 		printk("\n");
 
 		return;
@@ -394,7 +401,7 @@ void select_role(bool is_central)
 		printk("\nPeripheral. Starting advertising\n");
 		adv_start();
 	}
-
+	
 	role_selected = true;
 
 	/* The role has been selected, button are not needed any more. */
@@ -520,7 +527,7 @@ int bt_throughput_test_run(void)
 		return 0;
 	}
 
-	printk("\n==== Starting throughput test ====\n");
+	/* printk("\n==== Starting throughput test ====\n"); */
 
 	/* reset peer metrics */
 	err = bt_throughput_write(&throughput, dummy, 1);
@@ -574,7 +581,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.le_data_len_updated = le_data_length_updated
 };
 
-int bt_throughput_test_init(void)
+int bt_throughput_test_init(bool ble_role)
 {
 	int err;
 	int64_t stamp;
@@ -585,7 +592,7 @@ int bt_throughput_test_init(void)
 		return err;
 	}
 
-	printk("Bluetooth initialized\n");
+	//printk("Bluetooth initialized\n");
 
 	scan_init();
 
@@ -596,10 +603,13 @@ int bt_throughput_test_init(void)
 	}
 
 	buttons_init();
+	
+	select_role(ble_role);
 
-	select_role(true);
-
-	printk("Waiting for connection.\n");
+	//printk("Waiting for connection.\n");
+	//ble_scan2conn_start_time = k_uptime_get_32();
+	//ble_scan2conn_time = 0;
+	
 	stamp = k_uptime_get_32();
 	while (k_uptime_delta(&stamp) / MSEC_PER_SEC < THROUGHPUT_CONFIG_TIMEOUT) {
 		if (default_conn) {
@@ -612,12 +622,23 @@ int bt_throughput_test_init(void)
 		printk("Cannot set up connection.\n");
 		return -ENOTCONN;
 	}
-	return connection_configuration_set(
+
+	//ble_scan2conn_time = k_uptime_delta(&ble_scan2conn_start_time);
+	//printk("Time taken for scan %lld ms\n", ble_scan2conn_time);	
+
+	//ble_scan2conn_start_time = k_uptime_get_32();
+	//ble_scan2conn_time = 0;
+	
+	uint32_t conn_cfg_status = connection_configuration_set(
 			BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN,
 			CONFIG_INTERVAL_MAX,
 			CONN_LATENCY, SUPERVISION_TIMEOUT),
 			BT_CONN_LE_PHY_PARAM_2M,
 			BT_LE_DATA_LEN_PARAM_MAX);
+	//ble_scan2conn_time = k_uptime_delta(&ble_scan2conn_start_time);
+	//printk("Time taken for connecion %lld ms\n", ble_scan2conn_time);
+	
+	return(conn_cfg_status);
 }
 
 int bt_throughput_test_exit(void)
