@@ -32,9 +32,6 @@
 #define INTERVAL_MIN	80	/* 320 units, 400 ms */
 #define INTERVAL_MAX	80	/* 320 units, 400 ms */
 
-#define WIFI_SCAN_BLE_CON_PERIPH
-//#define DEFAULT_BT_TPUT_TEST
-
 #define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define SCAN_CONFIG_TIMEOUT 20 
 #define BLE_CONN_CENTRAL_TEST_DURATION 20000   //msec
@@ -137,9 +134,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 	}
 
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
-	#ifdef DEFAULT_BT_TPUT_TEST
 		instruction_print();
-	#endif
 		test_ready = true;
 	}
 }
@@ -709,34 +704,9 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 	return 0;
 }
 
-int bt_connection_init(bool ble_role)
-{
-	int err;
-	int64_t stamp;
-
-	err = bt_enable(NULL);
-	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
-		return err;
-	}
-
-	//printk("Bluetooth initialized\n");
-
-	scan_init();
-
-	/*  err = bt_throughput_init(&throughput, &throughput_cb);
-	if (err) {
-		printk("Throughput service initialization failed.\n");
-		return err;
-	} 
- */	
-	select_role(ble_role);
-
-	//printk("Waiting for connection.\n");
-	//ble_scan2conn_start_time = k_uptime_get_32();
-	//ble_scan2conn_time = 0;
-	
-	stamp = k_uptime_get_32();
+int bt_connection_init(void)
+{	
+	uint64_t stamp = k_uptime_get_32();
 	while (k_uptime_delta(&stamp) / MSEC_PER_SEC < SCAN_CONFIG_TIMEOUT) {
 		if (default_conn) {
 			break;
@@ -767,12 +737,12 @@ int bt_connection_init(bool ble_role)
 	return(conn_cfg_status);
 }
 
-static int wifi_scan_ble_conn_central()
+int wifi_scan_ble_conn_central(void)
 {
-	bool ble_role = 1;
+	//bool ble_role = 1;
 	uint64_t test_start_time = 0;
 	test_start_time = k_uptime_get_32();
-	bt_connection_init(ble_role);
+	bt_connection_init();
 	
 	while (true) {
 		bt_scan_start(BT_SCAN_TYPE_SCAN_PASSIVE);
@@ -843,6 +813,30 @@ void main(void)
 		buttons_init();
 	#endif
 	#ifdef WIFI_SCAN_BLE_CON_PERIPH	
-		wifi_scan_ble_conn_central();
+		int err;
+
+		printk("Starting Bluetooth Throughput example\n");
+
+		err = bt_enable(NULL);
+		if (err) {
+			printk("Bluetooth init failed (err %d)\n", err);
+			return;
+		}
+
+		printk("Bluetooth initialized\n");
+
+		scan_init();
+
+		/* err = bt_throughput_init(&throughput, &throughput_cb);
+		if (err) {
+			printk("Throughput service initialization failed.\n");
+			return;
+		} */		
+
+		printk("\n");
+		printk("Press button 1 or type \"central\" on the central board.\n");
+		printk("Press button 2 or type \"peripheral\" on the peripheral board.\n");
+
+		buttons_init();
 	#endif
 }

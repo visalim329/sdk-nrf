@@ -254,8 +254,13 @@ SHELL_STATIC_SUBCMD_SET_CREATE(sub_config,
 static int test_run_cmd(const struct shell *shell, size_t argc,
 			char **argv)
 {
+	#ifdef DEFAULT_BT_TPUT_TEST
 	return test_run(shell, test_params.conn_param, test_params.phy,
 			test_params.data_len);
+	#endif 
+	#ifdef WIFI_SCAN_BLE_CON_PERIPH
+		wifi_scan_ble_conn_central();
+	#endif
 }
 
 static int test_central_cmd(const struct shell *shell, size_t argc,
@@ -272,9 +277,7 @@ static int test_peripheral_cmd(const struct shell *shell, size_t argc,
 	return 0;
 }
 
-#ifdef DEFAULT_BT_TPUT_TEST
 SHELL_CMD_REGISTER(config, &sub_config, "Configure the example", default_cmd);
 SHELL_CMD_REGISTER(run, NULL, "Run the test", test_run_cmd);
 SHELL_CMD_REGISTER(central, NULL, "Select central role", test_central_cmd);
 SHELL_CMD_REGISTER(peripheral, NULL, "Select peripheral role", test_peripheral_cmd);
-#endif

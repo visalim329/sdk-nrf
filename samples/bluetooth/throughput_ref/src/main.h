@@ -15,6 +15,10 @@
  * @param phy         Phy parameters.
  * @param data_len    Maximum transmission payload.
  */
+
+#define WIFI_SCAN_BLE_CON_PERIPH
+//#define DEFAULT_BT_TPUT_TEST
+
 int test_run(const struct shell *shell,
 	     const struct bt_le_conn_param *conn_param,
 	     const struct bt_conn_le_phy_param *phy,
@@ -30,5 +34,9 @@ void select_role(bool is_central);
 int connection_config_set(const struct bt_le_conn_param *conn_param,
 			const struct bt_conn_le_phy_param *phy,
 			const struct bt_conn_le_data_len_param *data_len);
+			
+int bt_connection_init(void);
+int wifi_scan_ble_conn_central(void);
+int bt_disconnect_central(void);
 
 #endif /* THROUGHPUT_MAIN_H_ */

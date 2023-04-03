@@ -160,7 +160,7 @@ config BT_GAP_ADV_FAST_INT_MAX_2
 
 config BT_LE_SCAN_INTERVAL
 	int "BT LE Scan interval  value"
-	default 32
+	default 16
 
 config BT_LE_SCAN_WINDOW
 	int "BT LE Scan Window value"
