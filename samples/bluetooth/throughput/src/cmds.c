@@ -14,8 +14,8 @@
 
 #include "main.h"
 
-#define INTERVAL_MIN 80 /* 320 units, 400 ms */
-#define INTERVAL_MAX 80 /* 320 units, 400 ms */
+#define INTERVAL_MIN 80 /* 80 units, 100 ms */
+#define INTERVAL_MAX 80 /* 80 units, 100 ms */
 #define CONN_LATENCY 0
 
 #define MIN_CONN_INTERVAL   6

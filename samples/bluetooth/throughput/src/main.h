@@ -7,6 +7,10 @@
 #ifndef THROUGHPUT_MAIN_H_
 #define THROUGHPUT_MAIN_H_
 
+
+#define WIFI_SCAN_BLE_CON_PERIPH
+//#define DEFAULT_BT_TPUT_TEST
+
 /**
  * @brief Run the test
  *
@@ -30,5 +34,7 @@ void select_role(bool is_central);
 int connection_config_set(const struct bt_le_conn_param *conn_param,
 			const struct bt_conn_le_phy_param *phy,
 			const struct bt_conn_le_data_len_param *data_len);
+
+int bt_connection_init(bool ble_role)
 
 #endif /* THROUGHPUT_MAIN_H_ */

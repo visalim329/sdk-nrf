@@ -29,11 +29,9 @@
 
 #define DEVICE_NAME	CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-#define INTERVAL_MIN	80	/* 320 units, 400 ms */
-#define INTERVAL_MAX	80	/* 320 units, 400 ms */
+#define INTERVAL_MIN	80	/* 80 units, 100 ms */
+#define INTERVAL_MAX	80	/* 80 units, 100 ms */
 
-#define WIFI_SCAN_BLE_CON_PERIPH
-//#define DEFAULT_BT_TPUT_TEST
 
 #define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define SCAN_CONFIG_TIMEOUT 20 
@@ -767,7 +765,7 @@ int bt_connection_init(bool ble_role)
 	return(conn_cfg_status);
 }
 
-static int wifi_scan_ble_conn_central()
+static int ble_iterative_conn_central()
 {
 	bool ble_role = 1;
 	uint64_t test_start_time = 0;
@@ -843,6 +841,6 @@ void main(void)
 		buttons_init();
 	#endif
 	#ifdef WIFI_SCAN_BLE_CON_PERIPH	
-		wifi_scan_ble_conn_central();
+		ble_iterative_conn_central();
 	#endif
 }

@@ -388,7 +388,7 @@ static int __wifi_args_to_params(struct wifi_connect_req_params *params)
 	#endif
 
 	#if !defined(CONFIG_STA_KEY_MGMT_NONE)
-		params->psk = CONFIG_STA_SAMPLE_PASSWORD;
+		params->psk = CONFIG_STA_PASSWORD;
 		params->psk_length = strlen(params->psk);
 	#endif
 
