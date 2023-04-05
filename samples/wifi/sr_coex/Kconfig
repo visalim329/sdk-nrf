@@ -159,11 +159,11 @@ config BT_GAP_ADV_FAST_INT_MAX_2
 	default 240
 
 config BT_LE_SCAN_INTERVAL
-	int "BT LE Scan interval  value"
+	int "BT LE Scan interval  value. Each unit is 0.625milliseconds."
 	default 16
 
 config BT_LE_SCAN_WINDOW
-	int "BT LE Scan Window value"
+	int "BT LE Scan Window value. Each unit is 0.625milliseconds."
 	default 16
 
 config COEX_HARDWARE_ENABLE
