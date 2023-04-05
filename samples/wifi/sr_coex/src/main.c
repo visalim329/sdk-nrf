@@ -772,7 +772,6 @@ static int config_pta(bool wifi_coex_enable, bool antenna_mode, bool ble_role,
 		LOG_ERR("Invalid Wi-Fi band: %d\n", wlan_band);
 		goto err;
 	}
-	
 
 	LOG_INF("Configuring PTA for %s", wifi_band_txt(status.band));
 	ret = nrf_wifi_coex_config_pta(wlan_band, antenna_mode, ble_role,
@@ -802,7 +801,6 @@ static void print_test_params_info(bool test_wlan, bool test_ble,
 		} else {
 			LOG_INF("Running BLE only test");
 		}
-		wait_for_wifi_client_start=0;
 	}
 	if (antenna_mode) {
 		LOG_INF("Antenna mode : Separate antennas");
@@ -882,25 +880,8 @@ static int wifi_scan_ble_conn_central(bool wifi_coex_enable, bool antenna_mode,
 			}
 			k_sleep(K_SECONDS(1));
 		}
-		#endif
-		#ifdef CONNECTED_SCAN
-			wifi_connection(test_wlan, wifi_coex_enable, antenna_mode);
-			cmd_wifi_scan();
-		#else
-			cmd_wifi_scan();
-		#endif
 	}
-	test_start_time = k_uptime_get_32();
-	if(test_ble) {
-		ble_connection(test_ble, ble_role);
-		
-		start_ble_traffic(test_ble, ble_role);
 
-		run_ble_traffic(test_ble, ble_role);
-
-		disconnect_ble(test_ble, ble_role);
-	}
-	
 	if (test_wlan) {
 		while (true) {
 			if ((k_uptime_get_32() - test_start_time) > CONFIG_WIFI_TEST_DURATION) {
@@ -1038,6 +1019,7 @@ static int wifi_scan_ble_tput_central(bool wifi_coex_enable, bool antenna_mode,
 		run_ble_traffic(test_ble, ble_role);
 		disconnect_ble(test_ble, ble_role);
 	}
+
 	if (test_wlan) {
 		while (true) {
 			if (k_uptime_get_32() - test_start_time > CONFIG_WIFI_TEST_DURATION) {
@@ -1065,11 +1047,6 @@ static int wifi_scan_ble_tput_peripheral(bool wifi_coex_enable, bool antenna_mod
 	uint64_t test_start_time = 0;
 	int ret = 0;
 
-		cmd_wifi_scan();
-	}
-	
-	test_start_time = k_uptime_get_32();
-	
 	if (test_ble) {
 		if (!ble_role) {
 			LOG_INF("Make sure peer BLE role is central");
@@ -2223,6 +2200,4 @@ int main(void)
 err:
 	LOG_ERR("Returning with error");
 	return ret;
-
-
 }
