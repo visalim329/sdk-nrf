@@ -44,9 +44,6 @@ LOG_MODULE_REGISTER(coex, CONFIG_LOG_DEFAULT_LEVEL);
 #define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | \
 				NET_EVENT_WIFI_DISCONNECT_RESULT)
 
-#define MAX_SSID_LEN 32
-#define WIFI_CONNECTION_TIMEOUT 30
-
 #define WIFI_SCAN_BLE_CON_CENTRAL
 #define WIFI_SCAN_BLE_CON_PERIPH
 
@@ -71,7 +68,11 @@ LOG_MODULE_REGISTER(coex, CONFIG_LOG_DEFAULT_LEVEL);
 #define WIFI_TP_SERVER_BLE_TP_CENTRAL
 #define WIFI_TP_SERVER_BLE_TP_PERIPH
 
+#define MAX_SSID_LEN 32
+#define WIFI_CONNECTION_TIMEOUT 30
+
 #define PRINT_WIFI_SCAN_RESULT
+#define DEMARCATE_TEST_START
 
 #define HIGHEST_CHANNUM_24G 14
 
@@ -858,14 +859,13 @@ static int wifi_scan_ble_conn_central(bool wifi_coex_enable, bool antenna_mode,
 
 		cmd_wifi_scan();
 	}
-#endif
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
-	if (test_ble) {	
-		//LOG_INF("BLE Throughput started\n");
-		start_ble_traffic(test_ble, ble_role);
 
-	test_start_time = k_uptime_get_32();
-	
 	if (test_ble) {
 		bt_connection_init(ble_role);
 		while (true) {
@@ -958,6 +958,11 @@ static int wifi_scan_ble_conn_peripheral(bool wifi_coex_enable,
 	if (test_wlan) {
 		cmd_wifi_scan();
 	}
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 	if (test_ble) {
 		while (true) {
@@ -1016,7 +1021,11 @@ static int wifi_scan_ble_tput_central(bool wifi_coex_enable, bool antenna_mode,
 			cmd_wifi_scan();
 		#endif
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 	if(test_ble) {
 		/* ble_connection(test_ble, ble_role); */
@@ -1105,6 +1114,11 @@ static int wifi_scan_ble_tput_peripheral(bool wifi_coex_enable, bool antenna_mod
 			cmd_wifi_scan();
 		}
 	#endif
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 	if (test_ble) {	
 		//LOG_INF("BLE Throughput started\n");
@@ -1161,7 +1175,11 @@ static int wifi_con_ble_con_central(bool test_wlan,
 	if (test_ble) {
 		bt_connection_init(ble_role);
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	while (true) {
@@ -1229,7 +1247,11 @@ static int wifi_con_ble_con_peripheral(bool test_wlan,
 			}
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	while (true) {
@@ -1292,7 +1314,11 @@ static int wifi_con_ble_tput_central(bool test_wlan,
 			goto err;
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_ble) {
@@ -1379,7 +1405,11 @@ static int wifi_con_ble_tput_peripheral(bool test_wlan,
 		}
 		wait_for_ble_central_run = 0;
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_wlan) {
@@ -1440,7 +1470,11 @@ static int wifi_tput_client_ble_con_central(bool test_wlan,
 			goto err;
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_ble) {
@@ -1514,7 +1548,11 @@ static int wifi_tput_client_ble_con_peripheral(bool test_wlan,
 			goto err;
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_ble) {
@@ -1569,6 +1607,11 @@ static int wifi_tput_client_ble_tput_central(bool test_wlan,
 			goto err;
 		}
 	}
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	ret = run_wifi_traffic(test_wlan);
 	if (ret != 0) {
 		LOG_ERR("Failed to start Wi-Fi benchmark: %d", ret);
@@ -1635,7 +1678,11 @@ static int wifi_tput_client_ble_tput_peripheral(bool test_wlan,
 		}
 		wait_for_ble_central_run = 0;
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	ret = run_wifi_traffic(test_wlan);
 	if (ret != 0) {
 		LOG_ERR("Failed to start Wi-Fi benchmark: %d", ret);
@@ -1680,7 +1727,11 @@ static int wifi_tput_server_ble_con_central(bool test_wlan,
 			goto err;
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_ble) {
@@ -1753,7 +1804,11 @@ static int wifi_tput_server_ble_con_peripheral(bool test_wlan,
 			goto err;
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	test_start_time = k_uptime_get_32();
 
 	if (test_ble) {
@@ -1820,7 +1875,11 @@ static int wifi_tput_server_ble_tput_central(bool test_wlan,
 			k_sleep(K_SECONDS(1));
 		}
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	wait_for_wifi_client_start=0;
 
 	start_ble_traffic(test_ble, ble_role);
@@ -1884,7 +1943,11 @@ static int wifi_tput_server_ble_tput_peripheral(bool test_wlan,
 		}
 		wait_for_wifi_client_start=0;
 	}
-
+	#ifdef DEMARCATE_TEST_START
+	LOG_INF("\n\n");
+	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+	LOG_INF("\n\n");
+	#endif 
 	start_ble_traffic(test_ble, ble_role);
 
 	check_wifi_traffic(test_wlan);
