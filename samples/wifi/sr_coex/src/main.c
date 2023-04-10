@@ -44,34 +44,35 @@ LOG_MODULE_REGISTER(coex, CONFIG_LOG_DEFAULT_LEVEL);
 #define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | \
 				NET_EVENT_WIFI_DISCONNECT_RESULT)
 
-#define WIFI_SCAN_BLE_CON_CENTRAL
-#define WIFI_SCAN_BLE_CON_PERIPH
-
-#define WIFI_SCAN_BLE_TP_CENTRAL
-#define WIFI_SCAN_BLE_TP_PERIPH
-
-#define WIFI_CON_BLE_CON_CENTRAL
-#define WIFI_CON_BLE_CON_PERIPH
-
-#define WIFI_CON_BLE_TP_CENTRAL
-#define WIFI_CON_BLE_TP_PERIPH
-
-#define WIFI_TP_CLIENT_BLE_CON_CENTRAL
-#define WIFI_TP_CLIENT_BLE_CON_PERIPH
-
-#define WIFI_TP_CLIENT_BLE_TP_CENTRAL
-#define WIFI_TP_CLIENT_BLE_TP_PERIPH
-
-#define WIFI_TP_SERVER_BLE_CON_CENTRAL
+//#define WIFI_SCAN_BLE_CON_CENTRAL
+//#define WIFI_SCAN_BLE_CON_PERIPH
+//
+//#define WIFI_SCAN_BLE_TP_CENTRAL
+//#define WIFI_SCAN_BLE_TP_PERIPH
+//
+//#define WIFI_CON_BLE_CON_CENTRAL
+//#define WIFI_CON_BLE_CON_PERIPH
+//
+//#define WIFI_CON_BLE_TP_CENTRAL
+//#define WIFI_CON_BLE_TP_PERIPH
+//
+//#define WIFI_TP_CLIENT_BLE_CON_CENTRAL
+//#define WIFI_TP_CLIENT_BLE_CON_PERIPH
+//
+//#define WIFI_TP_CLIENT_BLE_TP_CENTRAL
+//#define WIFI_TP_CLIENT_BLE_TP_PERIPH
+//
+//#define WIFI_TP_SERVER_BLE_CON_CENTRAL
 #define WIFI_TP_SERVER_BLE_CON_PERIPH
-
-#define WIFI_TP_SERVER_BLE_TP_CENTRAL
-#define WIFI_TP_SERVER_BLE_TP_PERIPH
+//
+//#define WIFI_TP_SERVER_BLE_TP_CENTRAL
+//#define WIFI_TP_SERVER_BLE_TP_PERIPH
 
 #define MAX_SSID_LEN 32
 #define WIFI_CONNECTION_TIMEOUT 30
 
-#define PRINT_WIFI_SCAN_RESULT
+//#define PRINT_WIFI_SCAN_RESULT
+//#define PRINT_WIFI_CONN_RESULT
 #define DEMARCATE_TEST_START
 
 #define HIGHEST_CHANNUM_24G 14
@@ -249,11 +250,14 @@ static void handle_wifi_connect_result(struct net_mgmt_event_callback *cb)
 	if (status->status) {
 		LOG_ERR("Connection request failed (%d)", status->status);
 	} else {
+		#ifdef PRINT_WIFI_CONN_RESULT
 		LOG_INF("Connected");
+		#endif
 		context.connected = true;
 	}
-
+#ifdef PRINT_WIFI_CONN_RESULT
 	cmd_wifi_status();
+#endif
 	k_sem_give(&wait_for_next);
 }
 
@@ -271,8 +275,9 @@ static void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb)
 		LOG_INF("Disconnected");
 		context.connected = false;
 	}
-
+#ifdef PRINT_WIFI_CONN_RESULT
 	cmd_wifi_status();
+#endif
 }
 
 static void handle_wifi_scan_result(struct net_mgmt_event_callback *cb)
@@ -353,8 +358,9 @@ static void print_dhcp_ip(struct net_mgmt_event_callback *cb)
 	char dhcp_info[128];
 
 	net_addr_ntop(AF_INET, addr, dhcp_info, sizeof(dhcp_info));
-
+#ifdef PRINT_WIFI_SCAN_RESULT
 	LOG_INF("IP address: %s", dhcp_info);
+#endif
 	k_sem_give(&wait_for_next);
 }
 
@@ -477,18 +483,19 @@ static int parse_ipv4_addr(char *host, struct sockaddr_in *addr)
 int wait_for_next_event(const char *event_name, int timeout)
 {
 	int wait_result;
-
+#ifdef PRINT_WIFI_CONN_RESULT
 	if (event_name) {
 		LOG_INF("Waiting for %s", event_name);
 	}
-
+#endif
 	wait_result = k_sem_take(&wait_for_next, K_SECONDS(timeout));
 	if (wait_result) {
 		LOG_ERR("Timeout waiting for %s -> %d", event_name, wait_result);
 		return -1;
 	}
-
+#ifdef PRINT_WIFI_CONN_RESULT
 	LOG_INF("Got %s", event_name);
+#endif
 	k_sem_reset(&wait_for_next);
 
 	return 0;
@@ -606,7 +613,7 @@ static int run_wifi_traffic(bool test_wlan)
 	int ret = 0;
 
 	if (test_wlan) {
-		if(IS_ENABLED(WIFI_ZPERF_SERVER)) {
+		if(IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER)) {
 			struct zperf_download_params params;
 			params.port = CONFIG_NET_CONFIG_PEER_IPV4_PORT;
 			
@@ -681,7 +688,9 @@ static void disconnect_wifi(bool test_wlan)
 {
 	if (test_wlan) {
 		/* Wi-Fi disconnection */
+	#ifdef PRINT_WIFI_CONN_RESULT
 		LOG_INF("Disconnecting Wi-Fi");
+	#endif 
 		wifi_disconnect();
 	}
 }
@@ -1247,6 +1256,7 @@ static int wifi_con_ble_con_peripheral(bool test_wlan,
 			disconnect_wifi(test_wlan);
 			k_sleep(K_SECONDS(2));
 		}
+
 		// note: CONFIG_BLE_TEST_DURATION = CONFIG_WIFI_TEST_DURATION
 		if ((k_uptime_get_32() - test_start_time) > 
 			CONFIG_BLE_TEST_DURATION) {
@@ -1372,7 +1382,7 @@ static int wifi_con_ble_tput_peripheral(bool test_wlan,
 
 	if (test_ble) {
 		start_ble_traffic(test_ble, ble_role);
-		//run_ble_traffic(test_ble, ble_role);
+		run_ble_traffic(test_ble, ble_role);
 	}
 
 	if(test_wlan && test_ble) {
@@ -1404,8 +1414,18 @@ static int wifi_con_ble_tput_peripheral(bool test_wlan,
 			k_sleep(K_SECONDS(1));
 		}
 	}
+	if (test_ble && !test_wlan) {
+		while (true) {
+			if ((k_uptime_get_32() - test_start_time)
+					> CONFIG_BLE_TEST_DURATION) {
+					break;
+				}
+				k_sleep(K_SECONDS(1));
+		}
+	}
+		
 	if (test_ble) {
-		run_ble_traffic(test_ble, ble_role);
+		//run_ble_traffic(test_ble, ble_role);
 		disconnect_ble(test_ble, ble_role);
 	}
 
@@ -1703,6 +1723,11 @@ static int wifi_tput_server_ble_con_central(bool test_wlan,
 			LOG_ERR("Failed to start Wi-Fi benchmark: %d", ret);
 			goto err;
 		}
+		while (!wait_for_wifi_client_start) {
+			LOG_INF("start WiFi client\n");
+			k_sleep(K_SECONDS(1));
+		}
+		wait_for_wifi_client_start=0;
 	}
 	#ifdef DEMARCATE_TEST_START
 	LOG_INF("\n\n");
@@ -1714,6 +1739,7 @@ static int wifi_tput_server_ble_con_central(bool test_wlan,
 	if (test_ble) {
 		bt_connection_init(ble_role);
 		while (true) {
+			LOG_INF("Scan start\n");
 			scan_start();
 			k_sleep(K_SECONDS(1));
 
@@ -1780,6 +1806,13 @@ static int wifi_tput_server_ble_con_peripheral(bool test_wlan,
 			LOG_ERR("Failed to start Wi-Fi benchmark: %d", ret);
 			goto err;
 		}
+	}
+	if (test_wlan) {
+		while (!wait_for_wifi_client_start) {
+			LOG_INF("start WiFi client\n");
+			k_sleep(K_SECONDS(1));
+		}
+		wait_for_wifi_client_start=0;
 	}
 	#ifdef DEMARCATE_TEST_START
 	LOG_INF("\n\n");

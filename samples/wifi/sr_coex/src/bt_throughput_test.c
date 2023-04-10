@@ -36,12 +36,14 @@
 #define THROUGHPUT_CONFIG_TIMEOUT 20
 #define SCAN_CONFIG_TIMEOUT 20
 
+//#define PRINT_BLE_UPDATES
+
 static K_SEM_DEFINE(throughput_sem, 0, 1);
 
 extern uint8_t wait_for_ble_central_run;
 uint32_t ble_conn_success_cnt = 0;
 uint32_t ble_conn_fail_cnt = 0;
-bool ble_periph_connected;
+bool ble_periph_connected = false;
 
 uint64_t ble_scan2conn_start_time;
 int64_t ble_scan2conn_time;  /* get cycle ble_adv2conn_start_time */
@@ -96,8 +98,10 @@ void scan_filter_match(struct bt_scan_device_info *device_info,
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
 
+#ifdef PRINT_BLE_UPDATES
 	printk("Filters matched. Address: %s connectable: %d\n",
 		addr, connectable);
+#endif
 }
 
 void scan_filter_no_match(struct bt_scan_device_info *device_info,
@@ -106,9 +110,10 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-
+#ifdef PRINT_BLE_UPDATES
 	printk("Filter not match. Address: %s connectable: %d\n",
 				addr, connectable);
+#endif
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -124,8 +129,9 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 {
 	struct bt_conn_info info = {0};
 	int err;
-
+#ifdef PRINT_BLE_UPDATES
 	printk("MTU exchange %s\n", att_err == 0 ? "successful" : "failed");
+#endif
 
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
@@ -144,9 +150,9 @@ static void discovery_complete(struct bt_gatt_dm *dm,
 {
 	int err;
 	struct bt_throughput *throughput = context;
-
+#ifdef PRINT_BLE_UPDATES
 	printk("Service discovery completed\n");
-
+#endif
 	bt_gatt_dm_data_print(dm);
 	bt_throughput_handles_assign(dm, throughput);
 	bt_gatt_dm_data_release(dm);
@@ -154,10 +160,15 @@ static void discovery_complete(struct bt_gatt_dm *dm,
 	exchange_params.func = exchange_func;
 
 	err = bt_gatt_exchange_mtu(default_conn, &exchange_params);
+
 	if (err) {
+		#ifdef PRINT_BLE_UPDATES
 		printk("MTU exchange failed (err %d)\n", err);
+		#endif
 	} else {
+		#ifdef PRINT_BLE_UPDATES
 		printk("MTU exchange pending\n");
+		#endif
 	}
 }
 
@@ -208,10 +219,11 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 		printk("Failed to get connection info %d\n", err);
 		return;
 	}
-
+#ifdef PRINT_BLE_UPDATES
 	printk("Connected as %s\n",
-	       info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
+	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	printk("Conn. interval is %u units\n", info.le.interval);
+#endif
 
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
@@ -265,7 +277,9 @@ void scan_start(void)
 
 	err = bt_scan_start(BT_SCAN_TYPE_SCAN_PASSIVE);
 	if (err) {
+	#ifdef  PRINT_BLE_UPDATES
 		printk("Starting scanning failed (err %d)\n", err);
+	#endif
 		return;
 	}
 }
@@ -290,7 +304,9 @@ void adv_start(void)
 
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
+#ifdef PRINT_BLE_UPDATES
 	printk("Disconnected (reason 0x%02x)\n", reason);
+#endif
 
 	test_ready = false;
 	ble_periph_connected = false;
@@ -323,9 +339,10 @@ static void le_param_updated(struct bt_conn *conn, uint16_t interval,
 static void le_phy_updated(struct bt_conn *conn,
 			   struct bt_conn_le_phy_info *param)
 {
+#ifdef PRINT_BLE_UPDATES
 	printk("LE PHY updated: TX PHY %s, RX PHY %s\n",
 	       phy2str(param->tx_phy), phy2str(param->rx_phy));
-
+#endif
 	k_sem_give(&throughput_sem);
 }
 
@@ -335,11 +352,11 @@ static void le_data_length_updated(struct bt_conn *conn,
 	if (!data_length_req) {
 		return;
 	}
-
+#ifdef PRINT_BLE_UPDATES
 	printk("LE data len updated: TX (len: %d time: %d)"
 	       " RX (len: %d time: %d)\n", info->tx_max_len,
 	       info->tx_max_time, info->rx_max_len, info->rx_max_time);
-
+#endif
 	data_length_req = false;
 	k_sem_give(&throughput_sem);
 }
@@ -466,8 +483,9 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 		printk("PHY update failed: %d\n", err);
 		return err;
 	}
-
+#ifdef  PRINT_BLE_UPDATES
 	printk("PHY update pending");
+	#endif
 	err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 	if (err) {
 		printk("PHY update timeout");
@@ -483,8 +501,9 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 				    err);
 			return err;
 		}
-
+#ifdef  PRINT_BLE_UPDATES
 		printk("LE Data length update pending");
+#endif
 		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			printk("LE Data Length update timeout");

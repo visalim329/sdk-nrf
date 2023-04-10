@@ -35,6 +35,6 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 			const struct bt_conn_le_phy_param *phy,
 			const struct bt_conn_le_data_len_param *data_len);
 
-int bt_connection_init(bool ble_role)
+int bt_connection_init(bool ble_role);
 
 #endif /* THROUGHPUT_MAIN_H_ */
