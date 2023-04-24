@@ -68,7 +68,7 @@ static void *suite_setup(void)
 {
 	int err;
 
-	err = nrf_modem_lib_init();
+	err = nrf_modem_lib_init(NORMAL_MODE);
 	zassert_ok(err, "Failed to initialize");
 
 	return NULL;

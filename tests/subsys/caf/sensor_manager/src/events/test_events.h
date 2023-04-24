@@ -22,7 +22,7 @@ extern "C" {
 
 enum test_id {
 	TEST_IDLE,
-	TEST_SENSOR_INIT,
+	TEST_EVENT_MANAGER,
 	TEST_BASIC,
 	TEST_CHANGE_PERIOD_PRE,
 	TEST_CHANGE_PERIOD_POST,
@@ -46,12 +46,6 @@ struct test_end_event {
 };
 
 APP_EVENT_TYPE_DECLARE(test_end_event);
-
-struct test_initialization_done_event {
-	struct app_event_header header;
-};
-
-APP_EVENT_TYPE_DECLARE(test_initialization_done_event);
 
 #ifdef __cplusplus
 }

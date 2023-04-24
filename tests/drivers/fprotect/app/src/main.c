@@ -22,7 +22,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *pEsf)
 	actual_fatal++;
 }
 
-ZTEST(fprotect_test, test_writing_to_app_image)
+static void test_writing_to_app_image(void)
 {
 	/* Prepare for flash writes */
 	int err;
@@ -45,11 +45,19 @@ ZTEST(fprotect_test, test_writing_to_app_image)
 	zassert_unreachable("Should have BUS FAULTed before coming here.");
 }
 
-static void check_fatal(void *unused)
+static void test_fatal(void)
 {
 	zassert_equal(expected_fatal, actual_fatal,
 			"The wrong number of fatal error has occurred (e:%d != a:%d).\n",
 			expected_fatal, actual_fatal);
 }
 
-ZTEST_SUITE(fprotect_test, NULL, NULL, NULL, check_fatal, NULL);
+void test_main(void)
+{
+	ztest_test_suite(fprotect_test,
+			 ztest_unit_test(test_writing_to_app_image),
+			 ztest_unit_test(test_fatal)
+			 );
+
+	ztest_run_test_suite(fprotect_test);
+}

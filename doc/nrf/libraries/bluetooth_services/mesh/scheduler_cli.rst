@@ -75,50 +75,50 @@ mesh models sched instance get-all
 	Print all instances of the Scheduler Client model on the device.
 
 
-mesh models sched instance set <ElemIdx>
+mesh models sched instance set <elem_idx>
 	Select the Scheduler Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models sched get
 	Get the current Schedule Register status.
 
 
-mesh models sched action-get <Idx>
+mesh models sched action-get <idx>
 	Get the appropriate Scheduler Action status.
 
-	* ``Idx`` - Index of the Schedule Register entry to get.
+	* ``idx`` - Index of the Schedule Register entry to get.
 
 
-mesh models sched action-ctx-set <Year> <Month> <Day> <Hour> <Minute> <Second> <DayOfWeek> <Action> <TransTime(ms)> <SceneNumber>
+mesh models sched action-ctx-set <year> <month> <day> <hour> <minute> <second> <day_of_week> <action> <transition_time> <scene_number>
 	Set the appropriate Scheduler Action.
 	Used in combination with ``mesh models sched action-set`` or ``mesh models sched action-set-unack``.
 
-	* ``Year`` - Two last digits of the scheduled year for the action, or 0x64 for any year.
-	* ``Month`` - Scheduled month for the action.
-	* ``Day`` - Scheduled day of the month for the action.
-	* ``Hour`` - Scheduled hour for the action.
-	* ``Minute`` - Scheduled minute for the action.
-	* ``Second`` - Scheduled second for the action.
-	* ``DayOfWeek`` - Scheduled days of the week for the action.
-	* ``Action`` - Action to be performed at the scheduled time.
-	* ``TransTime`` - Transition time for this action in milliseconds.
-	* ``SceneNumber`` - Scene number to be used for some actions.
+	* ``year`` - Two last digits of the scheduled year for the action, or 0x64 for any year.
+	* ``month`` - Scheduled month for the action.
+	* ``day`` - Scheduled day of the month for the action.
+	* ``hour`` - Scheduled hour for the action.
+	* ``minute`` - Scheduled minute for the action.
+	* ``second`` - Scheduled second for the action.
+	* ``day_of_week`` - Schedule days of the week for the action.
+	* ``action`` - Action to be performed at the scheduled time.
+	* ``transition_time`` - Transition time for this action in milliseconds.
+	* ``scene_number`` - Scene number to be used for some actions.
 
 
-mesh models sched action-set <Idx>
+mesh models sched action-set <idx>
 	Send the current Scheduler Action context and wait for a response.
 
-	* ``Idx`` - Index of the Schedule Register entry to set.
+	* ``idx`` - Index of the Schedule Register entry to set.
 
 
-mesh models sched action-set-unack <Idx>
+mesh models sched action-set-unack <idx>
 	Send the current Scheduler Action context without requesting a response.
 
-	* ``Idx`` - Index of the Schedule Register entry to set.
+	* ``idx`` - Index of the Schedule Register entry to set.
 
 
 API documentation

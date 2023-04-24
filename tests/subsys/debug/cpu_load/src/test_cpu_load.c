@@ -24,7 +24,7 @@ static void timer_handler(nrf_timer_event_t event_type, void *context)
 #define FULL_LOAD 100000
 #define SMALL_LOAD 3000
 
-ZTEST(cpu_load, test_cpu_load)
+void test_cpu_load(void)
 {
 	int err;
 	uint32_t load;
@@ -84,4 +84,10 @@ ZTEST(cpu_load, test_cpu_load)
 	zassert_true(load < SMALL_LOAD, "Unexpected load:%d", load);
 }
 
-ZTEST_SUITE(cpu_load, NULL, NULL, NULL, NULL, NULL);
+void test_main(void)
+{
+	ztest_test_suite(cpu_load,
+		ztest_unit_test(test_cpu_load)
+	);
+	ztest_run_test_suite(cpu_load);
+}

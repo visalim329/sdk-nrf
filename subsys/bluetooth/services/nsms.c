@@ -8,7 +8,6 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
 
-size_t strnlen(const char *, size_t);
 #include <bluetooth/services/nsms.h>
 #include <zephyr/logging/log.h>
 

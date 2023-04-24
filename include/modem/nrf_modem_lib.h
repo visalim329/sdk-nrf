@@ -28,35 +28,37 @@ extern "C" {
  * @brief Modem library wrapper.
  */
 
+
+/** @brief Modem library mode */
+enum nrf_modem_mode {
+	/** Normal operation mode */
+	NORMAL_MODE,
+	/** Bootloader (full DFU) mode */
+	BOOTLOADER_MODE,
+};
+
 /**
  * @brief Initialize the Modem library and turn on the modem.
  *
- * The operation can take a few minutes when a firmware update is scheduled.
+ * This function initializes all integration components of the nrf_modem library
+ * and turns on the modem. The operation can take a few minutes when a firmware update
+ * is scheduled. If your application supports modem firmware updates, consider initializing
+ * the library manually to have control of what the application should do in the meantime.
  *
- * To switch between the bootloader mode and normal operating mode, shutdown the modem
+ * The library can initialize the modem in normal mode or bootloader mode.
+ *
+ * The bootloader mode is used to update the whole modem firmware.
+ * When modem is initialized in bootloader mode, no other functionality is available.
+ * In particular, networking sockets and AT commands won't be available.
+ *
+ * To switch between the bootloader mode and normal mode, shutdown the modem
  * with @ref nrf_modem_lib_shutdown() and re-initialize it in the desired mode.
- * Use @ref nrf_modem_lib_init() to initialize in normal mode and
- * @ref nrf_modem_lib_bootloader_init() to initialize the Modem library in bootloader mode.
  *
- * @return int Zero on success, a positive value @em nrf_modem_dfu when executing
- *         Modem firmware updates, and negative errno on other failures.
- */
-int nrf_modem_lib_init(void);
-
-/**
- * @brief Initialize the Modem library in bootloader mode and turn on the modem.
- *
- * When the modem is initialized in bootloader mode, no other functionality is available. In
- * particular, networking sockets and AT commands won't be available.
- *
- * To switch between the bootloader mode and normal operating mode, shutdown the modem
- * with @ref nrf_modem_lib_shutdown() and re-initialize it in the desired mode.
- * Use @ref nrf_modem_lib_init() to initialize in normal mode and
- * @ref nrf_modem_lib_bootloader_init() to initialize the Modem library in bootloader mode.
+ * @param[in] mode Initialization mode.
  *
  * @return int Zero on success, non-zero otherwise.
  */
-int nrf_modem_lib_bootloader_init(void);
+int nrf_modem_lib_init(enum nrf_modem_mode mode);
 
 /**
  * @brief Shutdown the Modem library and turn off the modem.

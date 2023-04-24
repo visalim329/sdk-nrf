@@ -47,10 +47,6 @@ using chip::Shell::shell_command_t;
 #include "ota_util.h"
 #endif
 
-#ifdef CONFIG_CHIP_ICD_SUBSCRIPTION_HANDLING
-#include <app/InteractionModelEngine.h>
-#endif
-
 #include <dk_buttons_and_leds.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -58,8 +54,6 @@ using chip::Shell::shell_command_t;
 #ifdef CONFIG_THREAD_WIFI_SWITCHING
 #include <pm_config.h>
 #endif
-
-#include <app/InteractionModelEngine.h>
 
 LOG_MODULE_DECLARE(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
@@ -196,7 +190,7 @@ CHIP_ERROR AppTask::Init()
 	k_timer_init(&sSwitchImagesTimer, &AppTask::SwitchImagesTimerTimeoutCallback, nullptr);
 #endif
 
-#ifdef CONFIG_MCUMGR_TRANSPORT_BT
+#ifdef CONFIG_MCUMGR_SMP_BT
 	/* Initialize DFU over SMP */
 	GetDFUOverSMP().Init();
 	GetDFUOverSMP().ConfirmNewImage();
@@ -231,10 +225,6 @@ CHIP_ERROR AppTask::Init()
 	ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
 	ConfigurationMgr().LogDeviceConfig();
 	PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
-
-#ifdef CONFIG_CHIP_ICD_SUBSCRIPTION_HANDLING
-	chip::app::InteractionModelEngine::GetInstance()->RegisterReadHandlerAppCallback(&GetICDUtil());
-#endif
 
 	/*
 	 * Add CHIP event handler and start CHIP thread.
@@ -503,7 +493,7 @@ void AppTask::FunctionHandler(const AppEvent &event)
 			Instance().CancelTimer();
 			Instance().mFunction = FunctionEvent::NoneSelected;
 
-#ifdef CONFIG_MCUMGR_TRANSPORT_BT
+#ifdef CONFIG_MCUMGR_SMP_BT
 			GetDFUOverSMP().StartServer();
 #else
 			LOG_INF("Software update is disabled");

@@ -63,10 +63,6 @@ config SENSOR
 	bool
 	default y
 
-config REGULATOR
-	bool
-	default y
-
 config CONTIN_ARRAY
 	bool
 	default y

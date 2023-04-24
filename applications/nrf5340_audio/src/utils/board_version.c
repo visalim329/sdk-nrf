@@ -18,20 +18,35 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(board_version, CONFIG_BOARD_VERSION_LOG_LEVEL);
 
-#define BOARD_ID DT_NODELABEL(board_id)
-
-static const struct adc_dt_spec adc = ADC_DT_SPEC_GET(BOARD_ID);
-static const struct gpio_dt_spec power_gpios = GPIO_DT_SPEC_GET(BOARD_ID, power_gpios);
-
+#define ADC_1ST_CHANNEL_ID 0
+#define ADC_RESOLUTION_BITS 12
 /* We allow the ADC register value to deviate by N points in either direction */
 #define BOARD_VERSION_TOLERANCE 70
+#define ADC_ACQ_TIME_US 40
 #define VOLTAGE_STABILIZE_TIME_US 5
 
 static int16_t sample_buffer;
+static const struct device *adc_dev;
+static const struct gpio_dt_spec board_id_en =
+	GPIO_DT_SPEC_GET(DT_NODELABEL(board_id_en_out), gpios);
 
-static struct adc_sequence sequence = {
-	.buffer = &sample_buffer,
+static const struct adc_channel_cfg m_channel_cfg = {
+	.gain = ADC_GAIN_1_4,
+	.reference = ADC_REF_VDD_1_4,
+	.acquisition_time = ADC_ACQ_TIME(ADC_ACQ_TIME_MICROSECONDS, ADC_ACQ_TIME_US),
+	.channel_id = ADC_1ST_CHANNEL_ID,
+	.differential = 0,
+#if defined(CONFIG_ADC_CONFIGURABLE_INPUTS)
+	.input_positive = NRF_SAADC_INPUT_AIN6,
+#endif /* defined(CONFIG_ADC_CONFIGURABLE_INPUTS) */
+};
+
+static const struct adc_sequence sequence = {
+	.channels = BIT(ADC_1ST_CHANNEL_ID),
+	.buffer = (void *)&sample_buffer,
 	.buffer_size = sizeof(sample_buffer),
+	.resolution = ADC_RESOLUTION_BITS,
+	.oversampling = NRF_SAADC_OVERSAMPLE_256X,
 };
 
 /* @brief Enable board version voltage divider and trigger ADC read */
@@ -39,7 +54,7 @@ static int divider_value_get(void)
 {
 	int ret;
 
-	ret = gpio_pin_set_dt(&power_gpios, 1);
+	ret = gpio_pin_set_dt(&board_id_en, 1);
 	if (ret) {
 		return ret;
 	}
@@ -47,12 +62,12 @@ static int divider_value_get(void)
 	/* Wait for voltage to stabilize */
 	k_busy_wait(VOLTAGE_STABILIZE_TIME_US);
 
-	ret = adc_read(adc.dev, &sequence);
+	ret = adc_read(adc_dev, &sequence);
 	if (ret) {
 		return ret;
 	}
 
-	ret = gpio_pin_set_dt(&power_gpios, 0);
+	ret = gpio_pin_set_dt(&board_id_en, 0);
 	if (ret) {
 		return ret;
 	}
@@ -98,26 +113,25 @@ static int board_version_init(void)
 		return 0;
 	}
 
-	if (!gpio_is_ready_dt(&power_gpios)) {
+	if (!device_is_ready(board_id_en.port)) {
 		return -ENXIO;
 	}
 
-	ret = gpio_pin_configure_dt(&power_gpios, GPIO_OUTPUT_INACTIVE);
+	ret = gpio_pin_configure_dt(&board_id_en, GPIO_OUTPUT_LOW);
 	if (ret) {
 		return ret;
 	}
 
-	if (!device_is_ready(adc.dev)) {
+	adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc));
+	if (!device_is_ready(adc_dev)) {
 		LOG_ERR("ADC not ready");
-		return -ENODEV;
+		return -ENXIO;
 	}
 
-	ret = adc_channel_setup_dt(&adc);
+	ret = adc_channel_setup(adc_dev, &m_channel_cfg);
 	if (ret) {
 		return ret;
 	}
-
-	(void)adc_sequence_init_dt(&adc, &sequence);
 
 	initialized = true;
 	return 0;

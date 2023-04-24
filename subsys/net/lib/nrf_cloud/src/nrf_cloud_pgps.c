@@ -781,22 +781,70 @@ static int pgps_request(const struct gps_pgps_request *request)
 
 	return 0;
 #elif defined(CONFIG_NRF_CLOUD_PGPS_TRANSPORT_MQTT)
-	cJSON *pgps_req_obj = cJSON_CreateObject();
-	int err = nrf_cloud_pgps_req_json_encode(request, pgps_req_obj);
+	int err = 0;
+	cJSON *data_obj;
+	cJSON *pgps_req_obj;
+	cJSON *ret;
 
-	if (!err) {
-		/* @TODO: if device is offline, we need to defer this to later */
-		err = json_send_to_cloud(pgps_req_obj);
-	} else {
-		LOG_ERR("Failed to create P-GPS request: %d", err);
+	LOG_INF("Requesting %u predictions...", request->prediction_count);
+
+	/* Create request JSON containing a data object */
+	pgps_req_obj = json_create_req_obj(NRF_CLOUD_JSON_APPID_VAL_PGPS,
+					   NRF_CLOUD_JSON_MSG_TYPE_VAL_DATA);
+	data_obj = cJSON_AddObjectToObject(pgps_req_obj, NRF_CLOUD_JSON_DATA_KEY);
+
+	if (!pgps_req_obj || !data_obj) {
+		err = -ENOMEM;
+		goto cleanup;
 	}
 
+#if defined(CONFIG_PGPS_INCLUDE_MODEM_INFO)
+	/* Add modem info and P-GPS types to the data object */
+	err = json_add_modem_info(data_obj);
+	if (err) {
+		LOG_ERR("Failed to add modem info to P-GPS request:%d", err);
+		goto cleanup;
+	}
+#endif
+
+	ret = cJSON_AddNumberToObject(data_obj, NRF_CLOUD_JSON_PGPS_PRED_COUNT,
+				      request->prediction_count);
+	if (ret == NULL) {
+		LOG_ERR("Failed to add pred count to P-GPS request:%d", err);
+		err = -ENOMEM;
+		goto cleanup;
+	}
+	ret = cJSON_AddNumberToObject(data_obj, NRF_CLOUD_JSON_PGPS_INT_MIN,
+				      request->prediction_period_min);
+	if (ret == NULL) {
+		LOG_ERR("Failed to add pred int min to P-GPS request:%d", err);
+		err = -ENOMEM;
+		goto cleanup;
+	}
+	ret = cJSON_AddNumberToObject(data_obj, NRF_CLOUD_JSON_PGPS_GPS_DAY,
+				      request->gps_day);
+	if (ret == NULL) {
+		LOG_ERR("Failed to add gps day to P-GPS request:%d", err);
+		err = -ENOMEM;
+		goto cleanup;
+	}
+	ret = cJSON_AddNumberToObject(data_obj, NRF_CLOUD_JSON_PGPS_GPS_TIME,
+				      request->gps_time_of_day);
+	if (ret == NULL) {
+		LOG_ERR("Failed to add gps time to P-GPS request:%d", err);
+		err = -ENOMEM;
+		goto cleanup;
+	}
+
+	/* @TODO: if device is offline, we need to defer this to later */
+	err = json_send_to_cloud(pgps_req_obj);
 	if (!err) {
-		LOG_INF("Requesting %u predictions...", request->prediction_count);
 		state = PGPS_REQUESTING;
 	}
 
+cleanup:
 	cJSON_Delete(pgps_req_obj);
+
 	return err;
 #endif /* defined(CONFIG_NRF_CLOUD_PGPS_TRANSPORT_MQTT) */
 }
@@ -1139,9 +1187,9 @@ static int open_flash(void)
 		name = prediction_flash_area->fa_dev->name;
 	}
 
-	LOG_DBG("Opened flash_area: fa_id:%u, "
+	LOG_DBG("Opened flash_area: fa_id:%u, fa_device_id:%u, "
 		"fa_off:%ld, fa_size:%zu, prediction_flash_area device name:%s",
-		prediction_flash_area->fa_id,
+		prediction_flash_area->fa_id, prediction_flash_area->fa_device_id,
 		prediction_flash_area->fa_off, prediction_flash_area->fa_size, name);
 	return err;
 }

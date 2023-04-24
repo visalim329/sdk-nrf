@@ -33,94 +33,94 @@ mesh models prop instance get-all
 	Print all instances of the Generic Property Client model on the device.
 
 
-mesh models prop instance set <ElemIdx>
+mesh models prop instance set <elem_idx>
 	Select the Generic Property Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
-mesh models prop cli-props-get <ID>
+mesh models prop cli-props-get <id>
 	Get the list of Generic Client Properties of the bound server.
 
-	* ``ID`` - A starting Client Property ID present within an element.
+	* ``id`` - A starting Client Property ID present within an element.
 
 
-mesh models prop props-get <Kind>
+mesh models prop props-get <kind>
 	Get the list of properties of the bound server.
 
-	* ``Kind`` - Kind of Property Server to query. Allowed values:
+	* ``kind`` - Kind of Property Server to query. Allowed values:
 		* ``0`` - Manufacturer Property Server.
 		* ``1`` - Admin Property Server.
 		* ``2`` - User Property Server.
 
 
-mesh models prop prop-get <Kind> <ID>
+mesh models prop prop-get <kind> <id>
 	Get the value of a property of a server.
 
-	* ``Kind`` - Kind of Property Server to query. Allowed values:
+	* ``kind`` - Kind of Property Server to query. Allowed values:
 		* ``0`` - Manufacturer Property Server.
 		* ``1`` - Admin Property Server.
 		* ``2`` - User Property Server.
 		* ``3`` - Client Property Server.
-	* ``ID`` - ID of the property.
+	* ``id`` - ID of the property.
 
 
-mesh models prop user-prop-set <ID> <HexStrVal>
+mesh models prop user-prop-set <id> <hex_str_val>
 	Set a property value of the User Property Server and wait for response.
 
-	* ``ID`` - Property ID.
-	* ``HexStrVal`` - Property value.
+	* ``id`` - Property ID.
+	* ``hex_str_val`` - Property value.
 
 
-mesh models prop user-prop-set-unack <ID> <HexStrVal>
+mesh models prop user-prop-set-unack <id> <hex_str_val>
 	Set a property value of the User Property Server without requesting a response.
 
-	* ``ID`` - Property ID.
-	* ``HexStrVal`` - Property value.
+	* ``id`` - Property ID.
+	* ``hex_str_val`` - Property value.
 
 
-mesh models prop admin-prop-set <ID> <Access> <HexStrVal>
+mesh models prop admin-prop-set <id> <access> <hex_str_val>
 	Set a property value of the Admin Property Server and wait for response.
 
-	* ``ID`` - Property ID.
-	* ``Access`` - User access flags for the property. Allowed values:
+	* ``id`` - Property ID.
+	* ``access`` - User access flags for the property. Allowed values:
 		* ``0`` - Access to the property is prohibited.
 		* ``1`` - Property may be read.
 		* ``2`` - Property may be written.
 		* ``3`` - Property may be read or written.
-	* ``HexStrVal`` - Property value.
+	* ``hex_str_val`` - Property value.
 
 
-mesh models prop admin-prop-set-unack <ID> <Access> <HexStrVal>
+mesh models prop admin-prop-set-unack <id> <access> <hex_str_val>
 	Set a property value of the Admin Property Server without requesting a response.
 
-	* ``ID`` - Property ID.
-	* ``Access`` - User access flags for the property. Allowed values:
+	* ``id`` - Property ID.
+	* ``access`` - User access flags for the property. Allowed values:
 		* ``0`` - Access to the property is prohibited.
 		* ``1`` - Property may be read.
 		* ``2`` - Property may be written.
 		* ``3`` - Property may be read or written.
-	* ``HexStrVal`` - Property value.
+	* ``hex_str_val`` - Property value.
 
 
-mesh models prop mfr-prop-set <ID> <Access>
+mesh models prop mfr-prop-set <id> <access>
 	Set the user access of a property of the Manufacturer Property Server and wait for response.
 
-	* ``ID`` - Property ID.
-	* ``Access`` - User access flags for the property. Allowed values:
+	* ``id`` - Property ID.
+	* ``access`` - User access flags for the property. Allowed values:
 		* ``0`` - Access to the property is prohibited.
 		* ``1`` - Property may be read.
 		* ``2`` - Property may be written.
 		* ``3`` - Property may be read or written.
 
 
-mesh models prop mfr-prop-set-unack <ID> <Access>
+mesh models prop mfr-prop-set-unack <id> <access>
 	Set the user access of a property of the Manufacturer Property Server without requesting a response.
 
-	* ``ID`` - Property ID.
-	* ``Access`` - User access flags for the property. Allowed values:
+	* ``id`` - Property ID.
+	* ``access`` - User access flags for the property. Allowed values:
 		* ``0`` - Access to the property is prohibited.
 		* ``1`` - Property may be read.
 		* ``2`` - Property may be written.

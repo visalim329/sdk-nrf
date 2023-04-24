@@ -36,31 +36,31 @@ mesh models ponoff instance get-all
 	Print all instances of the Generic Power OnOff Client model on the device.
 
 
-mesh models ponoff instance set <ElemIdx>
+mesh models ponoff instance set <elem_idx>
 	Select the Generic Power OnOff Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models ponoff get
 	Get the OnPowerUp state of the server.
 
 
-mesh models ponoff set <PowUpState>
+mesh models ponoff set <pow_up_state>
 	Set the OnPowerUp state of the server and wait for a response.
 
-	* ``PowUpState`` - OnPowerUp state value to set. Allowed values:
+	* ``pow_up_state`` - OnPowerUp state value to set. Allowed values:
 		* ``0`` - On power-up, sets the state to off.
 		* ``1`` - On power-up, sets the state to on.
 		* ``2`` - On power-up, restores the previous state value.
 
 
-mesh models ponoff set-unack <PowUpState>
+mesh models ponoff set-unack <pow_up_state>
 	Set the Generic Power OnOff state value without requesting a response.
 
-	* ``PowUpState`` - OnPowerUp state value to set. Allowed values:
+	* ``pow_up_state`` - OnPowerUp state value to set. Allowed values:
 		* ``0`` - On power-up, sets the state to off.
 		* ``1`` - On power-up, sets the state to on.
 		* ``2`` - On power-up, restores the previous state value.

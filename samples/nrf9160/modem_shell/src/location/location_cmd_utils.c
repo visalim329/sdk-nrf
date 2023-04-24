@@ -14,7 +14,6 @@
 #include <math.h>
 #include <getopt.h>
 #include <net/nrf_cloud.h>
-#include <net/nrf_cloud_codec.h>
 #include <modem/location.h>
 
 #include "mosh_print.h"

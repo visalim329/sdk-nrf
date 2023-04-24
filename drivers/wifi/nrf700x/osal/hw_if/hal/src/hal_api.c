@@ -38,15 +38,28 @@ wifi_nrf_hal_rpu_pktram_buf_map_init(struct wifi_nrf_hal_dev_ctx *hal_dev_ctx)
 
 	hal_dev_ctx->addr_rpu_pktram_base_tx = hal_dev_ctx->addr_rpu_pktram_base;
 
-	hal_dev_ctx->addr_rpu_pktram_base_rx_pool[0] =
-		 (hal_dev_ctx->addr_rpu_pktram_base + RPU_PKTRAM_SIZE) -
-		 (CONFIG_NRF700X_RX_NUM_BUFS * CONFIG_NRF700X_RX_MAX_DATA_SIZE);
+	hal_dev_ctx->addr_rpu_pktram_base_rx = hal_dev_ctx->addr_rpu_pktram_base_tx +
+		(hal_dev_ctx->hpriv->cfg_params.max_tx_frms *
+		 hal_dev_ctx->hpriv->cfg_params.max_tx_frm_sz);
+
+	hal_dev_ctx->addr_rpu_pktram_base_rx_pool[0] = hal_dev_ctx->addr_rpu_pktram_base_rx;
 
 	for (pool_idx = 1; pool_idx < MAX_NUM_OF_RX_QUEUES; pool_idx++) {
 		hal_dev_ctx->addr_rpu_pktram_base_rx_pool[pool_idx] =
-			hal_dev_ctx->addr_rpu_pktram_base_rx_pool[pool_idx - 1] +
-			(hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[pool_idx - 1].num_bufs *
-			 hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[pool_idx - 1].buf_sz);
+			(hal_dev_ctx->addr_rpu_pktram_base_rx_pool[pool_idx - 1] +
+			 (hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[pool_idx - 1].num_bufs *
+			  hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[pool_idx - 1].buf_sz));
+	}
+
+	if ((hal_dev_ctx->addr_rpu_pktram_base_rx_pool[MAX_NUM_OF_RX_QUEUES - 1] +
+	     (hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[MAX_NUM_OF_RX_QUEUES - 1].num_bufs *
+	      hal_dev_ctx->hpriv->cfg_params.rx_buf_pool[MAX_NUM_OF_RX_QUEUES - 1].buf_sz)) >
+	    (hal_dev_ctx->addr_rpu_pktram_base + RPU_PKTRAM_SIZE)) {
+		wifi_nrf_osal_log_err(hal_dev_ctx->hpriv->opriv,
+				      "%s: RPU PKTRAM buffer overflowed\n",
+				      __func__);
+		status = WIFI_NRF_STATUS_FAIL;
+		goto out;
 	}
 
 	status = WIFI_NRF_STATUS_SUCCESS;
@@ -175,8 +188,7 @@ out:
 unsigned long wifi_nrf_hal_buf_map_tx(struct wifi_nrf_hal_dev_ctx *hal_dev_ctx,
 				      unsigned long buf,
 				      unsigned int buf_len,
-				      unsigned int desc_id,
-				      unsigned int buf_indx)
+				      unsigned int desc_id)
 {
 	struct wifi_nrf_hal_buf_map_info *tx_buf_info = NULL;
 	unsigned long addr_to_map = 0;
@@ -209,16 +221,7 @@ unsigned long wifi_nrf_hal_buf_map_tx(struct wifi_nrf_hal_dev_ctx *hal_dev_ctx,
 		(desc_id * hal_dev_ctx->hpriv->cfg_params.max_tx_frm_sz) +
 		hal_dev_ctx->hpriv->cfg_params.tx_buf_headroom_sz;
 
-	if (buf_indx == 0) {
-		hal_dev_ctx->addr_last_buf = bounce_buf_addr;
-	} else {
-		bounce_buf_addr = hal_dev_ctx->addr_last_buf;
-	}
-
 	rpu_addr = RPU_MEM_PKT_BASE + (bounce_buf_addr - hal_dev_ctx->addr_rpu_pktram_base);
-
-	/* Align the memory */
-	buf_len = (buf_len + 4) & 0xfffffffc;
 
 	hal_rpu_mem_write(hal_dev_ctx,
 			  (unsigned int)rpu_addr,
@@ -242,9 +245,6 @@ unsigned long wifi_nrf_hal_buf_map_tx(struct wifi_nrf_hal_dev_ctx *hal_dev_ctx,
 out:
 	if (tx_buf_info->phy_addr) {
 		tx_buf_info->mapped = true;
-
-		hal_dev_ctx->addr_last_buf += buf_len +
-			hal_dev_ctx->hpriv->cfg_params.tx_buf_headroom_sz;
 	}
 
 	return tx_buf_info->phy_addr;
@@ -457,26 +457,6 @@ static void hal_rpu_ps_set_state(struct wifi_nrf_hal_dev_ctx *hal_dev_ctx,
 				 enum RPU_PS_STATE ps_state)
 {
 	hal_dev_ctx->rpu_ps_state = ps_state;
-}
-
-enum wifi_nrf_status wifi_nrf_hal_get_rpu_ps_state(
-				struct wifi_nrf_hal_dev_ctx *hal_dev_ctx,
-				int *rpu_ps_ctrl_state)
-{
-	enum wifi_nrf_status status = WIFI_NRF_STATUS_FAIL;
-
-	if (!hal_dev_ctx) {
-		wifi_nrf_osal_log_err(hal_dev_ctx->hpriv->opriv,
-				      "%s: Invalid parameters\n",
-				      __func__);
-		goto out;
-	}
-
-	*rpu_ps_ctrl_state = hal_dev_ctx->rpu_ps_state;
-
-	return WIFI_NRF_STATUS_SUCCESS;
-out:
-	return status;
 }
 #endif /* CONFIG_NRF_WIFI_LOW_POWER */
 

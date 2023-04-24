@@ -290,9 +290,11 @@ Requirements
 
 The nRF5340 Audio application is designed to be used only with the following hardware:
 
-.. table-from-rows:: /includes/sample_board_rows.txt
-   :header: heading
-   :rows: nrf5340_audio_dk_nrf5340
++-----------------------------------------------------+----------------------------------+--------------------------+-------------------------------------+
+| Hardware platforms                                  | PCA                              | Board name               | Build target                        |
++=====================================================+==================================+==========================+=====================================+
+| `nRF5340 Audio DK <nRF5340 Audio DK Hardware_>`_    | PCA10121 revision 1.0.0 or above | nrf5340_audio_dk_nrf5340 | ``nrf5340_audio_dk_nrf5340_cpuapp`` |
++-----------------------------------------------------+----------------------------------+--------------------------+-------------------------------------+
 
 .. note::
    The application supports PCA10121 revisions 1.0.0 or above.

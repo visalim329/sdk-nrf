@@ -35,36 +35,36 @@ mesh models hsl instance get-all
 	Print all instances of the Light HSL Client model on the device.
 
 
-mesh models hsl instance set <ElemIdx>
+mesh models hsl instance set <elem_idx>
 	Select the Light HSL Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models hsl get
 	Get the Light HSL state value of the bound server.
 
 
-mesh models hsl set <Light> <Hue> <Sat> [TransTime(ms) [Delay(ms)]]
+mesh models hsl set <light> <hue> <saturation> [transition_time_ms [delay_ms]]
 	Set the Light HSL state value and wait for a response.
 
-	* ``Light`` - Lightness level to set.
-	* ``Hue`` - Hue level to set.
-	* ``Sat`` - Saturation level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``light`` - Lightness level to set.
+	* ``hue`` - Hue level to set.
+	* ``saturation`` - Saturation level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models hsl set-unack <Light> <Hue> <Sat> [TransTime(ms) [Delay(ms)]]
+mesh models hsl set-unack <light> <hue> <saturation> [transition_time_ms [delay_ms]]
 	Set the Light HSL state value without requesting for a response.
 
-	* ``Light`` - Lightness level to set.
-	* ``Hue`` - Hue level to set.
-	* ``Sat`` - Saturation level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``light`` - Lightness level to set.
+	* ``hue`` - Hue level to set.
+	* ``saturation`` - Saturation level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
 mesh models hsl target-get
@@ -75,82 +75,82 @@ mesh models hsl default-get
 	Get the default HSL value of the bound server.
 
 
-mesh models hsl default-set <Light> <Hue> <Sat>
+mesh models hsl default-set <light> <hue> <saturation>
 	Set the default HSL value of the server and wait for a response.
 
-	* ``Light`` - Default lightness level to set.
-	* ``Hue`` - Default hue level to set.
-	* ``Sat`` - Default saturation level to set.
+	* ``light`` - Default lightness level to set.
+	* ``hue`` - Default hue level to set.
+	* ``saturation`` - Default saturation level to set.
 
 
-mesh models hsl default-set-unack <Light> <Hue> <Sat>
+mesh models hsl default-set-unack <light> <hue> <saturation>
 	Set the Default Light state value of the server without requesting a response.
 
-	* ``Light`` - Default lightness level to set.
-	* ``Hue`` - Default hue level to set.
-	* ``Sat`` - Default saturation level to set.
+	* ``light`` - Default lightness level to set.
+	* ``hue`` - Default hue level to set.
+	* ``saturation`` - Default saturation level to set.
 
 
 mesh models hsl range-get
 	Get the Light HSL Range state value of the bound server.
 
 
-mesh models hsl range-set <HueMin> <HueMax> <SatMin> <SatMax>
+mesh models hsl range-set <hue_min> <hue_max> <sat_min> <sat_max>
 	Set the Light HSL Range state value and wait for a response.
 
-	* ``HueMin`` - Minimum allowed hue value.
-	* ``HueMax`` - Maximum allowed hue value.
-	* ``SatMin`` - Minimum allowed saturation value.
-	* ``SatMax`` - Maximum allowed saturation value.
+	* ``hue_min`` - Minimum allowed hue value.
+	* ``hue_max`` - Maximum allowed hue value.
+	* ``sat_min`` - Minimum allowed saturation value.
+	* ``sat_max`` - Maximum allowed saturation value.
 
 
-mesh models hsl range-set-unack <HueMin> <HueMax> <SatMin> <SatMax>
+mesh models hsl range-set-unack <hue_min> <hue_max> <sat_min> <sat_max>
 	Set the Light HSL Range state value without requesting a response.
 
-	* ``HueMin`` - Minimum allowed hue value.
-	* ``HueMax`` - Maximum allowed hue value.
-	* ``SatMin`` - Minimum allowed saturation value.
-	* ``SatMax`` - Maximum allowed saturation value.
+	* ``hue_min`` - Minimum allowed hue value.
+	* ``hue_max`` - Maximum allowed hue value.
+	* ``sat_min`` - Minimum allowed saturation value.
+	* ``sat_max`` - Maximum allowed saturation value.
 
 
 mesh models hsl hue-get
 	Get the Light Hue state value of the bound server.
 
 
-mesh models hsl hue-set <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models hsl hue-set <lvl> [transition_time_ms [delay_ms]]
 	Set the Light Hue state value and wait for a response.
 
-	* ``Lvl`` - Hue level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Hue level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models hsl hue-set-unack <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models hsl hue-set-unack <lvl> [transition_time_ms [delay_ms]]
 	Set the Light Hue state value without requesting a response.
 
-	* ``Lvl`` - Hue level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Hue level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
 mesh models hsl saturation-get
 	Get the Light Saturation state value of the bound server.
 
 
-mesh models hsl saturation-set <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models hsl saturation-set <lvl> [transition_time_ms [delay_ms]]
 	Set the Light Saturation state value and wait for a response.
 
-	* ``Lvl`` - Saturation level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Saturation level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models hsl saturation-set-unack <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models hsl saturation-set-unack <lvl> [transition_time_ms [delay_ms]]
 	Set the Light Saturation state value without requesting a response.
 
-	* ``Lvl`` - Saturation level to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Saturation level to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
 API documentation

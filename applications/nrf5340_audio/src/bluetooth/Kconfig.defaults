@@ -15,12 +15,6 @@ config BT_ATT_ENFORCE_FLOW
 config BT_HCI_VS_EXT
 	default n
 
-config BT_HCI_VS
-	default y if BT
-
-config BT_ECC
-	default y if BT
-
 config BT_EXT_ADV
 	default y
 
@@ -81,7 +75,7 @@ config NVS_LOG_LEVEL
 # HEADSET
 if AUDIO_DEV = 1
 
-config BT_BAP_UNICAST_SERVER
+config BT_AUDIO_UNICAST_SERVER
 	default y
 
 config BT_MAX_CONN
@@ -124,9 +118,11 @@ config BT_PACS_SRC_CONTEXT
 	default 0x0007 if STREAM_BIDIRECTIONAL
 
 config BT_CSIP_SET_MEMBER
+	bool
 	default y
 
 config BT_CAP_ACCEPTOR
+	bool
 	default y
 
 config BT_CAP_ACCEPTOR_SET_MEMBER
@@ -138,7 +134,7 @@ endif # AUDIO_DEV = 1 (HEADSET)
 # GATEWAY
 if AUDIO_DEV = 2
 
-config BT_BAP_UNICAST_CLIENT
+config BT_AUDIO_UNICAST_CLIENT
 	default y
 
 config BT_ISO_TX_BUF_COUNT
@@ -158,14 +154,14 @@ config BT_ISO_MAX_CHAN
 config BT_MAX_PAIRED
 	default 2
 
-config BT_BAP_UNICAST_CLIENT_GROUP_STREAM_COUNT
+config BT_AUDIO_UNICAST_CLIENT_GROUP_STREAM_COUNT
 	default 4 if STREAM_BIDIRECTIONAL
 	default 2
 
-config BT_BAP_UNICAST_CLIENT_ASE_SNK_COUNT
+config BT_AUDIO_UNICAST_CLIENT_ASE_SNK_COUNT
 	default 2
 
-config BT_BAP_UNICAST_CLIENT_ASE_SRC_COUNT
+config BT_AUDIO_UNICAST_CLIENT_ASE_SRC_COUNT
 	default 2 if STREAM_BIDIRECTIONAL
 	default 0
 
@@ -201,6 +197,7 @@ endif # TRANSPORT_CIS
 if TRANSPORT_BIS # Depends on TRANSPORT_BIS
 
 config BT_BUF_ACL_RX_SIZE
+	int
 	default 502 if (AUDIO_DFU > 0)
 
 # HEADSET
@@ -219,10 +216,10 @@ config BT_DEVICE_APPEARANCE
 config BT_ISO_SYNC_RECEIVER
 	default y
 
-config BT_BAP_BROADCAST_SINK
+config BT_AUDIO_BROADCAST_SINK
 	default y
 
-config BT_BAP_BROADCAST_SNK_STREAM_COUNT
+config BT_AUDIO_BROADCAST_SNK_STREAM_COUNT
 	default 2
 
 config BT_ISO_MAX_CHAN
@@ -249,13 +246,13 @@ config BT_DEVICE_APPEARANCE
 config BT_ISO_BROADCASTER
 	default y
 
-config BT_BAP_BROADCAST_SOURCE
+config BT_AUDIO_BROADCAST_SOURCE
 	default y
 
 config BT_ISO_TX_BUF_COUNT
 	default 2
 
-config BT_BAP_BROADCAST_SRC_STREAM_COUNT
+config BT_AUDIO_BROADCAST_SRC_STREAM_COUNT
 	default 2
 
 config BT_ISO_MAX_CHAN

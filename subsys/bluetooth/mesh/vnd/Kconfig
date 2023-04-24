@@ -68,19 +68,19 @@ config BT_MESH_DM_SRV_REFLECTOR_DELAY
 	int "Reflector start delay"
 	default 0
 	help
-	  Distance measurement reflector role start delay in microseconds.
+	  Distance measurement reflector role start delay in milliseconds.
 
 config BT_MESH_DM_SRV_INITIATOR_RANGING_WINDOW_US
-	int "Ranging window for the initiator in microseconds"
+	int "Ranging window for the initiator in micro seconds"
 	default 50000
 	help
-	  Ranging window for the initiator in microseconds.
+	  Ranging window for the initiator in micro seconds.
 
 config BT_MESH_DM_SRV_REFLECTOR_RANGING_WINDOW_US
-	int "Ranging window for the reflector in microseconds"
+	int "Ranging window for the reflector in micro seconds"
 	default 70000
 	help
-	  Ranging window for the reflector in microseconds.
+	  Ranging window for the reflector in micro seconds.
 
 endif
 

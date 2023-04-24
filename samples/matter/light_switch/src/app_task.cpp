@@ -33,10 +33,6 @@
 #include "ota_util.h"
 #endif
 
-#ifdef CONFIG_CHIP_ICD_SUBSCRIPTION_HANDLING
-#include <app/InteractionModelEngine.h>
-#endif
-
 #include <dk_buttons_and_leds.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
@@ -170,7 +166,7 @@ CHIP_ERROR AppTask::Init()
 	k_timer_user_data_set(&sDimmerPressKeyTimer, this);
 	k_timer_user_data_set(&sFunctionTimer, this);
 
-#ifdef CONFIG_MCUMGR_TRANSPORT_BT
+#ifdef CONFIG_MCUMGR_SMP_BT
 	/* Initialize DFU over SMP */
 	GetDFUOverSMP().Init();
 	GetDFUOverSMP().ConfirmNewImage();
@@ -192,10 +188,6 @@ CHIP_ERROR AppTask::Init()
 	ReturnErrorOnFailure(chip::Server::GetInstance().Init(initParams));
 	ConfigurationMgr().LogDeviceConfig();
 	PrintOnboardingCodes(chip::RendezvousInformationFlags(chip::RendezvousInformationFlag::kBLE));
-
-#ifdef CONFIG_CHIP_ICD_SUBSCRIPTION_HANDLING
-	chip::app::InteractionModelEngine::GetInstance()->RegisterReadHandlerAppCallback(&GetICDUtil());
-#endif
 
 	/*
 	 * Add CHIP event handler and start CHIP thread.
@@ -263,7 +255,7 @@ void AppTask::ButtonReleaseHandler(const AppEvent &event)
 				Instance().CancelTimer(Timer::Function);
 				Instance().mFunction = FunctionEvent::NoneSelected;
 
-#ifdef CONFIG_MCUMGR_TRANSPORT_BT
+#ifdef CONFIG_MCUMGR_SMP_BT
 				GetDFUOverSMP().StartServer();
 				UpdateStatusLED();
 #else

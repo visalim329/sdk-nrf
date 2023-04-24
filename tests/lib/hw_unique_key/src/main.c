@@ -167,16 +167,23 @@ static void do_key_test(void)
 	}
 }
 
-ZTEST(test_hw_unique_key, test_hw_unique_key1)
+static void test_hw_unique_key1(void)
 {
 	do_key_test();
 }
 
-void check_fatal(void *f)
+static void test_fatal(void)
 {
 	zassert_equal(expected_fatal, actual_fatal,
 			"An unexpected fatal error has occurred (%d != %d).\n",
 			expected_fatal, actual_fatal);
 }
 
-ZTEST_SUITE(test_hw_unique_key, NULL, NULL, NULL, check_fatal, NULL);
+void test_main(void)
+{
+	ztest_test_suite(test_hw_unique_key,
+			ztest_unit_test(test_hw_unique_key1),
+			ztest_unit_test(test_fatal)
+			);
+	ztest_run_test_suite(test_hw_unique_key);
+}

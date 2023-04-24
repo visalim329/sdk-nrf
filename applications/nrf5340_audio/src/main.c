@@ -210,6 +210,8 @@ void main(void)
 	ret = leds_set();
 	ERR_CHK(ret);
 
+	audio_system_init();
+
 	ret = streamctrl_start();
 	ERR_CHK(ret);
 

@@ -56,7 +56,7 @@ class DFUInfo:
         return self.sync_buffer_size
 
     def is_started(self):
-        return self.dfu_state in (self._DFU_STATE_ACTIVE, self._DFU_STATE_STORING)
+        return (self.dfu_state == self._DFU_STATE_ACTIVE) or (self.dfu_state == self._DFU_STATE_STORING)
 
     def is_storing(self):
         return self.dfu_state == self._DFU_STATE_STORING
@@ -104,23 +104,6 @@ class FwInfo:
                 '  Version: {}.{}.{}.{}').format(self.flash_area_id, self.image_len,
                                                  self.ver_major, self.ver_minor,
                                                  self.ver_rev, self.ver_build_nr)
-
-
-class DevInfo:
-    def __init__(self, fetched_data):
-        fmt = '<HH'
-        assert struct.calcsize(fmt) < len(fetched_data)
-        self.vid, self.pid = struct.unpack(fmt, fetched_data[:struct.calcsize(fmt)])
-
-        # The remaining data represents device generation
-        generation = fetched_data[struct.calcsize(fmt):]
-        self.generation = generation.decode('utf-8').replace(chr(0x00), '')
-
-    def __str__(self):
-        return ('Device info\n'
-                '  Vendor ID: {}\n'
-                '  Product ID: {}\n'
-                '  Generation: {}').format(hex(self.vid), hex(self.pid), self.generation)
 
 
 def b0_get_fwinfo_offset(dfu_bin):
@@ -383,7 +366,7 @@ class DfuImage:
 def fwinfo(dev):
     dfu_module_name = dev.get_complete_module_name('dfu')
     if dfu_module_name:
-        success, fetched_data = dev.config_get(dfu_module_name, 'fwinfo')
+        success, fetched_data = dev.config_get(dfu_module_name , 'fwinfo')
     else:
         print('Module DFU not found')
         return None
@@ -393,18 +376,6 @@ def fwinfo(dev):
         return fw_info
     else:
         return None
-
-
-def devinfo(dev):
-    dev_info = None
-    dfu_module_name = dev.get_complete_module_name('dfu')
-
-    if dfu_module_name:
-        success, fetched_data = dev.config_get(dfu_module_name, 'devinfo')
-        if success and fetched_data:
-            dev_info = DevInfo(fetched_data)
-
-    return dev_info
 
 
 def fwreboot(dev):

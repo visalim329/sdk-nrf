@@ -138,8 +138,7 @@ struct nrf_cloud_rest_agps_request {
 	bool filtered;
 	/** Constrain the set of ephemerides to only those currently
 	 *  visible at or above the specified elevation threshold
-	 *  angle in degrees. Range is 0 to 90.  Set to
-	 *  NRF_CLOUD_AGPS_MASK_ANGLE_NONE to exclude from request.
+	 *  angle in degrees. Range is 0 to 90.
 	 */
 	uint8_t mask_angle;
 };
@@ -154,10 +153,19 @@ struct nrf_cloud_rest_agps_result {
 	size_t agps_sz;
 };
 
+/** Omit the prediction count from P-GPS request */
+#define NRF_CLOUD_REST_PGPS_REQ_NO_COUNT	0
+/** Omit the prediction validity period from P-GPS request */
+#define NRF_CLOUD_REST_PGPS_REQ_NO_INTERVAL	0
+/** Omit the GPS day from P-GPS request */
+#define NRF_CLOUD_REST_PGPS_REQ_NO_GPS_DAY	0
+/** Omit the GPS time of day from P-GPS request */
+#define NRF_CLOUD_REST_PGPS_REQ_NO_GPS_TOD	(-1)
+
 /** @brief Data required for nRF Cloud Predicted GPS (P-GPS) request */
 struct nrf_cloud_rest_pgps_request {
 	/** Data to be included in the P-GPS request. To omit an item
-	 * use the appropriate `NRF_CLOUD_PGPS_REQ_NO_` define.
+	 * use the appropriate `NRF_CLOUD_REST_PGPS_REQ_NO_` define.
 	 */
 	const struct gps_pgps_request *pgps_req;
 };
@@ -207,7 +215,6 @@ int nrf_cloud_rest_agps_data_get(struct nrf_cloud_rest_context *const rest_ctx,
 	struct nrf_cloud_rest_agps_request const *const request,
 	struct nrf_cloud_rest_agps_result *const result);
 
-#if defined(CONFIG_NRF_CLOUD_PGPS)
 /**
  * @brief nRF Cloud Predicted GPS (P-GPS) data request.
  *
@@ -223,7 +230,6 @@ int nrf_cloud_rest_agps_data_get(struct nrf_cloud_rest_context *const rest_ctx,
  */
 int nrf_cloud_rest_pgps_data_get(struct nrf_cloud_rest_context *const rest_ctx,
 	struct nrf_cloud_rest_pgps_request const *const request);
-#endif
 
 /**
  * @brief Requests nRF Cloud FOTA job info for the specified device.

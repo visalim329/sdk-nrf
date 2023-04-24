@@ -47,8 +47,7 @@ static const struct tm start_tm = {
 };
 
 struct bt_mesh_msg_ctx test_ctx = {
-	.addr = 0x0001,
-	.send_ttl = 0,
+	.addr = 1,
 };
 
 static struct bt_mesh_scene_srv scene_srv;
@@ -76,7 +75,7 @@ static void srv_action_set_cb(struct bt_mesh_scheduler_srv *srv, struct bt_mesh_
 			      uint8_t idx, struct bt_mesh_schedule_entry *entry)
 {
 	ztest_check_expected_value(srv);
-	ztest_check_expected_data(ctx, sizeof(struct bt_mesh_msg_ctx));
+	ztest_check_expected_value(ctx);
 	ztest_check_expected_value(idx);
 	ztest_check_expected_data(entry, sizeof(struct bt_mesh_schedule_entry));
 }
@@ -89,7 +88,7 @@ static void cli_action_status_handler(struct bt_mesh_scheduler_cli *cli,
 				      const struct bt_mesh_schedule_entry *action)
 {
 	ztest_check_expected_value(cli);
-	ztest_check_expected_data(ctx, sizeof(struct bt_mesh_msg_ctx));
+	ztest_check_expected_value(ctx);
 	ztest_check_expected_value(idx);
 	ztest_check_expected_data(action, sizeof(struct bt_mesh_schedule_entry));
 }
@@ -98,7 +97,7 @@ static void cli_status_handler(struct bt_mesh_scheduler_cli *cli, struct bt_mesh
 			       uint16_t schedules)
 {
 	ztest_check_expected_value(cli);
-	ztest_check_expected_data(ctx, sizeof(struct bt_mesh_msg_ctx));
+	ztest_check_expected_value(ctx);
 	ztest_check_expected_value(schedules);
 }
 
@@ -228,7 +227,7 @@ int bt_mesh_msg_send(struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
 		     struct net_buf_simple *buf)
 {
 	ztest_check_expected_value(model);
-	ztest_check_expected_data(ctx, sizeof(struct bt_mesh_msg_ctx));
+	ztest_check_expected_value(ctx);
 	/* action is packed, check buffer length only */
 	ztest_check_expected_value(buf->len);
 
@@ -239,7 +238,7 @@ int bt_mesh_msg_ackd_send(struct bt_mesh_model *model, struct bt_mesh_msg_ctx *c
 			  struct net_buf_simple *buf, const struct bt_mesh_msg_rsp_ctx *rsp)
 {
 	ztest_check_expected_value(model);
-	ztest_check_expected_data(ctx, sizeof(struct bt_mesh_msg_ctx));
+	ztest_check_expected_value(ctx);
 	ztest_check_expected_value(rsp);
 	/* action is packed, check buffer length only */
 	ztest_check_expected_value(buf->len);
@@ -261,10 +260,10 @@ bool bt_mesh_msg_ack_ctx_match(const struct bt_mesh_msg_ack_ctx *ack, uint32_t o
 static void assert_cli_action_set_send(const struct bt_mesh_schedule_entry *test_entry,
 				       uint8_t test_idx, int ret_val)
 {
-	zassert_equal(bt_mesh_scheduler_cli_action_set(&sched_cli, &test_ctx, test_idx, test_entry,
+	zassert_equal(bt_mesh_scheduler_cli_action_set(&sched_cli, NULL, test_idx, test_entry,
 						       NULL),
 		      ret_val);
-	zassert_equal(bt_mesh_scheduler_cli_action_set_unack(&sched_cli, &test_ctx, test_idx,
+	zassert_equal(bt_mesh_scheduler_cli_action_set_unack(&sched_cli, NULL, test_idx,
 							     test_entry),
 		      ret_val);
 }
@@ -278,7 +277,7 @@ static int action_set(const struct bt_mesh_schedule_entry *test_entry, bool ack)
 
 	scheduler_action_pack(&buf, test_idx, test_entry);
 
-	return _bt_mesh_scheduler_setup_srv_op[ack ? 0 : 1].func(sched_srv.model, &test_ctx, &buf);
+	return _bt_mesh_scheduler_setup_srv_op[ack ? 0 : 1].func(sched_srv.model, NULL, &buf);
 }
 
 /* Prepare buffer and call server GET opcode handler */
@@ -286,7 +285,7 @@ static int current_register_get(void)
 {
 	BT_MESH_MODEL_BUF_DEFINE(buf, BT_MESH_SCHEDULER_OP_GET, BT_MESH_SCHEDULER_MSG_LEN_GET);
 
-	return _bt_mesh_scheduler_srv_op[0].func(sched_srv.model, &test_ctx, &buf);
+	return _bt_mesh_scheduler_srv_op[0].func(sched_srv.model, NULL, &buf);
 }
 
 /* Prepare buffer and call server ACTION GET opcode handler */
@@ -297,7 +296,7 @@ static int action_get(void)
 
 	net_buf_simple_add_u8(&buf, test_idx);
 
-	return _bt_mesh_scheduler_srv_op[1].func(sched_srv.model, &test_ctx, &buf);
+	return _bt_mesh_scheduler_srv_op[1].func(sched_srv.model, NULL, &buf);
 }
 
 static void *setup(void)
@@ -364,11 +363,11 @@ ZTEST(scheduler_message_validity_test, test_cli_set_valid)
 	 */
 
 	ztest_expect_value(bt_mesh_msg_send, model, sched_cli.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_SET);
 
 	ztest_expect_value(bt_mesh_msg_ackd_send, model, sched_cli.model);
-	ztest_expect_data(bt_mesh_msg_ackd_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_ackd_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, rsp, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_SET);
 
@@ -383,8 +382,7 @@ ZTEST(scheduler_message_validity_test, test_cli_get_action_prohibited)
 	 */
 
 	test_idx = BT_MESH_SCHEDULER_ACTION_ENTRY_COUNT;
-	zassert_equal(bt_mesh_scheduler_cli_action_get(&sched_cli, &test_ctx, test_idx, NULL),
-		      -EINVAL);
+	zassert_equal(bt_mesh_scheduler_cli_action_get(&sched_cli, NULL, test_idx, NULL), -EINVAL);
 
 	/** This test will fail if bt_mesh_msg_ackd_send() is called as there are no expected values
 	 * for this function.
@@ -402,11 +400,11 @@ ZTEST(scheduler_message_validity_test, test_cli_get_action_valid)
 
 	test_idx = 1;
 	ztest_expect_value(bt_mesh_msg_ackd_send, model, sched_cli.model);
-	ztest_expect_data(bt_mesh_msg_ackd_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_ackd_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, rsp, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_GET);
 
-	zassert_ok(bt_mesh_scheduler_cli_action_get(&sched_cli, &test_ctx, test_idx, NULL));
+	zassert_ok(bt_mesh_scheduler_cli_action_get(&sched_cli, NULL, test_idx, NULL));
 
 	/* Create a packed action with a valid entry */
 	BT_MESH_MODEL_BUF_DEFINE(buf, BT_MESH_SCHEDULER_OP_ACTION_SET_UNACK,
@@ -414,7 +412,7 @@ ZTEST(scheduler_message_validity_test, test_cli_get_action_valid)
 	bt_mesh_model_msg_init(&buf, BT_MESH_SCHEDULER_OP_ACTION_SET_UNACK);
 	scheduler_action_pack(&buf, test_idx, &valid_entry);
 
-	ztest_expect_data(cli_action_status_handler, ctx, &test_ctx);
+	ztest_expect_value(cli_action_status_handler, ctx, &test_ctx);
 	ztest_expect_value(cli_action_status_handler, idx, test_idx);
 	ztest_expect_value(cli_action_status_handler, cli, &sched_cli);
 	ztest_expect_data(cli_action_status_handler, action, &valid_entry);
@@ -430,17 +428,17 @@ ZTEST(scheduler_message_validity_test, test_cli_get_valid)
 	 */
 
 	ztest_expect_value(bt_mesh_msg_ackd_send, model, sched_cli.model);
-	ztest_expect_data(bt_mesh_msg_ackd_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_ackd_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, rsp, NULL);
 	ztest_expect_value(bt_mesh_msg_ackd_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_GET);
 
-	zassert_ok(bt_mesh_scheduler_cli_get(&sched_cli, &test_ctx, NULL));
+	zassert_ok(bt_mesh_scheduler_cli_get(&sched_cli, NULL, NULL));
 
 	NET_BUF_SIMPLE_DEFINE(dummy_rsp, 2);
 	net_buf_simple_add_le16(&dummy_rsp, 12345);
 
 	ztest_expect_value(cli_status_handler, cli, &sched_cli);
-	ztest_expect_data(cli_status_handler, ctx, &test_ctx);
+	ztest_expect_value(cli_status_handler, ctx, &test_ctx);
 	ztest_expect_value(cli_status_handler, schedules, 12345);
 
 	zassert_ok(_bt_mesh_scheduler_cli_op[0].func(sched_cli.model, &test_ctx, &dummy_rsp));
@@ -487,31 +485,29 @@ ZTEST(scheduler_message_validity_test, test_srv_set_rsp)
 
 	/* Acked */
 	ztest_expect_value(srv_action_set_cb, srv, &sched_srv);
-	ztest_expect_data(srv_action_set_cb, ctx, &test_ctx);
+	ztest_expect_value(srv_action_set_cb, ctx, NULL);
 	ztest_expect_value(srv_action_set_cb, idx, test_idx);
 	ztest_expect_data(srv_action_set_cb, entry, &valid_entry);
 
-	/* publish state changing */
 	ztest_expect_value(bt_mesh_msg_send, model, sched_srv.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, NULL);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_STATUS);
 
-	/* respond to client */
+	/* expect 2nd call to bt_mesh_msg_send */
 	ztest_expect_value(bt_mesh_msg_send, model, sched_srv.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_STATUS);
 
 	zassert_ok(action_set(&valid_entry, true));
 
 	/* Unacked */
 	ztest_expect_value(srv_action_set_cb, srv, &sched_srv);
-	ztest_expect_data(srv_action_set_cb, ctx, &test_ctx);
+	ztest_expect_value(srv_action_set_cb, ctx, NULL);
 	ztest_expect_value(srv_action_set_cb, idx, test_idx);
 	ztest_expect_data(srv_action_set_cb, entry, &valid_entry);
 
-	/* publish state changing */
 	ztest_expect_value(bt_mesh_msg_send, model, sched_srv.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, NULL);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_ACTION_STATUS);
 
 	zassert_ok(action_set(&valid_entry, false));
@@ -541,7 +537,7 @@ ZTEST(scheduler_message_validity_test, test_srv_get_action_rsp)
 
 	test_idx = 1;
 	ztest_expect_value(bt_mesh_msg_send, model, sched_srv.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	/* reduced since the action entry is not previously defined */
 	ztest_expect_value(bt_mesh_msg_send, buf->len,
 			   BT_MESH_SCHEDULER_MSG_LEN_ACTION_STATUS_REDUCED);
@@ -555,7 +551,7 @@ ZTEST(scheduler_message_validity_test, test_srv_get_rsp)
 	 */
 
 	ztest_expect_value(bt_mesh_msg_send, model, sched_srv.model);
-	ztest_expect_data(bt_mesh_msg_send, ctx, &test_ctx);
+	ztest_expect_value(bt_mesh_msg_send, ctx, NULL);
 	ztest_expect_value(bt_mesh_msg_send, buf->len, BT_MESH_SCHEDULER_MSG_LEN_STATUS);
 
 	zassert_ok(current_register_get());

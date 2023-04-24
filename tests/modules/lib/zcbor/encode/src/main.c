@@ -6,7 +6,7 @@
 #include <zephyr/ztest.h>
 #include "test_encode.h"
 
-ZTEST(lib_zcbor_test, test_encode)
+static void test_encode(void)
 {
 	uint8_t payload[32];
 	uint32_t payload_len;
@@ -29,4 +29,11 @@ ZTEST(lib_zcbor_test, test_encode)
 	zassert_equal(ZCBOR_SUCCESS, res, "Encoding should have been successful\n");
 }
 
-ZTEST_SUITE(lib_zcbor_test, NULL, NULL, NULL, NULL, NULL);
+void test_main(void)
+{
+	ztest_test_suite(lib_zcbor_test,
+	     ztest_unit_test(test_encode)
+	 );
+
+	ztest_run_test_suite(lib_zcbor_test);
+}

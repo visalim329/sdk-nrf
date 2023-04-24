@@ -29,21 +29,17 @@ manifest:
       url-base: https://github.com/ARMmbed
     - name: nordicsemi
       url-base: https://github.com/NordicSemiconductor
-    - name: dragoon
-      url-base: https://projecttools.nordicsemi.no/bitbucket/scm/drgn
     - name: memfault
       url-base: https://github.com/memfault
     - name: ant-nrfconnect
       url-base: https://github.com/ant-nrfconnect
-    - name: babblesim
-      url-base: https://github.com/BabbleSim
 
   # If not otherwise specified, the projects below should be obtained
   # from the ncs remote.
   defaults:
     remote: ncs
 
-  group-filter: [-homekit, -nrf-802154, -dragoon, -find-my, -ant, -babblesim]
+  group-filter: [-homekit, -nrf-802154, -find-my, -ant]
 
   # "projects" is a list of git repositories which make up the NCS
   # source code.
@@ -59,7 +55,7 @@ manifest:
     # https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/zephyr/guides/modules.html
     - name: zephyr
       repo-path: sdk-zephyr
-      revision: 74c7bca86e6a7d590333681eef90e159d79bcfe8
+      revision: f8f113382356934cb6d1ef4cdad95a843f922085
       import:
         # In addition to the zephyr repository itself, NCS also
         # imports the contents of zephyr/west.yml at the above
@@ -110,7 +106,7 @@ manifest:
     - name: hostap
       repo-path: sdk-hostap
       path: modules/lib/hostap
-      revision: a5b03c432030923779abb2c060988fc5d4ee1253
+      revision: a7c991e1c10b0d42bdb73bea95d1b45b87b7adbd
       userdata:
         ncs:
           upstream-url: https://w1.fi/cgit/hostap/
@@ -118,7 +114,7 @@ manifest:
           compare-by-default: false
     - name: mcuboot
       repo-path: sdk-mcuboot
-      revision: c78d59dbe8ec48cfbdff9a0bfc12f25b90c73d2f
+      revision: v1.9.99-ncs4
       path: bootloader/mcuboot
     - name: qcbor
       url: https://github.com/laurencelundblade/QCBOR.git
@@ -127,19 +123,19 @@ manifest:
     - name: mbedtls
       path: modules/crypto/mbedtls
       repo-path: sdk-mbedtls
-      revision: 3c2bc903cb396af6033115c8186f0807ef81bdaf
+      revision: de1b3f57a54364e1e415f1e650585e7396e9527b
     - name: nrfxlib
       repo-path: sdk-nrfxlib
       path: nrfxlib
-      revision: 9cb73143fb543d3eefeeb356ae335a7e4c756512
+      revision: 6d7a93ff58e71354c22ae572b6ecd49aa5b3d95d
     - name: trusted-firmware-m
       repo-path: sdk-trusted-firmware-m
       path: modules/tee/tf-m/trusted-firmware-m
-      revision: ab8140dd25da98356619ae7ed02b735404c5b962
+      revision: ffa268f5a71471c291fdaaac1eface16955b1616
     - name: matter
       repo-path: sdk-connectedhomeip
       path: modules/lib/matter
-      revision: 2a8f797f1f4dc2439d6c4def25db7a4698d1f339
+      revision: 1c60ae5551383b16488fddff02ae42dc3e3bb05e
       submodules:
         - name: nlio
           path: third_party/nlio/repo
@@ -160,14 +156,6 @@ manifest:
       revision: 2e0320844049e041de9d5769d810c5a15b10842a
       groups:
         - nrf-802154
-    - name: dragoon
-      # Only for internal Nordic development
-      repo-path: dragoon.git
-      remote: dragoon
-      revision: b093384fc4663a2da582811314e13db2a52c81ac
-      submodules: true
-      groups:
-        - dragoon
     - name: cjson
       repo-path: sdk-cjson
       path: modules/lib/cjson
@@ -179,12 +167,12 @@ manifest:
           compare-by-default: false
     - name: homekit
       repo-path: sdk-homekit
-      revision: 7d3f3a3e098d64fbf804fc1edfd033ded56d161d
+      revision: ee0815092c43700454ff26d77740747eb300e270
       groups:
         - homekit
     - name: find-my
       repo-path: sdk-find-my
-      revision: 219987daaac52ff0799ca29aaf7aff5f1276f045
+      revision: 92054fe0ba2155e1ad9be2bd2d7c89296399873d
       groups:
         - find-my
     - name: azure-sdk-for-c
@@ -223,21 +211,14 @@ manifest:
       remote: throwtheswitch
     - name: memfault-firmware-sdk
       path: modules/lib/memfault-firmware-sdk
-      revision: 0.42.1
+      revision: 0.37.2
       remote: memfault
     - name: ant
       repo-path: sdk-ant
-      revision: 373e6987cb18bacec6baab11d119333d92338589
+      revision: 7df46a12ace258473c1f2b3b98de690b5799ac64
       remote: ant-nrfconnect
       groups:
         - ant
-    - name: bsim
-      repo-path: bsim_west
-      remote: babblesim
-      revision: 908ffde6298a937c6549dbfa843a62caab26bfc5
-      import:
-        path-prefix: tools
-
 
   # West-related configuration for the nrf repository.
   self:

@@ -120,7 +120,7 @@ static void on_cnec_esm(const char *notif)
 static void on_cgev(const char *notif)
 {
 	char *p;
-	int8_t cid;
+	uint8_t cid;
 	struct pdn *pdn;
 
 	const struct {
@@ -130,8 +130,6 @@ static void on_cgev(const char *notif)
 		{"ME PDN ACT",	 PDN_EVENT_ACTIVATED},	 /* +CGEV: ME PDN ACT <cid>[,<reason>] */
 		{"ME PDN DEACT", PDN_EVENT_DEACTIVATED}, /* +CGEV: ME PDN DEACT <cid> */
 		{"NW PDN DEACT", PDN_EVENT_DEACTIVATED}, /* +CGEV: NW PDN DEACT <cid> */
-		{"ME DETACH",	 PDN_EVENT_NETWORK_DETACH},	 /* +CGEV: ME DETACH */
-		{"NW DETACH",	 PDN_EVENT_NETWORK_DETACH},	 /* +CGEV: NW DETACH */
 		/* Order is important */
 		{"IPV6 FAIL",	 PDN_EVENT_IPV6_DOWN},	 /* +CGEV: IPV6 FAIL <cid> */
 		{"IPV6",	 PDN_EVENT_IPV6_UP},	 /* +CGEV: IPV6 <cid> */
@@ -143,13 +141,7 @@ static void on_cgev(const char *notif)
 			continue;
 		}
 
-		p += strlen(map[i].notif);
-		if (*p == ' ') {
-			cid = strtoul(p, &p, 10);
-		} else {
-			cid = CID_UNASSIGNED;
-		}
-
+		cid = strtoul(p + strlen(map[i].notif), &p, 10);
 		if (cid == pdn_act_notif.cid && map[i].event == PDN_EVENT_ACTIVATED) {
 			if (*p == ',') {
 				pdn_act_notif.reason = strtol(p + 1, NULL, 10);
@@ -160,8 +152,8 @@ static void on_cgev(const char *notif)
 		}
 
 		SYS_SLIST_FOR_EACH_CONTAINER(&pdn_contexts, pdn, node) {
-			if ((pdn->context_id == cid || cid == CID_UNASSIGNED) && pdn->callback) {
-				pdn->callback(pdn->context_id, map[i].event, 0);
+			if (pdn->context_id == cid && pdn->callback) {
+				pdn->callback(cid, map[i].event, 0);
 			}
 		}
 
@@ -176,24 +168,13 @@ static void on_modem_init(int ret, void *ctx)
 	int err;
 	(void) err;
 
-	if (ret != 0) {
-		/* Return if modem initialization failed */
-		return;
-	}
-
 #if defined(CONFIG_PDN_LEGACY_PCO)
 	err = nrf_modem_at_printf("AT%%XEPCO=0");
 	if (err) {
 		LOG_ERR("Failed to set legacy PCO mode, err %d", err);
 		return;
 	}
-#else
-	err = nrf_modem_at_printf("AT%%XEPCO=1");
-	if (err) {
-		LOG_ERR("Failed to set ePCO mode, err %d", err);
-		return;
-	}
-#endif /* CONFIG_PDN_LEGACY_PCO */
+#endif
 
 #if defined(CONFIG_PDN_DEFAULTS_OVERRIDE)
 	err = pdn_ctx_configure(0, CONFIG_PDN_DEFAULT_APN,

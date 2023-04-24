@@ -369,7 +369,7 @@ int lwm2m_os_nrf_modem_init(void)
 #if defined CONFIG_NRF_MODEM_LIB_SYS_INIT
 	int nrf_err = modem_lib_init_result;
 #else
-	int nrf_err = nrf_modem_lib_init();
+	int nrf_err = nrf_modem_lib_init(NORMAL_MODE);
 #endif /* CONFIG_NRF_MODEM_LIB_SYS_INIT */
 
 	switch (nrf_err) {

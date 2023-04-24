@@ -10,7 +10,6 @@
 #include <hal/nrf_radio.h>
 #include <hal/nrf_timer.h>
 #include <helpers/nrfx_gppi.h>
-#include <nrf_erratas.h>
 
 #include <zephyr/sys/printk.h>
 
@@ -329,9 +328,8 @@ int fem_init(NRF_TIMER_Type *timer_instance, uint8_t compare_channel_mask)
 	return 0;
 }
 
-#if (NRF52_CONFIGURATION_254_PRESENT || NRF52_CONFIGURATION_255_PRESENT || \
-	NRF52_CONFIGURATION_256_PRESENT || NRF52_CONFIGURATION_257_PRESENT)
-static void apply_fem_errata_25X(nrf_radio_mode_t mode)
+#if defined(NRF52840_XXAA) || defined(NRF52833_XXAA)
+void fem_errata_254(nrf_radio_mode_t mode)
 {
 	static uint8_t old_mode = NRF_RADIO_MODE_NRF_1MBIT;
 
@@ -362,18 +360,8 @@ static void apply_fem_errata_25X(nrf_radio_mode_t mode)
 	old_mode = mode;
 }
 #else
-static void apply_fem_errata_25X(nrf_radio_mode_t mode)
+void fem_errata_254(nrf_radio_mode_t mode)
 {
-	ARG_UNUSED(mode);
-}
-#endif /* (NRF52_CONFIGURATION_254_PRESENT || NRF52_CONFIGURATION_255_PRESENT || \
-	*  NRF52_CONFIGURATION_256_PRESENT || NRF52_CONFIGURATION_257_PRESENT)
-	*/
 
-void fem_errata_25X(nrf_radio_mode_t mode)
-{
-	if (nrf52_configuration_254() || nrf52_configuration_255() ||
-	    nrf52_configuration_256() || nrf52_configuration_257()) {
-		apply_fem_errata_25X(mode);
-	}
 }
+#endif /* defined(NRF52840_XXAA) || defined(NRF52833_XXAA) */

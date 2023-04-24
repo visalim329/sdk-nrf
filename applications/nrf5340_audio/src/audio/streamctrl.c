@@ -124,13 +124,13 @@ static void le_audio_rx_data_handler(uint8_t const *const p_data, size_t data_si
 	struct ble_iso_data *iso_received = NULL;
 
 #if (CONFIG_AUDIO_DEV == GATEWAY)
-	static uint32_t packet_count_r;
-
 	switch (channel_index) {
 	case AUDIO_CH_L:
 		/* Proceed */
 		break;
 	case AUDIO_CH_R:
+		static uint32_t packet_count_r;
+
 		packet_count_r++;
 		if ((packet_count_r % 1000) == 0) {
 			LOG_DBG("Packets received from right channel: %d", packet_count_r);
@@ -363,7 +363,6 @@ static void button_evt_handler(struct button_evt event)
 static void le_audio_evt_handler(enum le_audio_evt_type event)
 {
 	int ret;
-	uint32_t pres_delay;
 
 	LOG_DBG("Received event = %d, current state = %d", event, strm_state);
 	switch (event) {
@@ -414,6 +413,7 @@ static void le_audio_evt_handler(enum le_audio_evt_type event)
 		break;
 
 	case LE_AUDIO_EVT_PRES_DELAY_SET:
+		uint32_t pres_delay;
 
 		ret = le_audio_config_get(NULL, NULL, &pres_delay);
 		if (ret) {
@@ -463,8 +463,6 @@ void streamctrl_event_handler(void)
 int streamctrl_start(void)
 {
 	int ret;
-
-	audio_system_init();
 
 	ret = data_fifo_init(&ble_fifo_rx);
 	ERR_CHK_MSG(ret, "Failed to set up ble_rx FIFO");

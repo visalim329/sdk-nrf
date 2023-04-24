@@ -16,7 +16,7 @@ Adding MCUboot to application
 *****************************
 
 Read :ref:`ug_bootloader_adding_immutable_mcuboot` to learn how to add MCUboot to an |NCS| application.
-Some Matter samples include Device Firmware Update (DFU) support out of the box, as listed in the :ref:`sample feature matrix table <matter_samples>`.
+Some Matter samples include DFU support out of the box, as listed in the :ref:`sample feature matrix table <matter_samples>`.
 
 MCUboot minimal configuration
 *****************************
@@ -27,39 +27,31 @@ You can reduce the size of the bootloader image by disabling unnecessary feature
 See the `Kconfig.mcuboot.defaults`_ file for the MCUboot minimal configuration used by :ref:`Matter samples <matter_samples>` in the |NCS|.
 This configuration allows to reduce the flash partition occupied by MCUboot to 24 kB.
 
-.. _ug_matter_device_bootloader_partition_layout:
-
 Partition layout
 ****************
 
 Each application that uses MCUboot must use :ref:`partition_manager` to define partitions of the flash memory.
 This is needed for the bootloader to know where the current and the new firmware images are located in the flash.
 
-Consider the following when defining partitions for your end product:
+There are multiple ways to define parititions using Partition Manager.
+For example, each :ref:`Matter sample <matter_samples>` provides a :file:`pm_static_dfu.yml` file (one for each configuration) that statically defines the partition layout.
+See :ref:`ug_matter_hw_requirements_layouts` to check the reference partition layout for each supported platform.
 
-* There are multiple ways to define parititions using Partition Manager.
-  For example, each :ref:`Matter sample <matter_samples>` provides a :file:`pm_static_dfu.yml` file (one for each configuration) that statically defines the partition layout.
-  See :ref:`ug_matter_hw_requirements_layouts` to confirm the reference partition layout for each supported platform.
-* Given the size of the Matter stack, it will usually not be possible to fit both the primary and the secondary slot in the internal flash in order to store the current and the new firmware image, respectively.
-  Instead, you should use the :ref:`external flash <ug_bootloader_external_flash>` to host the secondary slot.
+Given the size of the Matter stack, it will usually not be possible to fit both the primary and the secondary slot in the internal flash in order to store the current and the new firmware image, respectively.
+Instead, you should use the :ref:`external flash <ug_bootloader_external_flash>` to host the secondary slot.
 
-  .. note::
-      Remember to enable a proper flash driver when placing the secondary slot in the external flash.
-      For example, if you develop your application on a Nordic Semiconductor's development kit that includes a QSPI NOR flash module, set the :kconfig:option:`CONFIG_NORDIC_QSPI_NOR` Kconfig option.
-
-* When selecting the partition sizes, take into account that some of the partitions, such as settings and factory data ones, are not modified during the DFU process.
-  This means that performing DFU from one firmware version to another using different partition sizes may not be possible, and you will not be able to change the partition sizes without reprogramming the device.
-  Trying to perform DFU between applications that use incompatible partition sizes can result in unwanted application behavior, depending on which partitions are overlapping.
-  In some cases, this may corrupt some partitions; in others, this can lead to a DFU failure.
+.. note::
+   Remember to enable a proper flash driver when putting the secondary slot in the external flash.
+   For example, if you develop your application on a Nordic Semiconductor's development kit that includes a QSPI NOR flash module, you can do this by setting the :kconfig:option:`CONFIG_NORDIC_QSPI_NOR` Kconfig option.
 
 Settings partition
 ==================
 
 The nRF Connect platform in Matter uses Zephyr's :ref:`zephyr:settings_api` API to provide the storage capabilities to the Matter stack.
 This requires that you define the ``settings_storage`` partition in the flash.
-The recommended minimum size of the partition is 32 kB, but you can reserve even more space if your application uses the storage extensively.
+The recommended minimum size of the partition is 16 kB, but you can reserve even more space if your application uses the storage extensively.
 
-As you can see in :ref:`ug_matter_hw_requirements_layouts`, Matter samples in the |NCS| reserve exactly 32 kB for the ``settings_storage`` partition.
+As you can see in :ref:`ug_matter_hw_requirements_layouts`, Matter samples in the |NCS| reserve exactly 16 kB for the ``settings_storage`` partition.
 
 Factory data partition
 ======================

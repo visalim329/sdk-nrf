@@ -500,9 +500,9 @@ static uint8_t apply_fmfu_from_ext_flash(void)
 		return RESULT_UPDATE_FAILED;
 	}
 
-	ret = nrf_modem_lib_bootloader_init();
+	ret = nrf_modem_lib_init(BOOTLOADER_MODE);
 	if (ret != 0) {
-		LOG_ERR("nrf_modem_lib_bootloader_init() failed: %d\n", ret);
+		LOG_ERR("nrf_modem_lib_init(BOOTLOADER_MODE) failed: %d\n", ret);
 		return RESULT_UPDATE_FAILED;
 	}
 
@@ -552,7 +552,7 @@ static uint8_t apply_firmware_delta_modem_update(void)
 
 	lte_lc_deinit();
 	nrf_modem_lib_shutdown();
-	ret = nrf_modem_lib_init();
+	ret = nrf_modem_lib_init(NORMAL_MODE);
 
 	ret = modem_lib_init_result;
 	switch (ret) {

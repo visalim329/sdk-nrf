@@ -694,7 +694,7 @@ class NcsUpmerger(NcsWestCommand):
                         '  Similar upstream titles:')
                 for i, uc in enumerate(ucs, start=1):
                     log.inf(f'    {i}. {uc.oid} {commit_title(uc)}')
-            project.git('revert --signoff --no-edit ' + str(dc.oid))
+            project.git('revert --no-edit ' + str(dc.oid))
         log.inf(f'Merging: {z_rev} to project: {project.name}')
         msg = f"[nrf mergeup] Merge upstream automatically up to commit {z_sha}\n\nThis auto-upmerge was performed with ncs-upmerger script."
         project.git('merge --no-edit --no-ff --signoff -m "' + msg + '" ' + str(self.zephyr_rev))
@@ -726,6 +726,5 @@ _BLOCKED_PROJECTS: set[Path] = set(
      'modules/hal/ti',
      'modules/hal/xtensa',
      'modules/lib/tflite-micro',
-     'modules/lib/thrift',
      'modules/tee/tf-a/trusted-firmware-a',
      ])

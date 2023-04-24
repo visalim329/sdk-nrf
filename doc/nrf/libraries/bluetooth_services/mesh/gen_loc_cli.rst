@@ -36,60 +36,60 @@ mesh models loc instance get-all
 	Print all instances of the Generic Location Client model on the device.
 
 
-mesh models loc instance set <ElemIdx>
+mesh models loc instance set <elem_idx>
 	Select the Generic Location Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models loc global-get
 	Get the current global location value of the Generic Location state.
 
 
-mesh models loc global-set <Lat> <Long> <Alt>
+mesh models loc global-set <latitude> <longitude> <altitude>
 	Set the global location value of the Generic Location state and wait for a response.
 
-	* ``Lat`` - Global WGS84 North coordinate in degrees.
-	* ``Long`` - Global WGS84 East coordinate in degrees.
-	* ``Alt`` - Global altitude above the WGS84 datum in meters.
+	* ``latitude`` - Global WGS84 North coordinate in degrees.
+	* ``longitude`` - Global WGS84 East coordinate in degrees.
+	* ``altitude`` - Global altitude above the WGS84 datum in meters.
 
 
-mesh models loc global-set-unack <Lat> <Long> <Alt>
+mesh models loc global-set-unack <latitude> <longitude> <altitude>
 	Set the global location value of the Generic Location state without requesting a response.
 
-	* ``Lat`` - Global WGS84 North coordinate in degrees.
-	* ``Long`` - Global WGS84 East coordinate in degrees.
-	* ``Alt`` - Global altitude above the WGS84 datum in meters.
+	* ``latitude`` - Global WGS84 North coordinate in degrees.
+	* ``longitude`` - Global WGS84 East coordinate in degrees.
+	* ``altitude`` - Global altitude above the WGS84 datum in meters.
 
 
 mesh models loc local-get
 	Get the current local location value of the Generic Location state.
 
 
-mesh models loc local-set <North> <East> <Alt> <Floor> [TimeDlt(ms) [Prec(mm) [IsMobile]]]
+mesh models loc local-set <north> <east> <altitude> <floor> [time_delta [precision_mm [is_mobile]]]
 	Set the local location value of the Generic Location state and wait for a response.
 
-	* ``North`` - Local north position in decimeters.
-	* ``East`` - Local east position in decimeters.
-	* ``Alt`` - Local altitude in decimeters.
-	* ``Floor`` - Floor number.
-	* ``TimeDlt`` - If present, defines the time since the previous position update in milliseconds.
-	* ``Prec`` - If present, defines the precision of the location in millimeters.
-	* ``IsMobile`` - If present, defines whether the device is movable.
+	* ``north`` - Local north position in decimeters.
+	* ``east`` - Local east position in decimeters.
+	* ``altitude`` - Local altitude in decimeters.
+	* ``floor`` - Floor number.
+	* ``time_delta`` - If present, defines the time since the previous position update in milliseconds.
+	* ``precision_mm`` - If present, defines the precision of the location in millimeters.
+	* ``is_mobile`` - If present, defines whether the device is movable.
 
 
-mesh models loc local-set-unack <North> <East> <Alt> <Floor> [TimeDlt(ms) [Prec(mm) [IsMobile]]]
+mesh models loc local-set-unack <north> <east> <altitude> <floor> [time_delta [precision_mm [is_mobile]]]
 	Set the local location value of the Generic Location state without requesting a response.
 
-	* ``North`` - Local north position in decimeters.
-	* ``East`` - Local east position in decimeters.
-	* ``Alt`` - Local altitude in decimeters.
-	* ``Floor`` - Floor number.
-	* ``TimeDlt`` - If present, defines the time since the previous position update in milliseconds.
-	* ``Prec`` - If present, defines the precision of the location in millimeters.
-	* ``IsMobile`` - If present, defines whether the device is movable.
+	* ``north`` - Local north position in decimeters.
+	* ``east`` - Local east position in decimeters.
+	* ``altitude`` - Local altitude in decimeters.
+	* ``floor`` - Floor number.
+	* ``time_delta`` - If present, defines the time since the previous position update in milliseconds.
+	* ``precision_mm`` - If present, defines the precision of the location in millimeters.
+	* ``is_mobile`` - If present, defines whether the device is movable.
 
 
 API documentation

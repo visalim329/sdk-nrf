@@ -39,21 +39,24 @@ struct wifi_nrf_drv_priv_zep rpu_drv_priv_zep;
 
 #define MAX_RX_QUEUES 3
 
+#define TOTAL_TX_FRAMES \
+	(CONFIG_NRF700X_MAX_TX_TOKENS * CONFIG_NRF700X_MAX_TX_AGGREGATION)
 #define MAX_TX_FRAME_SIZE \
 	(CONFIG_NRF700X_TX_MAX_DATA_SIZE + TX_BUF_HEADROOM)
 #define TOTAL_TX_SIZE \
-	(CONFIG_NRF700X_MAX_TX_TOKENS * CONFIG_NRF700X_TX_MAX_DATA_SIZE)
+	(TOTAL_TX_FRAMES * MAX_TX_FRAME_SIZE)
 #define TOTAL_RX_SIZE \
 	(CONFIG_NRF700X_RX_NUM_BUFS * CONFIG_NRF700X_RX_MAX_DATA_SIZE)
 
 BUILD_ASSERT(CONFIG_NRF700X_MAX_TX_TOKENS >= 1,
 	"At least one TX token is required");
-BUILD_ASSERT(CONFIG_NRF700X_MAX_TX_AGGREGATION <= 15,
-	"Max TX aggregation is 15");
+BUILD_ASSERT(CONFIG_NRF700X_MAX_TX_AGGREGATION <= 16,
+	"Max TX aggregation is 16");
 BUILD_ASSERT(CONFIG_NRF700X_RX_NUM_BUFS >= 1,
 	"At least one RX buffer is required");
-BUILD_ASSERT(RPU_PKTRAM_SIZE - TOTAL_RX_SIZE >= TOTAL_TX_SIZE,
-	"Packet RAM overflow: not enough memory for TX");
+
+BUILD_ASSERT(RPU_PKTRAM_SIZE >= (TOTAL_TX_SIZE + TOTAL_RX_SIZE),
+		"Packet RAM overflow in Sheliak");
 
 static const unsigned char aggregation = 1;
 static const unsigned char wmm = 1;
@@ -229,6 +232,7 @@ int wifi_nrf_reg_domain(const struct device *dev, struct wifi_reg_domain *reg_do
 
 	if (reg_domain->oper == WIFI_MGMT_SET) {
 		memcpy(reg_domain_info.alpha2, reg_domain->country_code, WIFI_COUNTRY_CODE_LEN);
+		reg_domain_info.alpha2[WIFI_COUNTRY_CODE_LEN] = '\0';
 
 		reg_domain_info.force = reg_domain->force;
 
@@ -315,11 +319,7 @@ enum wifi_nrf_status wifi_nrf_fmac_dev_add_zep(struct wifi_nrf_drv_priv_zep *drv
 #ifdef CONFIG_NRF_WIFI_LOW_POWER
 					sleep_type,
 #endif /* CONFIG_NRF_WIFI_LOW_POWER */
-					NRF_WIFI_DEF_PHY_CALIB,
-					CONFIG_NRF700X_ANT_GAIN_2G,
-					CONFIG_NRF700X_ANT_GAIN_5G_BAND1,
-					CONFIG_NRF700X_ANT_GAIN_5G_BAND2,
-					CONFIG_NRF700X_ANT_GAIN_5G_BAND3);
+					NRF_WIFI_DEF_PHY_CALIB);
 
 	if (status != WIFI_NRF_STATUS_SUCCESS) {
 		LOG_ERR("%s: wifi_nrf_fmac_dev_init failed\n", __func__);

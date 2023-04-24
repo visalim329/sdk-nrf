@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <zephyr/net/lwm2m.h>
 #include <modem/nrf_modem_lib.h>
+#include <zephyr/settings/settings.h>
+
 #include <net/lwm2m_client_utils.h>
 #include <app_event_manager.h>
 #include <net/lwm2m_client_utils_location.h>
@@ -26,6 +28,7 @@ LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
 #include "lwm2m_app_utils.h"
 #include "sensor_module.h"
 #include "gnss_module.h"
+#include "lwm2m_engine.h"
 #include "location_events.h"
 
 #if defined(CONFIG_LWM2M_CLIENT_UTILS_LOCATION_ASSISTANCE)
@@ -46,9 +49,6 @@ LOG_MODULE_REGISTER(app_lwm2m_client, CONFIG_APP_LOG_LEVEL);
 #define LWM2M_SECURITY_RAW_PUBLIC_KEY 1
 #define LWM2M_SECURITY_CERTIFICATE 2
 #define LWM2M_SECURITY_NO_SEC 3
-
-#define CONNEVAL_MAX_DELAY_S 60
-#define CONNEVAL_POLL_PERIOD_MS 5000
 
 /* Client State Machine states */
 static enum client_state {
@@ -380,10 +380,6 @@ static void rd_client_event(struct lwm2m_ctx *client, enum lwm2m_rd_client_event
 {
 	k_mutex_lock(&lte_mutex, K_FOREVER);
 
-	if (IS_ENABLED(CONFIG_LWM2M_CLIENT_UTILS_LTE_CONNEVAL)) {
-		lwm2m_utils_conneval(client, &client_event);
-	}
-
 	if (client_state == LTE_OFFLINE &&
 	    client_event != LWM2M_RD_CLIENT_EVENT_ENGINE_SUSPENDED) {
 		LOG_DBG("Drop network event %d at LTE offline state", client_event);
@@ -428,11 +424,6 @@ static void rd_client_event(struct lwm2m_ctx *client, enum lwm2m_rd_client_event
 		state_trigger_and_unlock(NETWORK_ERROR);
 		break;
 
-	case LWM2M_RD_CLIENT_EVENT_REG_UPDATE:
-		LOG_DBG("Registration update started");
-		k_mutex_unlock(&lte_mutex);
-		break;
-
 	case LWM2M_RD_CLIENT_EVENT_REG_UPDATE_COMPLETE:
 		LOG_DBG("Registration update complete");
 		state_trigger_and_unlock(CONNECTED);
@@ -449,6 +440,7 @@ static void rd_client_event(struct lwm2m_ctx *client, enum lwm2m_rd_client_event
 		if (client_state != UPDATE_FIRMWARE) {
 			state_set_and_unlock(START);
 		}
+
 		break;
 
 	case LWM2M_RD_CLIENT_EVENT_QUEUE_MODE_RX_OFF:
@@ -516,16 +508,6 @@ static void modem_connect(void)
 			}
 		}
 	} while (ret < 0);
-
-	if (IS_ENABLED(CONFIG_LWM2M_CLIENT_UTILS_LTE_CONNEVAL)) {
-		ret = lwm2m_utils_enable_conneval(LTE_LC_ENERGY_CONSUMPTION_NORMAL,
-						  CONNEVAL_MAX_DELAY_S, CONNEVAL_POLL_PERIOD_MS);
-		if (ret < 0) {
-			LOG_ERR("Failed to enable conneval (%d)", ret);
-		} else {
-			LOG_INF("Conneval enabled");
-		}
-	}
 }
 
 static bool lte_connected(enum lte_lc_nw_reg_status nw_reg_status)
@@ -588,7 +570,7 @@ void main(void)
 	LOG_INF(APP_BANNER);
 
 #if !defined(CONFIG_NRF_MODEM_LIB_SYS_INIT)
-	ret = nrf_modem_lib_init();
+	ret = nrf_modem_lib_init(NORMAL_MODE);
 	if (ret < 0) {
 		LOG_ERR("Unable to init modem library (%d)", ret);
 		return;

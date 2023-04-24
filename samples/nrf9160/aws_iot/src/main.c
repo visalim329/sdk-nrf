@@ -20,10 +20,6 @@
 #include <cJSON.h>
 #include <cJSON_os.h>
 #include <zephyr/logging/log.h>
-#if defined(CONFIG_AWS_IOT_SAMPLE_DEVICE_ID_USE_HW_ID)
-#include <hw_id.h>
-#endif
-
 
 LOG_MODULE_REGISTER(aws_iot_sample, CONFIG_AWS_IOT_SAMPLE_LOG_LEVEL);
 
@@ -119,7 +115,7 @@ static int shadow_update(bool version_number_include)
 	}
 
 	if (version_number_include) {
-		err = json_add_str(reported_obj, "app_version", CONFIG_AWS_IOT_SAMPLE_APP_VERSION);
+		err = json_add_str(reported_obj, "app_version", CONFIG_APP_VERSION);
 	} else {
 		err = 0;
 	}
@@ -177,11 +173,9 @@ static void connect_work_fn(struct k_work *work)
 		LOG_ERR("aws_iot_connect, error: %d", err);
 	}
 
-	LOG_INF("Next connection retry in %d seconds",
-		CONFIG_AWS_IOT_SAMPLE_CONNECTION_RETRY_TIMEOUT_SECONDS);
+	LOG_INF("Next connection retry in %d seconds", CONFIG_CONNECTION_RETRY_TIMEOUT_SECONDS);
 
-	k_work_schedule(&connect_work,
-			K_SECONDS(CONFIG_AWS_IOT_SAMPLE_CONNECTION_RETRY_TIMEOUT_SECONDS));
+	k_work_schedule(&connect_work, K_SECONDS(CONFIG_CONNECTION_RETRY_TIMEOUT_SECONDS));
 }
 
 static void shadow_update_work_fn(struct k_work *work)
@@ -197,11 +191,9 @@ static void shadow_update_work_fn(struct k_work *work)
 		LOG_ERR("shadow_update, error: %d", err);
 	}
 
-	LOG_INF("Next data publication in %d seconds",
-		CONFIG_AWS_IOT_SAMPLE_PUBLICATION_INTERVAL_SECONDS);
+	LOG_INF("Next data publication in %d seconds", CONFIG_PUBLICATION_INTERVAL_SECONDS);
 
-	k_work_schedule(&shadow_update_work,
-			K_SECONDS(CONFIG_AWS_IOT_SAMPLE_PUBLICATION_INTERVAL_SECONDS));
+	k_work_schedule(&shadow_update_work, K_SECONDS(CONFIG_PUBLICATION_INTERVAL_SECONDS));
 }
 
 static void shadow_update_version_work_fn(struct k_work *work)
@@ -277,7 +269,7 @@ void aws_iot_event_handler(const struct aws_iot_evt *const evt)
 		/** Start sequential shadow data updates.
 		 */
 		k_work_schedule(&shadow_update_work,
-				K_SECONDS(CONFIG_AWS_IOT_SAMPLE_PUBLICATION_INTERVAL_SECONDS));
+				K_SECONDS(CONFIG_PUBLICATION_INTERVAL_SECONDS));
 
 #if defined(CONFIG_NRF_MODEM_LIB)
 		int err = lte_lc_psm_req(true);
@@ -501,7 +493,7 @@ void main(void)
 {
 	int err;
 
-	LOG_INF("The AWS IoT sample started, version: %s", CONFIG_AWS_IOT_SAMPLE_APP_VERSION);
+	LOG_INF("The AWS IoT sample started, version: %s", CONFIG_APP_VERSION);
 
 	cJSON_Init();
 
@@ -509,26 +501,7 @@ void main(void)
 	nrf_modem_lib_dfu_handler();
 #endif
 
-#if defined(CONFIG_AWS_IOT_SAMPLE_DEVICE_ID_USE_HW_ID)
-	char device_id[HW_ID_LEN] = { 0 };
-
-	err = hw_id_get(device_id, ARRAY_SIZE(device_id));
-	if (err) {
-		LOG_ERR("Failed to retrieve device ID, error: %d", err);
-		return;
-	}
-
-	struct aws_iot_config config = {
-	    .client_id = device_id,
-	    .client_id_len = strlen(device_id)
-	};
-
-	LOG_INF("Device id: %s", device_id);
-
-	err = aws_iot_init(&config, aws_iot_event_handler);
-#else
 	err = aws_iot_init(NULL, aws_iot_event_handler);
-#endif
 	if (err) {
 		LOG_ERR("AWS IoT library could not be initialized, error: %d", err);
 	}

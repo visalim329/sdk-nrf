@@ -33,64 +33,64 @@ mesh models lvl instance get-all
 	Print all instances of the Generic Level Client model on the device.
 
 
-mesh models lvl instance set <ElemIdx>
+mesh models lvl instance set <elem_idx>
 	Select the Generic Level Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models lvl get
 	Get the current Generic Level state value.
 
 
-mesh models lvl set <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models lvl set <lvl> [transition_time_ms [delay_ms]]
 	Set the Generic Level state value and wait for a response.
 
-	* ``Lvl`` - Level state value to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Level state value to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models lvl set-unack <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models lvl set-unack <lvl> [transition_time_ms [delay_ms]]
 	Set the Generic Level state value without requesting a response.
 
-	* ``Lvl`` - Level state value to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``level`` - Level state value to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models lvl delta-set <Dlt> [TransTime(ms) [Delay(ms)]]
+mesh models lvl delta-set <delta> [transition_time_ms [delay_ms]]
 	Trigger a differential level state change for the server and wait for a response.
 
-	* ``Dlt`` - Translation from the original value.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``delta`` - Translation from the original value.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models lvl delta-set-unack <Dlt> [TransTime(ms) [Delay(ms)]]
+mesh models lvl delta-set-unack <delta> [transition_time_ms [delay_ms]]
 	Trigger a differential level state change for the server without requesting a response.
 
-	* ``Dlt`` - Translation from the original value.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``delta`` - Translation from the original value.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models lvl move-set <Dlt> [TransTime(ms) [Delay(ms)]]
+mesh models lvl move-set <delta> [transition_time_ms [delay_ms]]
 	Trigger a continuous level change for the server and wait for a response.
 
-	* ``Dlt`` - Translation to make for every transition step.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``delta`` - Translation to make for every transition step.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models lvl move-set-unack <Dlt> [TransTime(ms) [Delay(ms)]]
+mesh models lvl move-set-unack <delta> [transition_time_ms [delay_ms]]
 	Trigger a continuous level change for the server without requesting a response.
 
-	* ``Dlt`` - Translation to make for every transition step.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``delta`` - Translation to make for every transition step.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
 API documentation

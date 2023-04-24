@@ -1166,10 +1166,6 @@ void wifi_nrf_fmac_dev_rem(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx);
  * @rf_params_usr: RF parameters (if any) to be passed to the RPU.
  * @sleep_type: Type of RPU sleep.
  * @phy_calib: PHY calibration flags to be passed to the RPU.
- * @ant_gain_2g: Antenna gain value for 2.4 GHz band.
- * @ant_gain_5g_band1: Antenna gain value for 5 GHz band (5150 MHz - 5350 MHz).
- * @ant_gain_5g_band2: Antenna gain value for 5 GHz band (5470 MHz - 5730 MHz).
- * @ant_gain_5g_band3: Antenna gain value for 5 GHz band (5730 MHz - 5895 MHz).
  *
  * This function initializes the firmware of an RPU instance.
  *
@@ -1184,11 +1180,7 @@ enum wifi_nrf_status wifi_nrf_fmac_dev_init(struct wifi_nrf_fmac_dev_ctx *fmac_d
 #ifdef CONFIG_NRF_WIFI_LOW_POWER
 					    int sleep_type,
 #endif /* CONFIG_NRF_WIFI_LOW_POWER */
-					    unsigned int phy_calib,
-					    unsigned char ant_gain_2g,
-					    unsigned char ant_gain_5g_band1,
-					    unsigned char ant_gain_5g_band2,
-					    unsigned char ant_gain_5g_band3);
+					    unsigned int phy_calib);
 
 
 /**
@@ -1324,7 +1316,7 @@ enum wifi_nrf_status wifi_nrf_fmac_rf_params_get(struct wifi_nrf_fmac_dev_ctx *f
 						 unsigned char *rf_params);
 
 struct wifi_nrf_fmac_reg_info {
-	unsigned char alpha2[NRF_WIFI_COUNTRY_CODE_LEN];
+	unsigned char alpha2[3];
 	bool force;
 };
 
@@ -1373,22 +1365,5 @@ enum wifi_nrf_status wifi_nrf_fmac_get_power_save_info(void *fmac_dev_ctx,
 enum wifi_nrf_status wifi_nrf_fmac_set_tx_rate(struct wifi_nrf_fmac_dev_ctx *fmac_dev_ctx,
 					       unsigned char rate_flag,
 					       int data_rate);
-#ifdef CONFIG_NRF_WIFI_LOW_POWER
-/**
- * wifi_nrf_fmac_get_host_ref_rpu_ps_ctrl_state() - Get the RPU power save
- *			status from host perspective.
- * @fmac_dev_ctx: Pointer to the UMAC IF context for a RPU WLAN device.
- * @rpu_ps_ctrl_state: Pointer to the address where the current rpu ps state
- *			from host perspective needs to be copied.
- *
- * This function is used to fetch the RPU power save status
- * from host perspective.
- * Returns: Status
- *              Pass: %WIFI_NRF_STATUS_SUCCESS
- *              Fail: %WIFI_NRF_STATUS_FAIL
- */
-enum wifi_nrf_status wifi_nrf_fmac_get_host_rpu_ps_ctrl_state(void *fmac_dev_ctx,
-							      int *rpu_ps_ctrl_state);
-#endif /* CONFIG_NRF_WIFI_LOW_POWER */
-#endif
+#endif /* CONFIG_NRF700X_UTIL */
 #endif /* __FMAC_API_H__ */

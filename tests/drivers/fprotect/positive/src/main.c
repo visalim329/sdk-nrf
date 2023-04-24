@@ -23,7 +23,7 @@ static uint32_t control_read_addr = 0x6032;
 static uint8_t read_data_before[sizeof(write_data)];
 static uint8_t read_data_after[sizeof(write_data)];
 
-ZTEST(test_fprotect_positive, test_1_flash_write)
+static void test_flash_write(void)
 {
 	int retval = flash_read(flash_dev, control_read_addr, read_data_before,
 				ARRAY_SIZE(read_data_before));
@@ -34,7 +34,7 @@ ZTEST(test_fprotect_positive, test_1_flash_write)
 	zassert_true(retval == 0, "flash_write failed");
 }
 
-ZTEST(test_fprotect_positive, test_2_flash_read)
+static void test_flash_read(void)
 {
 	int retval = 0;
 
@@ -56,7 +56,7 @@ ZTEST(test_fprotect_positive, test_2_flash_read)
 	}
 }
 
-ZTEST(test_fprotect_positive, test_3_flash_read_protected)
+static void test_flash_read_protected(void)
 {
 	int retval;
 	uint8_t rd[256];
@@ -65,4 +65,14 @@ ZTEST(test_fprotect_positive, test_3_flash_read_protected)
 	zassert_true(retval == 0, "flash read to protected area failed");
 }
 
-ZTEST_SUITE(test_fprotect_positive, NULL, NULL, NULL, NULL, NULL);
+void test_main(void)
+{
+	__ASSERT_NO_MSG(device_is_ready(flash_dev));
+
+	ztest_test_suite(test_fprotect_positive,
+			ztest_unit_test(test_flash_write),
+			ztest_unit_test(test_flash_read),
+			ztest_unit_test(test_flash_read_protected)
+			);
+	ztest_run_test_suite(test_fprotect_positive);
+}

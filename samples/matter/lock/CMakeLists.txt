@@ -51,7 +51,7 @@ target_sources(app PRIVATE
     ${COMMON_ROOT}/src/led_widget.cpp
 )
 
-if(CONFIG_CHIP_OTA_REQUESTOR OR CONFIG_MCUMGR_TRANSPORT_BT)
+if(CONFIG_CHIP_OTA_REQUESTOR OR CONFIG_MCUMGR_SMP_BT)
     target_sources(app PRIVATE ${COMMON_ROOT}/src/ota_util.cpp)
 endif()
 
@@ -59,7 +59,7 @@ if(CONFIG_CHIP_NUS)
     target_sources(app PRIVATE ${COMMON_ROOT}/src/bt_nus_service.cpp)
 endif()
 
-if(CONFIG_MCUMGR_TRANSPORT_BT)
+if(CONFIG_MCUMGR_SMP_BT)
     target_sources(app PRIVATE ${COMMON_ROOT}/src/dfu_over_smp.cpp)
 endif()
 
@@ -69,10 +69,6 @@ if(CONFIG_THREAD_WIFI_SWITCHING)
         ${COMMON_ROOT}/src/ota_multi_image_processor_impl.cpp
         ${COMMON_ROOT}/src/ota_multi_image_downloader.cpp
     )
-endif()
-
-if(CONFIG_CHIP_ICD_SUBSCRIPTION_HANDLING)
-    target_sources(app PRIVATE ${COMMON_ROOT}/src/icd_util.cpp)
 endif()
 
 chip_configure_data_model(app

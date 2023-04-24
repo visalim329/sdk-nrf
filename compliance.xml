@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testsuites tests="6" failures="44" errors="0" skipped="0" time="0.0">
+	<testsuite name="Compliance" tests="6" errors="0" failures="44" skipped="0" time="0">
+		<testcase name="KconfigBasic" classname="Guidelines"/>
+		<testcase name="Gitlint" classname="Guidelines"/>
+		<testcase name="Checkpatch" classname="Guidelines">
+			<failure message="samples/wifi/sr_coex/src/main.h:30  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:30</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:30  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:30</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:33  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:33</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:33  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:33</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:36  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:36</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:36  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:36</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:39  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:39</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:39  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:39</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:42  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:42</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:42  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:42</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:45  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:45</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:45  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:45</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:48  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:48</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:48  please, no spaces at the start of a line" type="warning">
+LEADING_SPACE: please, no spaces at the start of a line
+File:samples/wifi/sr_coex/src/main.h
+Line:48</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:92  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:92</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:99  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:99</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:107  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:107</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:114  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:114</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:122  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:122</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:129  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:129</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:136  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:136</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:143  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:143</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:151  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:151</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:159  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:159</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:159  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:159</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:168  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:168</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:168  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:168</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:177  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:177</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:177  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:177</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:186  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:186</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:186  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:186</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:195  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:195</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:195  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:195</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:204  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:204</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:204  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:204</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:213  'Funtion' may be misspelled - perhaps 'Function'?" type="warning">
+TYPO_SPELLING: 'Funtion' may be misspelled - perhaps 'Function'?
+File:samples/wifi/sr_coex/src/main.h
+Line:213</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:213  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:213</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:270  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/main.h
+Line:270</failure>
+			<failure message="samples/wifi/sr_coex/src/main.h:270  line length of 112 exceeds 100 columns" type="warning">
+LONG_LINE: line length of 112 exceeds 100 columns
+File:samples/wifi/sr_coex/src/main.h
+Line:270</failure>
+			<failure message="samples/wifi/sr_coex/src/wifi_ble_coex_functions.h:76  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/wifi_ble_coex_functions.h
+Line:76</failure>
+			<failure message="samples/wifi/sr_coex/src/wifi_ble_coex_functions.h:207  trailing whitespace" type="error">
+TRAILING_WHITESPACE: trailing whitespace
+File:samples/wifi/sr_coex/src/wifi_ble_coex_functions.h
+Line:207</failure>
+		</testcase>
+		<testcase name="Pylint" classname="Guidelines"/>
+		<testcase name="Nits" classname="Guidelines"/>
+		<testcase name="Identity" classname="Guidelines">
+			<failure message="Identity issues" type="failure">2b5ec158b5c5342d0ebbd4625881740172b5792a: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) needs to match one of the signed-off-by entries.
+2b5ec158b5c5342d0ebbd4625881740172b5792a: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) does not follow the syntax: First Last &lt;email&gt;.</failure>
+			<failure message="Identity issues" type="failure">cad937b2b96560f198be899cbbc1016f55eb62a1: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) needs to match one of the signed-off-by entries.
+cad937b2b96560f198be899cbbc1016f55eb62a1: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) does not follow the syntax: First Last &lt;email&gt;.</failure>
+			<failure message="Identity issues" type="failure">f19a943c4c3a2402b5e51923e7cffab514b27fea: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) needs to match one of the signed-off-by entries.
+f19a943c4c3a2402b5e51923e7cffab514b27fea: author email (Mushunuri, Visali &lt;visali.mushunuri@nordicsemi.no&gt;) does not follow the syntax: First Last &lt;email&gt;.</failure>
+		</testcase>
+	</testsuite>
+</testsuites>

@@ -8,7 +8,7 @@
 #include <nrfx.h>
 
 
-ZTEST(test_flash_patch, test_flash_patch1)
+void test_flash_patch1(void)
 {
 #ifdef CONFIG_DISABLE_FLASH_PATCH
 	zassert_equal(NRF_UICR->DEBUGCTRL, 0xFFFF00FF,
@@ -21,4 +21,10 @@ ZTEST(test_flash_patch, test_flash_patch1)
 #endif
 }
 
-ZTEST_SUITE(test_flash_patch, NULL, NULL, NULL, NULL, NULL);
+void test_main(void)
+{
+	ztest_test_suite(test_flash_patch,
+			 ztest_unit_test(test_flash_patch1)
+	);
+	ztest_run_test_suite(test_flash_patch);
+}

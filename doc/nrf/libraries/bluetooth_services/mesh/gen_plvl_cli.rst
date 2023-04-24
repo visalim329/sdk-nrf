@@ -36,66 +36,66 @@ mesh models plvl instance get-all
 	Print all instances of the Generic Power Level Client model on the device.
 
 
-mesh models plvl instance set <ElemIdx>
+mesh models plvl instance set <elem_idx>
 	Select the Generic Power Level Client model instantiated on the specified element ID.
 	This instance will be used in message sending.
 	If no model instance is selected, the first model instance found on the device will be used by default.
 
-	* ``ElemIdx`` - Element index where the model instance is found.
+	* ``elem_idx`` - Element index where the model instance is found.
 
 
 mesh models plvl get
 	Get the Power Level of the bound server.
 
 
-mesh models plvl set <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models plvl set <lvl> [transition_time_ms [delay_ms]]
 	Set the Power Level of the server and wait for a response.
 
-	* ``Lvl`` - Power Level value to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Power Level value to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
-mesh models plvl set-unack <Lvl> [TransTime(ms) [Delay(ms)]]
+mesh models plvl set-unack <lvl> [transition_time_ms [delay_ms]]
 	Set the Power Level of the server without requesting a response.
 
-	* ``Lvl`` - Power Level value to set.
-	* ``TransTime`` - If present, defines the transition time in the message in milliseconds.
-	* ``Delay`` - If present, defines the delay in the message in milliseconds.
+	* ``lvl`` - Power Level value to set.
+	* ``transition_time_ms`` - If present, defines the transition time in the message in milliseconds.
+	* ``delay_ms`` - If present, defines the delay in the message in milliseconds.
 
 
 mesh models plvl range-get
 	Get the Power Range of the bound server.
 
 
-mesh models plvl range-set <Min> <Max>
+mesh models plvl range-set <min> <max>
 	Set the Power Range state value and wait for a response.
 
-	* ``Min`` - Minimum allowed Power Level.
-	* ``Max`` - Maximum allowed Power Level.
+	* ``min`` - Minimum allowed Power Level.
+	* ``max`` - Maximum allowed Power Level.
 
 
-mesh models plvl range-set-unack <Min> <Max>
+mesh models plvl range-set-unack <min> <max>
 	Set the Generic Power Range state value without requesting a response.
 
-	* ``Min`` - Minimum allowed Power Level.
-	* ``Max`` - Maximum allowed Power Level.
+	* ``min`` - Minimum allowed Power Level.
+	* ``max`` - Maximum allowed Power Level.
 
 
 mesh models plvl default-get
 	Get the Default Power state of the bound server.
 
 
-mesh models plvl default-set <Lvl>
+mesh models plvl default-set <lvl>
 	Set the Default Power state of the server and wait for a response.
 
-	* ``Lvl`` - Default Power value to set.
+	* ``lvl`` - Default Power value to set.
 
 
-mesh models plvl default-set-unack <Lvl>
+mesh models plvl default-set-unack <lvl>
 	Set the Default Power state of the server without requesting a response.
 
-	* ``Lvl`` - Default Power value to set.
+	* ``lvl`` - Default Power value to set.
 
 
 mesh models plvl last-get

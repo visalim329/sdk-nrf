@@ -14,8 +14,8 @@
 
 #include "main.h"
 
-#define INTERVAL_MIN 0x140 /* 320 units, 400 ms */
-#define INTERVAL_MAX 0x140 /* 320 units, 400 ms */
+#define INTERVAL_MIN 80 /* 80 units, 100 ms */
+#define INTERVAL_MAX 80 /* 80 units, 100 ms */
 #define CONN_LATENCY 0
 
 #define MIN_CONN_INTERVAL   6
@@ -272,7 +272,9 @@ static int test_peripheral_cmd(const struct shell *shell, size_t argc,
 	return 0;
 }
 
+#ifdef BLE_THROUGHPUT_TEST
 SHELL_CMD_REGISTER(config, &sub_config, "Configure the example", default_cmd);
 SHELL_CMD_REGISTER(run, NULL, "Run the test", test_run_cmd);
 SHELL_CMD_REGISTER(central, NULL, "Select central role", test_central_cmd);
 SHELL_CMD_REGISTER(peripheral, NULL, "Select peripheral role", test_peripheral_cmd);
+#endif

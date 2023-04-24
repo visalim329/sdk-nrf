@@ -54,8 +54,6 @@
 #define MAX_NUM_STAS 2
 #define MAX_NUM_APS 1
 
-#define NRF_WIFI_COUNTRY_CODE_LEN 2
-
 /*#define NRF_WIFI_PHY_CALIB_FLAG_RXDC 1*/
 /*#define NRF_WIFI_PHY_CALIB_FLAG_TXDC 2*/
 /*#define NRF_WIFI_PHY_CALIB_FLAG_TXPOW 4*/
@@ -569,6 +567,24 @@ struct nrf_wifi_sys_params {
 } __NRF_WIFI_PKD;
 
 /**
+ * struct nrf_wifi_cmd_radiotest_req_set_reg - command for setting regulatory
+ * @sys_head: UMAC header, See &struct nrf_wifi_sys_head
+ * @nrf_wifi_alpha: regulatory country code.
+ *
+ */
+#define NRF_WIFI_CMD_RT_REQ_SET_REG_ALPHA_VALID (1 << 0)
+
+struct nrf_wifi_radiotest_req_set_reg {
+		unsigned int valid_fields;
+		unsigned char nrf_wifi_alpha[3];
+} __NRF_WIFI_PKD;
+
+struct nrf_wifi_cmd_radiotest_req_set_reg {
+	struct nrf_wifi_sys_head sys_head;
+	struct nrf_wifi_radiotest_req_set_reg set_reg_info;
+} __NRF_WIFI_PKD;
+
+/**
  * struct nrf_wifi_cmd_sys_init - Initialize UMAC
  * @sys_head: umac header, see &nrf_wifi_sys_head
  * @wdev_id : id of the interface.
@@ -588,11 +604,7 @@ struct nrf_wifi_cmd_sys_init {
 	struct nrf_wifi_data_config_params data_config_params;
 	struct temp_vbat_config temp_vbat_config_params;
 	unsigned char tcp_ip_checksum_offload;
-	unsigned char country_code[NRF_WIFI_COUNTRY_CODE_LEN];
-	unsigned char ant_gain_2g;
-	unsigned char ant_gain_5g_band1;
-	unsigned char ant_gain_5g_band2;
-	unsigned char ant_gain_5g_band3;
+	struct nrf_wifi_radiotest_req_set_reg set_reg_info;
 } __NRF_WIFI_PKD;
 
 /**
@@ -705,7 +717,6 @@ struct rpu_conf_params {
 	unsigned char bb_gain;
 	unsigned short int capture_length;
 	unsigned char bypass_regulatory;
-	unsigned char country_code[NRF_WIFI_COUNTRY_CODE_LEN];
 	unsigned int tx_pkt_cw;
 } __NRF_WIFI_PKD;
 

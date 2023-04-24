@@ -54,106 +54,106 @@ mesh models sensor instance get-all
    Print all instances of the Sensor Client model on the device.
 
 
-mesh models sensor instance set <ElemIdx>
+mesh models sensor instance set <elem_idx>
    Select the Sensor Client model instantiated on the specified element ID.
    This instance will be used in message sending.
    If no model instance is selected, the first model instance found on the device will be used by default.
 
-   * ``ElemIdx`` - Element index where the model instance is found.
+   * ``elem_idx`` - Element index where the model instance is found.
 
 
-mesh models sensor desc-get [SensorID]
+mesh models sensor desc-get [sensor_id]
    Get the sensor descriptor for one or all sensors on the server.
    This will get a maximum number of sensor descriptors specified by :kconfig:option:`CONFIG_BT_MESH_SHELL_SENSOR_CLI_MAX_SENSORS`.
 
-   * ``SensorID`` - If present, selects the sensor for which to get the descriptor.
+   * ``sensor_id`` - If present, selects the sensor for which to get the descriptor.
 
 
-mesh models sensor cadence-get <SensorID>
+mesh models sensor cadence-get <sensor_id>
    Get the configured cadence for a sensor on the server.
 
-   * ``SensorID`` - Selects the sensor for which to get the configured cadence.
+   * ``sensor_id`` - Selects the sensor for which to get the configured cadence.
 
 
-mesh models sensor cadence-set <SensorID> <FastPerDiv> <MinInt> <DltType> <DltUp> <DltDown> <CadInside> <RngLow> <RngHigh>
+mesh models sensor cadence-set <sensor_id> <fast_period_div> <min_int> <delta_type> <delta_up> <delta_down> <cadence_inside> <range_low> <range_high>
    Set the cadence for a sensor on the server and wait for a response.
 
-   * ``SensorID`` - Selects the sensor for which to get the configured cadence.
-   * ``FastPerDiv`` - Divisor for computing fast cadence. Fast period is publish_period / (1 << FastPerDiv).
-   * ``MinInt`` - Minimum publish interval in fast region. Interval is never lower than 1 << MinInt.
-   * ``DltType`` - Sets the type of delta triggering. 0 = value-based threshold. 1 = percentage-based threshold.
-   * ``DltUp`` - Minimum positive delta which triggers publication.
-   * ``DltDown`` - Minimum negative delta which triggers publication.
-   * ``CadInside`` - Sets the cadence used inside the range. 0 = normal cadence inside, fast outside. 1 = fast cadence inside, normal outside.
-   * ``RngLow`` - Lower bound of the cadence range.
-   * ``RngHigh`` - Upper bound of the cadence range.
+   * ``sensor_id`` - Selects the sensor for which to get the configured cadence.
+   * ``fast_period_div`` - Divisor for computing fast cadence. Fast period is publish_period / (1 << fast_period_div).
+   * ``min_int`` - Minimum publish interval in fast region. Interval is never lower than 1 << min_int.
+   * ``delta_type`` - Sets the type of delta triggering. 0 = value-based threshold. 1 = percentage-based threshold.
+   * ``delta_up`` - Minimum positive delta which triggers publication.
+   * ``delta_down`` - Minimum negative delta which triggers publication.
+   * ``cadence_inside`` - Sets the cadence used inside the range. 0 = normal cadence inside, fast outside. 1 = fast cadence inside, normal outside.
+   * ``range_low`` - Lower bound of the cadence range.
+   * ``range_high`` - Upper bound of the cadence range.
 
 
-mesh models sensor cadence-set-unack <SensorID> <FastPerDiv> <MinInt> <DltType> <DltUp> <DltDown> <CadInside> <RngLow> <RngHigh>
+mesh models sensor cadence-set-unack <sensor_id> <fast_period_div> <min_int> <delta_type> <delta_up> <delta_down> <cadence_inside> <range_low> <range_high>
    Set the cadence for a sensor on the server without waiting for a response.
 
-   * ``SensorID`` - Selects the sensor for which to get the configured cadence.
-   * ``FastPerDiv`` - Divisor for computing fast cadence. Fast period is publish_period / (1 << FastPerDiv).
-   * ``MinInt`` - Minimum publish interval in fast region. Interval is never lower than 1 << MinInt.
-   * ``DltType`` - Sets the type of delta triggering. 0 = value-based threshold. 1 = percentage-based threshold.
-   * ``DltUp`` - Minimum positive delta which triggers publication.
-   * ``DltDown`` - Minimum negative delta which triggers publication.
-   * ``CadInside`` - Sets the cadence used inside the range. 0 = normal cadence inside, fast outside. 1 = fast cadence inside, normal outside.
-   * ``RngLow`` - Lower bound of the cadence range.
-   * ``RngHigh`` - Upper bound of the cadence range.
+   * ``sensor_id`` - Selects the sensor for which to get the configured cadence.
+   * ``fast_period_div`` - Divisor for computing fast cadence. Fast period is publish_period / (1 << fast_period_div).
+   * ``min_int`` - Minimum publish interval in fast region. Interval is never lower than 1 << min_int.
+   * ``delta_type`` - Sets the type of delta triggering. 0 = value-based threshold. 1 = percentage-based threshold.
+   * ``delta_up`` - Minimum positive delta which triggers publication.
+   * ``delta_down`` - Minimum negative delta which triggers publication.
+   * ``cadence_inside`` - Sets the cadence used inside the range. 0 = normal cadence inside, fast outside. 1 = fast cadence inside, normal outside.
+   * ``range_low`` - Lower bound of the cadence range.
+   * ``range_high`` - Upper bound of the cadence range.
 
 
-mesh models sensor settings-get <SensorID>
+mesh models sensor settings-get <sensor_id>
    Get the available settings for a sensor on the server.
    This will get a maximum number of settings specified by :kconfig:option:`CONFIG_BT_MESH_SHELL_SENSOR_CLI_MAX_SETTINGS`.
 
-   * ``SensorID`` - Selects the sensor for which to get the available settings.
+   * ``sensor_id`` - Selects the sensor for which to get the available settings.
 
 
-mesh models sensor setting-get <SensorID> <SettingID>
+mesh models sensor setting-get <sensor_id> <setting_id>
    Get the value of a setting for a sensor on the server.
 
-   * ``SensorID`` - Selects the sensor for which to get the setting value.
-   * ``SettingID`` - Selects the setting to get.
+   * ``sensor_id`` - Selects the sensor for which to get the setting value.
+   * ``setting_id`` - Selects the setting to get.
 
 
-mesh models sensor setting-set <SensorID> <SettingID> <Value>
+mesh models sensor setting-set <sensor_id> <setting_id> <value>
    Set the value of a setting for a sensor on the server and wait for a response.
 
-   * ``SensorID`` - Selects the sensor for which to set the setting value.
-   * ``SettingID`` - Selects the setting to set.
-   * ``Value`` - The new value of the setting.
+   * ``sensor_id`` - Selects the sensor for which to set the setting value.
+   * ``setting_id`` - Selects the setting to set.
+   * ``value`` - The new value of the setting.
 
 
-mesh models sensor setting-set-unack <SensorID> <SettingID> <Value>
+mesh models sensor setting-set-unack <sensor_id> <setting_id> <value>
    Set the value of a setting for a sensor on the server without waiting for a response.
 
-   * ``SensorID`` - Selects the sensor for which to set the setting value.
-   * ``SettingID`` - Selects the setting to set.
-   * ``Value`` - The new value of the setting.
+   * ``sensor_id`` - Selects the sensor for which to set the setting value.
+   * ``setting_id`` - Selects the setting to set.
+   * ``value`` - The new value of the setting.
 
 
-mesh models sensor get [SensorID]
+mesh models sensor get [sensor_id]
    Get the sensor value for one or all of the sensors on the server.
    This will get a maximum number of sensor values specified by :kconfig:option:`CONFIG_BT_MESH_SHELL_SENSOR_CLI_MAX_SENSORS`.
 
-   * ``SensorID`` - If present, selects the sensor for which to get the sensor value.
+   * ``sensor_id`` - If present, selects the sensor for which to get the sensor value.
 
 
-mesh models sensor series-entry get <SensorID> <Column>
+mesh models sensor series-entry get <sensor_id> <column>
    Get the value of a column for a sensor on the server.
 
-   * ``SensorID`` - Selects the sensor for which to get the entry value.
-   * ``Column`` - Start value of the column for which to get the entry value.
+   * ``sensor_id`` - Selects the sensor for which to get the entry value.
+   * ``column`` - Start value of the column for which to get the entry value.
 
 
-mesh models sensor series-entries-get <SensorID> [<RngStart> <RngEnd>]
+mesh models sensor series-entries-get <sensor_id> [range_start range_end]
    Get the entries for all columns, or a specified range of columns, for a sensor on the server.
    This will get a maximum number of entries specified by :kconfig:option:`CONFIG_BT_MESH_SHELL_SENSOR_CLI_MAX_COLUMNS`.
 
-   * ``SensorID`` - Selects the sensor for which to get the entries.
-   * ``RngStart`` - If present, selects the start of the column range to get.
-   * ``RngEnd`` - If present, selects the end of the column range to get. If ``RngStart`` is present, this must also be present.
+   * ``sensor_id`` - Selects the sensor for which to get the entries.
+   * ``range_start`` - If present, selects the start of the column range to get.
+   * ``range_end`` - If present, selects the end of the column range to get. If ``range_start`` is present, this must also be present.
 
 
 API documentation
