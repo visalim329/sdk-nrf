@@ -1,181 +1,80 @@
-/*
+/**
  * Copyright (c) 2022 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
 
 /** @file
- * @brief SR coexistence sample
+ * @brief SR coexistence sample test bench
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(coex, CONFIG_LOG_DEFAULT_LEVEL);
+/*#include "common.h"*/
+#include "main.h"
 
 #include <nrfx_clock.h>
-#include <zephyr/kernel.h>
-#include <zephyr/init.h>
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/shell/shell_uart.h>
+#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
+#include "zephyr_fmac_main.h"
+#endif
 
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/net/zperf.h>
-#include <zephyr/net/net_if.h>
-#include <zephyr/net/wifi_mgmt.h>
-#include <zephyr/net/net_event.h>
-#include <zephyr/net/socket.h>
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
-/* For net_sprint_ll_addr_buf */
-#include "net_private.h"
-
-#include <zephyr_coex.h>
-
-#include "bt_throughput_test.h"
-
-#define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | \
-				NET_EVENT_WIFI_DISCONNECT_RESULT)
-
-#define MAX_SSID_LEN 32
-#define WIFI_CONNECTION_TIMEOUT 30
-
-static struct sockaddr_in in4_addr_my = {
-	.sin_family = AF_INET,
-	.sin_port = htons(CONFIG_NET_CONFIG_PEER_IPV4_PORT),
-};
-
-static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
-static struct net_mgmt_event_callback net_addr_mgmt_cb;
-
-static struct {
-	uint8_t connected :1;
-	uint8_t disconnect_requested: 1;
-	uint8_t _unused : 6;
-} context;
-
-K_SEM_DEFINE(wait_for_next, 0, 1);
-K_SEM_DEFINE(udp_callback, 0, 1);
-
-static void run_bt_benchmark(void);
-
-K_THREAD_DEFINE(run_bt_traffic,
-		CONFIG_WIFI_THREAD_STACK_SIZE,
-		run_bt_benchmark,
-		NULL,
-		NULL,
-		NULL,
-		CONFIG_WIFI_THREAD_PRIORITY,
-		0,
-		K_TICKS_FOREVER);
-
-struct wifi_iface_status status = { 0 };
-
-static int cmd_wifi_status(void)
+#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
+void print_test_params_info(bool test_wlan, bool test_ble,
+				bool antenna_mode, bool ble_role, bool wifi_coex_enable,
+				bool ble_coex_enable, bool coex_hardware_enable)
 {
-	struct net_if *iface = net_if_get_default();
-
-	if (net_mgmt(NET_REQUEST_WIFI_IFACE_STATUS, iface, &status,
-				sizeof(struct wifi_iface_status))) {
-		LOG_INF("Status request failed\n");
-
-		return -ENOEXEC;
-	}
-
-	LOG_INF("Status: successful\n");
-	LOG_INF("==================\n");
-	LOG_INF("State: %s\n", wifi_state_txt(status.state));
-
-	if (status.state >= WIFI_STATE_ASSOCIATED) {
-		uint8_t mac_string_buf[sizeof("xx:xx:xx:xx:xx:xx")];
-
-		LOG_INF("Interface Mode: %s\n",
-		       wifi_mode_txt(status.iface_mode));
-		LOG_INF("Link Mode: %s\n",
-		       wifi_link_mode_txt(status.link_mode));
-		LOG_INF("SSID: %-32s\n", status.ssid);
-		LOG_INF("BSSID: %s\n",
-		       net_sprint_ll_addr_buf(
-				status.bssid, WIFI_MAC_ADDR_LEN,
-				mac_string_buf, sizeof(mac_string_buf)));
-		LOG_INF("Band: %s\n", wifi_band_txt(status.band));
-		LOG_INF("Channel: %d\n", status.channel);
-		LOG_INF("Security: %s\n", wifi_security_txt(status.security));
-		LOG_INF("MFP: %s\n", wifi_mfp_txt(status.mfp));
-		LOG_INF("RSSI: %d\n", status.rssi);
-	}
-
-	return 0;
-}
-
-static void handle_wifi_connect_result(struct net_mgmt_event_callback *cb)
-{
-	const struct wifi_status *status =
-		(const struct wifi_status *) cb->info;
-
-	if (status->status) {
-		LOG_ERR("Connection request failed (%d)", status->status);
+	if (test_wlan && test_ble) {
+		if (coex_hardware_enable) {
+			LOG_INF("Running WLAN and BLE tests with coex hardware enable");
+		} else {
+			LOG_INF("Running WLAN and BLE tests with coex hardware disable");
+		}
 	} else {
-		LOG_INF("Connected");
-		context.connected = true;
+		if (test_wlan) {
+			LOG_INF("Running WLAN only test");
+		} else {
+			LOG_INF("Running BLE only test");
+		}
 	}
-
-	cmd_wifi_status();
-	k_sem_give(&wait_for_next);
-}
-
-static void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb)
-{
-	const struct wifi_status *status =
-		(const struct wifi_status *) cb->info;
-
-	if (context.disconnect_requested) {
-		LOG_INF("Disconnection request %s (%d)",
-			 status->status ? "failed" : "done",
-					status->status);
-		context.disconnect_requested = false;
+	if (antenna_mode) {
+		LOG_INF("Antenna mode : Separate antennas");
 	} else {
-		LOG_INF("Disconnected");
-		context.connected = false;
+		LOG_INF("Antenna mode : Shared antennas");
 	}
 
-	cmd_wifi_status();
-}
+	if (ble_role) {
+		LOG_INF("BLE role : Central");
+	} else {
+		LOG_INF("BLE role : Peripheral");
+	}
 
-static void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				     uint32_t mgmt_event, struct net_if *iface)
-{
-	switch (mgmt_event) {
-	case NET_EVENT_WIFI_CONNECT_RESULT:
-		handle_wifi_connect_result(cb);
-		break;
-	case NET_EVENT_WIFI_DISCONNECT_RESULT:
-		handle_wifi_disconnect_result(cb);
-		break;
-	default:
-		break;
+	if (wifi_coex_enable) {
+		LOG_INF("WLAN posts requests to PTA");
+	} else {
+		LOG_INF("WLAN doesn't post requests to PTA");
+	}
+
+	if (ble_coex_enable) {
+		LOG_INF("BLE posts requests to PTA");
+	} else {
+		LOG_INF("BLE doesn't post requests to PTA");
+	}
+	if (IS_ENABLED(CONFIG_RPU_ENABLE)) {
+		LOG_INF("RPU enabled");
+	} else {
+		LOG_INF("RPU disabled");
 	}
 }
 
-static void print_dhcp_ip(struct net_mgmt_event_callback *cb)
-{
-	/* Get DHCP info from struct net_if_dhcpv4 and print */
-	const struct net_if_dhcpv4 *dhcpv4 = cb->info;
-	const struct in_addr *addr = &dhcpv4->requested_ip;
-	char dhcp_info[128];
 
-	net_addr_ntop(AF_INET, addr, dhcp_info, sizeof(dhcp_info));
-
-	LOG_INF("IP address: %s", dhcp_info);
-	k_sem_give(&wait_for_next);
-}
-
-static void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
+void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 				    uint32_t mgmt_event, struct net_if *iface)
 {
 	switch (mgmt_event) {
@@ -187,187 +86,70 @@ static void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 	}
 }
 
-static int __wifi_args_to_params(struct wifi_connect_req_params *params)
+void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
+				uint32_t mgmt_event, struct net_if *iface)
 {
-	params->timeout = SYS_FOREVER_MS;
+	const struct device *dev = iface->if_dev->dev;
+	struct wifi_nrf_vif_ctx_zep *vif_ctx_zep = NULL;
 
-	/* SSID */
-	params->ssid = CONFIG_STA_SAMPLE_SSID;
-	params->ssid_length = strlen(params->ssid);
+	vif_ctx_zep = dev->data;
 
-#if defined(CONFIG_STA_KEY_MGMT_WPA2)
-	params->security = 1;
-#elif defined(CONFIG_STA_KEY_MGMT_WPA2_256)
-	params->security = 2;
-#elif defined(CONFIG_STA_KEY_MGMT_WPA3)
-	params->security = 3;
-#else
-	params->security = 0;
-#endif
-
-#if !defined(CONFIG_STA_KEY_MGMT_NONE)
-	params->psk = CONFIG_STA_SAMPLE_PASSWORD;
-	params->psk_length = strlen(params->psk);
-#endif
-	params->channel = WIFI_CHANNEL_ANY;
-
-	/* MFP (optional) */
-	params->mfp = WIFI_MFP_OPTIONAL;
-
-	return 0;
-}
-
-static int wifi_connect(void)
-{
-	struct net_if *iface = net_if_get_default();
-	static struct wifi_connect_req_params cnx_params;
-
-	__wifi_args_to_params(&cnx_params);
-
-	if (net_mgmt(NET_REQUEST_WIFI_CONNECT, iface,
-		     &cnx_params, sizeof(struct wifi_connect_req_params))) {
-		LOG_ERR("Connection request failed");
-
-		return -ENOEXEC;
-	}
-
-	LOG_INF("Connection requested");
-
-	return 0;
-}
-
-static int wifi_disconnect(void)
-{
-	struct net_if *iface = net_if_get_default();
-	int status;
-
-	context.disconnect_requested = true;
-
-	status = net_mgmt(NET_REQUEST_WIFI_DISCONNECT, iface, NULL, 0);
-
-	if (status) {
-		context.disconnect_requested = false;
-
-		if (status == -EALREADY) {
-			LOG_INF("Already disconnected");
-		} else {
-			LOG_ERR("Disconnect request failed");
-			return -ENOEXEC;
-		}
-	} else {
-		LOG_INF("Disconnect requested");
-	}
-
-	return 0;
-}
-
-static int parse_ipv4_addr(char *host, struct sockaddr_in *addr)
-{
-	int ret;
-
-	if (!host) {
-		return -EINVAL;
-	}
-
-	ret = net_addr_pton(AF_INET, host, &addr->sin_addr);
-	if (ret < 0) {
-		LOG_ERR("Invalid IPv4 address %s\n", host);
-		return -EINVAL;
-	}
-
-	LOG_INF("IPv4 address %s", host);
-
-	return 0;
-}
-
-int wait_for_next_event(const char *event_name, int timeout)
-{
-	int wait_result;
-
-	if (event_name) {
-		LOG_INF("Waiting for %s", event_name);
-	}
-
-	wait_result = k_sem_take(&wait_for_next, K_SECONDS(timeout));
-	if (wait_result) {
-		LOG_ERR("Timeout waiting for %s -> %d", event_name, wait_result);
-		return -1;
-	}
-
-	LOG_INF("Got %s", event_name);
-	k_sem_reset(&wait_for_next);
-
-	return 0;
-}
-
-static void udp_upload_results_cb(enum zperf_status status,
-			  struct zperf_results *result,
-			  void *user_data)
-{
-	unsigned int client_rate_in_kbps;
-
-	switch (status) {
-	case ZPERF_SESSION_STARTED:
-		LOG_INF("New UDP session started");
+	switch (mgmt_event) {
+	case NET_EVENT_WIFI_CONNECT_RESULT:
+		handle_wifi_connect_result(cb);
 		break;
-	case ZPERF_SESSION_FINISHED:
-		LOG_INF("Wi-Fi benchmark: Upload completed!");
-		if (result->client_time_in_us != 0U) {
-			client_rate_in_kbps = (uint32_t)
-				(((uint64_t)result->nb_packets_sent *
-				  (uint64_t)result->packet_size * (uint64_t)8 *
-				  (uint64_t)USEC_PER_SEC) /
-				 ((uint64_t)result->client_time_in_us * 1024U));
-		} else {
-			client_rate_in_kbps = 0U;
-		}
-		/* print results */
-		LOG_INF("Upload results:");
-		LOG_INF("%u bytes in %u ms",
-				(result->nb_packets_sent * result->packet_size),
-				(result->client_time_in_us / USEC_PER_MSEC));
-		LOG_INF("%u packets sent", result->nb_packets_sent);
-		LOG_INF("%u packets lost", result->nb_packets_lost);
-		LOG_INF("%u packets received", result->nb_packets_rcvd);
-		k_sem_give(&udp_callback);
+	case NET_EVENT_WIFI_DISCONNECT_RESULT:
+		handle_wifi_disconnect_result(cb);
 		break;
-	case ZPERF_SESSION_ERROR:
-		LOG_ERR("UDP session error");
+	case NET_EVENT_WIFI_SCAN_RESULT:
+		vif_ctx_zep->scan_in_progress = 0;
+		handle_wifi_scan_result(cb);
 		break;
-	}
-}
-
-static void run_bt_benchmark(void)
-{
-	bt_throughput_test_run();
-}
-
-enum nrf_wifi_pta_wlan_op_band wifi_mgmt_to_pta_band(enum wifi_frequency_bands band)
-{
-	switch (band) {
-	case WIFI_FREQ_BAND_2_4_GHZ:
-		return NRF_WIFI_PTA_WLAN_OP_BAND_2_4_GHZ;
-	case WIFI_FREQ_BAND_5_GHZ:
-		return NRF_WIFI_PTA_WLAN_OP_BAND_5_GHZ;
+	case NET_EVENT_WIFI_SCAN_DONE:
+		handle_wifi_scan_done(cb);
+		break;
 	default:
-		return NRF_WIFI_PTA_WLAN_OP_BAND_NONE;
+		break;
 	}
 }
+#endif
 
 int main(void)
 {
+
+#if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
+	#ifdef BLE_PEER_THROUGHPUT_TEST
+		LOG_INF("BLE peer throughput test");
+	#else
+		LOG_INF("BLE peer connection-central test");
+	#endif
+	ble_peer_tp_conn();
+#endif
+
+#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
+
 	int ret = 0;
+	bool wifi_coex_enable = IS_ENABLED(CONFIG_WIFI_COEX_ENABLE);
+	bool ble_coex_enable = IS_ENABLED(CONFIG_MPSL_CX);
+	bool coex_hardware_enable = IS_ENABLED(CONFIG_COEX_HARDWARE_ENABLE);
+	bool antenna_mode = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
+	bool ble_role = IS_ENABLED(CONFIG_COEX_BT_CENTRAL);
+	bool wlan_role = IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER);
+
 	bool test_wlan = IS_ENABLED(CONFIG_TEST_TYPE_WLAN);
 	bool test_ble = IS_ENABLED(CONFIG_TEST_TYPE_BLE);
-#ifdef CONFIG_NRF700X_BT_COEX
-	enum nrf_wifi_pta_wlan_op_band wlan_band;
-	bool separate_antennas = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
-#endif /* CONFIG_NRF700X_BT_COEX */
+
+	bool wifi_connected_scan = 
+			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
+			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) ||
+			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
+			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH);
+
 #if !defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP) && !defined(CONFIG_COEX_SEP_ANTENNAS)
 	BUILD_ASSERT("Shared antenna support is not available with nRF7002 shields");
 #endif
 
-	memset(&context, 0, sizeof(context));
+	memset_context();
 
 	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb,
 				wifi_mgmt_event_handler,
@@ -385,127 +167,340 @@ int main(void)
 	nrfx_clock_divider_set(NRF_CLOCK_DOMAIN_HFCLK, NRF_CLOCK_HFCLK_DIV_1);
 #endif
 
-	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
+	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD,
+				SystemCoreClock/MHZ(1));
 	k_sleep(K_SECONDS(1));
 
-	LOG_INF("test_wlan = %d and test_ble = %d\n", test_wlan, test_ble);
+	print_test_params_info(test_wlan, test_ble, antenna_mode, ble_role,
+				wifi_coex_enable, ble_coex_enable, coex_hardware_enable);
 
 #ifdef CONFIG_NRF700X_BT_COEX
 	/* Configure SR side (nRF5340 side) switch in nRF7002 DK */
-	ret = nrf_wifi_config_sr_switch(separate_antennas);
+	LOG_INF("Configure SR side (nRF5340 side) switch");
+	bool external_antenna = 1;
+	ret = nrf_wifi_config_sr_switch(antenna_mode, external_antenna);
 	if (ret != 0) {
-		LOG_ERR("Unable to configure SR side switch: %d\n", ret);
+		LOG_ERR("Unable to configure SR side switch: %d", ret);
+		goto err;
+	}
+
+	/* Configure Coexistence Hardware non-PTA registers */
+	LOG_INF("Configuring non-PTA registers.");
+	ret = nrf_wifi_coex_config_non_pta(antenna_mode);
+	if (ret != 0) {
+		LOG_ERR("Configuring non-PTA registers of CoexHardware FAIL");
 		goto err;
 	}
 #endif /* CONFIG_NRF700X_BT_COEX */
 
-	if (test_wlan) {
-		/* Wi-Fi connection */
-		wifi_connect();
+	/**if (!(IS_ENABLED(CONFIG_RPU_ENABLE))) {
+	 *	LOG_INF("RPU disabled");
+	 *	rpu_disable();
+	 *}
+	 */
 
-		if (wait_for_next_event("Wi-Fi Connection", WIFI_CONNECTION_TIMEOUT)) {
-			goto err;
-		}
-
-		if (wait_for_next_event("Wi-Fi DHCP", 10)) {
-			goto err;
-		}
-
-#ifdef CONFIG_NRF700X_BT_COEX
-		/* Configure Coexistence Hardware */
-		LOG_INF("\n");
-		LOG_INF("Configuring non-PTA registers.\n");
-		ret = nrf_wifi_coex_config_non_pta(separate_antennas);
-		if (ret != 0) {
-			LOG_ERR("Configuring non-PTA registers of CoexHardware FAIL\n");
-			goto err;
-		}
-
-		wlan_band = wifi_mgmt_to_pta_band(status.band);
-		if (wlan_band == NRF_WIFI_PTA_WLAN_OP_BAND_NONE) {
-			LOG_ERR("Invalid Wi-Fi band: %d\n", wlan_band);
-			goto err;
-		}
-
-		LOG_INF("Configuring PTA registers for %s\n", wifi_band_txt(status.band));
-		ret = nrf_wifi_coex_config_pta(wlan_band, separate_antennas);
-		if (ret != 0) {
-			LOG_ERR("Failed to configure PTA coex hardware: %d\n", ret);
-			goto err;
-		}
-#endif /* CONFIG_NRF700X_BT_COEX */
-	}
-
-	if (test_ble) {
-		/* BLE connection */
-		LOG_INF("Configure BLE throughput test\n");
-		ret = bt_throughput_test_init();
-		if (ret != 0) {
-			LOG_ERR("Failed to configure BLE throughput test: %d\n", ret);
-			goto err;
-		}
-	}
-
-	if (test_wlan) {
-		struct zperf_upload_params params;
-
-		/* Start Wi-Fi traffic */
-		LOG_INF("Starting Wi-Fi benchmark: Zperf client");
-		params.duration_ms = CONFIG_WIFI_TEST_DURATION;
-		params.rate_kbps = CONFIG_WIFI_ZPERF_RATE;
-		params.packet_size = CONFIG_WIFI_ZPERF_PKT_SIZE;
-		parse_ipv4_addr(CONFIG_NET_CONFIG_PEER_IPV4_ADDR,
-			&in4_addr_my);
-		net_sprint_ipv4_addr(&in4_addr_my.sin_addr);
-
-		memcpy(&params.peer_addr, &in4_addr_my, sizeof(in4_addr_my));
-
-		ret = zperf_udp_upload_async(&params, udp_upload_results_cb, NULL);
-		if (ret != 0) {
-			LOG_ERR("Failed to start Wi-Fi benchmark: %d\n", ret);
-			goto err;
-		}
-	}
-
-	if (test_ble) {
-		/*  In case BLE is peripheral, skip running BLE traffic */
-		if (IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
-			/* Start BLE traffic */
-			k_thread_start(run_bt_traffic);
-		}
-	}
-
-	if (test_wlan) {
-		/* Run Wi-Fi traffic */
-		if (k_sem_take(&udp_callback, K_FOREVER) != 0) {
-			LOG_ERR("Results are not ready");
+	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL)) {
+		if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+			LOG_INF("Test case: wifi_scan_ble_conn_central");
 		} else {
-			LOG_INF("UDP SESSION FINISHED");
+			LOG_INF("Test case: wifi_conn_scan_ble_conn_central");
+		}
+		
+		ret = wifi_scan_ble_conn_central(wifi_coex_enable, antenna_mode, test_ble,
+				test_wlan, ble_role, wlan_role, coex_hardware_enable,
+				wifi_connected_scan);
+		if (ret != 0) {
+			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+				LOG_ERR("Running wifi_scan_ble_conn_central fail");
+			} else {
+				LOG_ERR("Running wifi_conn_scan_ble_conn_central fail");
+			}
+			goto err;
 		}
 	}
 
-	if (test_ble) {
-		/*  In case BLE is peripheral, skip running BLE traffic */
-		if (IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
-			/* Run BLE traffic */
-			k_thread_join(run_bt_traffic, K_FOREVER);
+	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH)) {			
+		if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+			LOG_INF("Test case: wifi_scan_ble_conn_peripheral");
+		} else {
+			LOG_INF("Test case: wifi_conn_scan_ble_conn_peripheral");
+		}
+		ret = wifi_scan_ble_conn_peripheral(wifi_coex_enable, antenna_mode, test_ble,
+				test_wlan, ble_role, wlan_role, coex_hardware_enable,
+				wifi_connected_scan);
+		if (ret != 0) {
+			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) {
+				LOG_ERR("Running wifi_scan_ble_conn_peripheral fail");
+			} else {
+				LOG_ERR("Running wifi_conn_scan_ble_conn_peripheral fail");
+			}
+			goto err;
 		}
 	}
 
-	if (test_wlan) {
-		/* Wi-Fi disconnection */
-		LOG_INF("Disconnecting Wi-Fi\n");
-		wifi_disconnect();
+	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL)) {
+		if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+			LOG_INF("Test case: wifi_scan_ble_tput_central");
+		} else {
+			LOG_INF("Test case: wifi_conn_scan_ble_tput_central");
+		}
+		ret = wifi_scan_ble_tput_central(wifi_coex_enable, antenna_mode,
+				test_ble, test_wlan, ble_role, wlan_role, coex_hardware_enable,
+				wifi_connected_scan);
+		if (ret != 0) {
+			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+				LOG_ERR("Running wifi_scan_ble_tput_central fail");
+			} else {
+				LOG_ERR("Running wifi_conn_scan_ble_tput_central fail");
+			}
+			goto err;
+		}
 	}
 
-	if (test_ble) {
-		/* BLE disconnection */
-		LOG_INF("Disconnecting BLE\n");
-		bt_throughput_test_exit();
+	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)) {
+		if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+			LOG_INF("Test case: wifi_scan_ble_tput_peripheral");
+		} else {
+			LOG_INF("Test case: wifi_conn_scan_ble_tput_peripheral");
+		}
+		ret = wifi_scan_ble_tput_peripheral(wifi_coex_enable, antenna_mode,
+				test_ble, test_wlan, ble_role, wlan_role, coex_hardware_enable,
+				wifi_connected_scan);
+		if (ret != 0) {			
+			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) {
+				LOG_ERR("Running wifi_scan_ble_tput_peripheral fail");
+			} else {
+				LOG_ERR("Running wifi_conn_scan_ble_tput_peripheral fail");
+			}
+			goto err;
+		}
 	}
-	LOG_INF("\nCoexistence test complete\n");
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL)) {
+		LOG_INF("Test case: wifi_con_ble_con_central");
+		ret = wifi_con_ble_con_central(test_wlan, wifi_coex_enable, test_ble, ble_role,
+				wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_con_central fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH)) {
+		LOG_INF("Test case: wifi_con_ble_con_peripheral");
+		ret = wifi_con_ble_con_peripheral(test_wlan, wifi_coex_enable, test_ble,
+				ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_con_peripheral fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL)) {
+		LOG_INF("Test case: wifi_con_ble_tput_central");
+		ret = wifi_con_ble_tput_central(test_wlan, wifi_coex_enable, antenna_mode,
+				test_ble, ble_role, wlan_role, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_tput_central fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH)) {
+		LOG_INF("Test case: wifi_con_ble_tput_peripheral");
+		ret = wifi_con_ble_tput_peripheral(test_wlan, wifi_coex_enable, antenna_mode,
+				test_ble, ble_role, wlan_role, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_tput_peripheral fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_CON_CENTRAL)) {
+		LOG_INF("Test case: wifi_tput_client_ble_con_central");
+		ret = wifi_tput_client_ble_con_central(test_wlan, wifi_coex_enable, test_ble,
+				ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_tput_client_ble_con_central fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_CON_PERIPH)) {
+		LOG_INF("Test case: wifi_tput_client_ble_con_peripheral");
+		ret = wifi_tput_client_ble_con_peripheral(test_wlan, wifi_coex_enable, test_ble,
+				ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_tput_client_ble_con_peripheral fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_CON_CENTRAL)) {
+		LOG_INF("Test case: wifi_tput_server_ble_con_central");
+		ret = wifi_tput_server_ble_con_central(test_wlan, wifi_coex_enable, test_ble,
+				ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_tput_server_ble_con_central fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_CON_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_PERIPH)) {
+		if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_CON_PERIPH)) {
+			LOG_INF("Test case: wifi_tput_server_ble_con_peripheral");
+		} else {
+			LOG_INF("Test case: wifi_tput_tcp_server_ble_con_peripheral");
+		}
+		
+		ret = wifi_tput_server_ble_con_peripheral(test_wlan, wifi_coex_enable, test_ble,
+				ble_role,
+				wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {			
+			if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_CON_PERIPH)) {
+				LOG_ERR("Running wifi_tput_server_ble_con_peripheral fail");
+			} else {
+				LOG_ERR("Running wifi_tput_tcp_server_ble_con_peripheral fail");
+			}
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL)) {
+		if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_CENTRAL)) {
+			LOG_INF(" Test case: wifi_tput_client_ble_tput_central");
+		} else {
+			LOG_INF(" Test case: wifi_tput_tcp_client_ble_tput_central");
+		}
+		if (!IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER) && IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {			
+			ret = wifi_tput_client_ble_tput_central(test_wlan, wifi_coex_enable,
+					antenna_mode, test_ble, ble_role,
+			wlan_role, coex_hardware_enable);
+			if (ret != 0) {				
+				if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_CENTRAL)) {
+					LOG_ERR("Running wifi_tput_client_ble_tput_central fail");
+				} else {
+					LOG_ERR("Running wifi_tput_tcp_client_ble_tput_central fail");
+				}
+				goto err;
+			}
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH)) {
+		if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_PERIPH)) {
+			LOG_INF(" Test case: wifi_tput_client_ble_tput_peripheral");
+		} else {
+			LOG_INF(" Test case: wifi_tput_tcp_client_ble_tput_peripheral");
+		}
+		if (!IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER) && !IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {			
+			ret = wifi_tput_client_ble_tput_peripheral(test_wlan, wifi_coex_enable,
+			antenna_mode, test_ble, ble_role, wlan_role, coex_hardware_enable);
+			if (ret != 0) {				
+				if (IS_ENABLED(CONFIG_WIFI_TP_CLIENT_BLE_TP_PERIPH)) {
+					LOG_ERR("Running wifi_tput_client_ble_tput_peripheral fail");
+				} else {
+					LOG_ERR("Running wifi_tput_tcp_client_ble_tput_peripheral fail");
+				}
+				goto err;
+			}
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL)) {
+		if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_CENTRAL)) {
+			LOG_INF(" Test case: wifi_tput_server_ble_tput_central");
+		} else {
+			LOG_INF(" Test case: wifi_tput_tcp_server_ble_tput_central");
+		}
+		if (IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER) && IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {			
+			ret = wifi_tput_server_ble_tput_central(test_wlan, wifi_coex_enable,
+				antenna_mode, test_ble, ble_role, wlan_role, coex_hardware_enable);
+			if (ret != 0) {				
+				if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_CENTRAL)) {
+					LOG_ERR("Running wifi_tput_server_ble_tput_central fail");
+				} else {
+					LOG_ERR("Running wifi_tput_tcp_server_ble_tput_central fail");
+				}
+				goto err;
+			}
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_PERIPH)) {
+		if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_PERIPH)) {
+			LOG_INF(" Test case: wifi_tput_server_ble_tput_peripheral");
+		} else {
+			LOG_INF(" Test case: wifi_tput_tcp_server_ble_tput_peripheral");
+		}
+		if (IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER) && !IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {			
+			ret = wifi_tput_server_ble_tput_peripheral(test_wlan, wifi_coex_enable,
+					antenna_mode, test_ble, ble_role, wlan_role,
+					coex_hardware_enable);
+			if (ret != 0) {				
+				if (IS_ENABLED(CONFIG_WIFI_TP_SERVER_BLE_TP_PERIPH)) {
+					LOG_ERR("Running wifi_tput_server_ble_tput_peripheral fail");
+				} else {
+					LOG_ERR("Running wifi_tput_tcp_server_ble_tput_peripheral fail");
+				}
+				goto err;
+			}
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_REGR)) {
+		LOG_INF("Test case: wifi_con_ble_con_central_regr");
+		ret = wifi_con_ble_con_central_regr(test_wlan, wifi_coex_enable,
+				test_ble, ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_con_central_regr fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_REGR)) {
+		LOG_INF("Test case: wifi_con_ble_con_peripheral_regr");
+		ret = wifi_con_ble_con_peripheral_regr(test_wlan, wifi_coex_enable,
+				test_ble, ble_role, wlan_role, antenna_mode, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_con_peripheral_regr fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL_REGR)) {
+		LOG_INF("Test case: wifi_con_ble_tput_central_regr");
+		ret = wifi_con_ble_tput_central_regr(test_wlan, wifi_coex_enable,
+				antenna_mode, test_ble, ble_role, wlan_role, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_tput_central_regr fail");
+			goto err;
+		}
+	}
+
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_REGR)) {
+		LOG_INF("Test case: wifi_con_ble_tput_peripheral_regr");
+		ret = wifi_con_ble_tput_peripheral_regr(test_wlan, wifi_coex_enable, antenna_mode,
+				test_ble, ble_role, wlan_role, coex_hardware_enable);
+		if (ret != 0) {
+			LOG_ERR("Running wifi_con_ble_tput_peripheral_regr fail");
+			goto err;
+		}
+	}
 
 	return 0;
+
 err:
+	LOG_INF("Returning with error");
 	return ret;
+#endif
 }

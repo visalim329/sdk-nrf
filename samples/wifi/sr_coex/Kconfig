@@ -42,9 +42,9 @@ config TEST_TYPE_BLE
 	help
 	  Enable BLE
 
-config STA_SAMPLE_SSID
+config STA_SSID
 	string "SSID"
-	default "coex_24"
+	default "wifi_sr_coex_24"
 	help
 	  Specify the SSID to connect
 
@@ -73,7 +73,7 @@ config STA_KEY_MGMT_WPA3
 	  Enable for WPA3 Security
 endchoice
 
-config STA_SAMPLE_PASSWORD
+config STA_PASSWORD
 	string "Passphrase (WPA2) or password (WPA3)"
 	help
 	  Specify the Password to connect
@@ -142,4 +142,33 @@ config COEX_SEP_ANTENNAS
 	bool "Control if the antennas are shared/serparate for BT and WLAN"
 	default y
 
+config WIFI_COEX_ENABLE
+	bool "Indicates if Wi-Fi posts requests to PTA"
+	default y
+
+config RPU_ENABLE
+	bool "Indicates if PRU is enable"
+	default y
+
+config BT_GAP_ADV_FAST_INT_MIN_2
+	int "BT GAP ADV interval min value. Each unit 0.625milliseconds"
+	default 160
+
+config BT_GAP_ADV_FAST_INT_MAX_2
+	int "BT GAP ADV interval max value. Each unit 0.625milliseconds"
+	default 240
+
+config BT_LE_SCAN_INTERVAL
+	int "BT LE Scan interval  value. Each unit is 0.625milliseconds."
+	default 16
+
+config BT_LE_SCAN_WINDOW
+	int "BT LE Scan Window value. Each unit is 0.625milliseconds."
+	default 16
+
+config COEX_HARDWARE_ENABLE
+	bool "Indicates if COEX hardware module enabled"
+	default y
+
+rsource "test/Kconfig"
 endmenu
