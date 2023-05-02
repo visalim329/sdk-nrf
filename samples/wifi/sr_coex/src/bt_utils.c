@@ -209,9 +209,12 @@ static const char *phy2str(uint8_t phy)
 	uint32_t ble_conn_success_cnt;
 	uint32_t ble_conn_fail_cnt;
 	bool ble_periph_connected;
+	bool ble_central_connected;
 
 	uint64_t ble_scan2conn_start_time;
 	int64_t ble_scan2conn_time;
+	uint32_t ble_conn_cnt_regr;
+	uint32_t ble_disconn_cnt_regr;
 
 	static volatile bool data_length_req;
 	static volatile bool test_ready;
@@ -734,7 +737,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	LOG_INF("Conn. interval is %u units", info.le.interval);
 #endif
-
+	ble_conn_cnt_regr++;
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
 				       BT_UUID_THROUGHPUT,
@@ -744,6 +747,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		if (err) {
 			LOG_ERR("Discover failed (err %d)", err);
 		}
+		ble_central_connected = true;
 	} else {
 		/*#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)*/
 		ble_periph_connected = true;
@@ -895,10 +899,12 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 
 	test_ready = false;
 	ble_periph_connected = false;
+	ble_central_connected = false;
 	if (default_conn) {
 		bt_conn_unref(default_conn);
 		default_conn = NULL;
 	}
+	ble_disconn_cnt_regr++;
 }
 #endif
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -1359,7 +1365,6 @@ int bt_throughput_test_exit(void)
 
 
 #if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
-
 void ble_peer_tp_conn(void) /* void main(void) */
 {
 	#if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
@@ -1382,11 +1387,11 @@ void ble_peer_tp_conn(void) /* void main(void) */
 		scan_init();
 
 		#ifdef BLE_PEER_THROUGHPUT_TEST
-			err = bt_throughput_init(&throughput, &throughput_cb);
-			if (err) {
-				LOG_ERR("Throughput service initialization failed.");
-				return;
-			}
+		err = bt_throughput_init(&throughput, &throughput_cb);
+		if (err) {
+			LOG_ERR("Throughput service initialization failed.");
+			return;
+		}
 		#endif
 
 		LOG_INF("");
@@ -1408,8 +1413,8 @@ void ble_peer_tp_conn(void) /* void main(void) */
 static void connected(struct bt_conn *conn, uint8_t hci_err)
 {
 	struct bt_conn_info info = {0};
-	int err;	
-		   
+	int err;
+
 	if (hci_err) {
 		if (hci_err == BT_HCI_ERR_UNKNOWN_CONN_ID) {
 			/* Canceled creating connection */

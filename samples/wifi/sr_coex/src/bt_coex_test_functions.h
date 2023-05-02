@@ -50,13 +50,14 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #define MAX_SSID_LEN 32
 #define WIFI_CONNECTION_TIMEOUT 30
 
-#define PRINT_WIFI_SCAN_RESULT
-#define PRINT_WIFI_CONN_RESULT
+//#define PRINT_WIFI_SCAN_RESULT
+//#define PRINT_WIFI_CONN_RESULT
 #define DEMARCATE_TEST_START
 
 #define HIGHEST_CHANNUM_24G 14
 
 extern bool ble_periph_connected;
+extern bool ble_central_connected;
 uint8_t wait_for_ble_central_run;
 
 static uint32_t wifi_scan_cnt_24g;
@@ -67,9 +68,13 @@ static uint8_t wait_for_wifi_client_start;
 
 extern uint32_t ble_conn_success_cnt;
 extern uint32_t ble_conn_fail_cnt;
+extern uint32_t ble_conn_cnt_regr;
+extern uint32_t ble_disconn_cnt_regr;
 
 static uint32_t wifi_conn_success_cnt;
 static uint32_t wifi_conn_fail_cnt;
+static uint32_t wifi_conn_cnt_regr;
+static uint32_t wifi_disconn_cnt_regr;
 
 static struct sockaddr_in in4_addr_my = {
 	.sin_family = AF_INET,

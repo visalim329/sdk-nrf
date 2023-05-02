@@ -21,45 +21,8 @@
 #define MIN_CONN_INTERVAL   6
 #define MAX_CONN_INTERVAL   3200
 #define SUPERVISION_TIMEOUT 1000
-#if 0
 
-	//------------------------------
-	#include <stddef.h>
-	#include <zephyr/sys/printk.h>
-	#include <zephyr/sys/util.h>
-	#include <zephyr/sys/byteorder.h>
 
-	//#include <zephyr/bluetooth/bluetooth.h>
-	//#include <zephyr/bluetooth/hci.h>
-	#include <zephyr/bluetooth/hci_vs.h>
-
-	//#include <zephyr/bluetooth/conn.h>
-	//#include <zephyr/bluetooth/uuid.h>
-	//#include <zephyr/bluetooth/gatt.h>
-	#include <zephyr/bluetooth/services/hrs.h>
-
-	static struct bt_conn *default_conn;
-	static uint16_t default_conn_handle;
-
-	//static const struct bt_data ad[] = {
-	//	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	//	BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HRS_VAL)),
-	//};
-
-	//#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
-	//#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-	#define DEVICE_BEACON_TXPOWER_NUM  8
-
-	static struct k_thread pwr_thread_data;
-	static K_THREAD_STACK_DEFINE(pwr_thread_stack, 512);
-
-	static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {4, 0, -3, -8,
-								-15, -18, -23, -30};
-	static const struct bt_le_adv_param *param =
-		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
-				0x0020, 0x0020, NULL);
-	//---------------------
-#endif
 #if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
 static struct test_params {
 	struct bt_le_conn_param *conn_param;
@@ -303,120 +266,11 @@ int test_central_cmd(const struct shell *shell, size_t argc,
 	select_role(true);
 	return 0;
 }
-#if 0
-static void read_conn_rssi(uint16_t handle, int8_t *rssi)
-{
-	struct net_buf *buf, *rsp = NULL;
-	struct bt_hci_cp_read_rssi *cp;
-	struct bt_hci_rp_read_rssi *rp;
-
-	int err;
-
-	buf = bt_hci_cmd_create(BT_HCI_OP_READ_RSSI, sizeof(*cp));
-	if (!buf) {
-		printk("Unable to allocate command buffer\n");
-		return;
-	}
-
-	cp = net_buf_add(buf, sizeof(*cp));
-	cp->handle = sys_cpu_to_le16(handle);
-
-	err = bt_hci_cmd_send_sync(BT_HCI_OP_READ_RSSI, buf, &rsp);
-	if (err) {
-		uint8_t reason = rsp ?
-			((struct bt_hci_rp_read_rssi *)rsp->data)->status : 0;
-		printk("Read RSSI err: %d reason 0x%02x\n", err, reason);
-		return;
-	}
-
-	rp = (void *)rsp->data;
-	*rssi = rp->rssi;
-
-	net_buf_unref(rsp);
-}
-
-void modulate_tx_power(void *p1, void *p2, void *p3)
-{
-	int8_t txp_get = 0;
-	uint8_t idx = 0;
-
-	while (1) {
-		if (!default_conn) {
-			printk("Set Tx power level to %d\n", txp[idx]);
-			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV,
-				     0, txp[idx]);
-
-			k_sleep(K_SECONDS(5));
-
-			printk("Get Tx power level -> ");
-			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV,
-				     0, &txp_get);
-			printk("TXP = %d\n", txp_get);
-
-			idx = (idx+1) % DEVICE_BEACON_TXPOWER_NUM;
-		} else {
-			int8_t rssi = 0xFF;
-			int8_t txp_adaptive;
-
-			idx = 0;
-
-			read_conn_rssi(default_conn_handle, &rssi);
-			printk("Connected (%d) - RSSI = %d\n",
-			       default_conn_handle, rssi);
-			if (rssi > -70) {
-				txp_adaptive = -20;
-			} else if (rssi > -90) {
-				txp_adaptive = -12;
-			} else {
-				txp_adaptive = -4;
-			}
-			printk("Adaptive Tx power selected = %d\n",
-			       txp_adaptive);
-			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				     default_conn_handle, txp_adaptive);
-			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				     default_conn_handle, &txp_get);
-			printk("Connection (%d) TXP = %d\n",
-			       default_conn_handle, txp_get);
-
-			k_sleep(K_SECONDS(1));
-		}
-	}
-}
-
-#endif
 
 int test_peripheral_cmd(const struct shell *shell, size_t argc,
 			       char **argv)
 {
 	select_role(false);
-#if 0	
-	////---------------------------------------------------------------------------
-	//int8_t txp_get = 0xFF;
-	//int err;
-	//printk("\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 1\n");
-	//default_conn = NULL;
-	//printk("Starting Dynamic Tx Power Beacon Demo\n");
-	//
-	//printk("Get Tx power level ->");
-	//get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_ADV, 0, &txp_get);
-	//printk("-> default TXP = %d\n", txp_get);
-	//printk("\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 2\n");
-	///* Wait for 5 seconds to give a chance users/testers
-	// * to check that default Tx power is indeed the one
-	// * selected in Kconfig.
-	// */
-	//k_sleep(K_SECONDS(5));
-	//
-	//k_thread_create(&pwr_thread_data, pwr_thread_stack,
-	//		K_THREAD_STACK_SIZEOF(pwr_thread_stack),
-	//		modulate_tx_power, NULL, NULL, NULL,
-	//		K_PRIO_COOP(10),
-	//		0, K_NO_WAIT);
-	//k_thread_name_set(&pwr_thread_data, "DYN TX");
-	//printk("\n$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ 3\n");
-	//---------------------------------------------------------------------------
-#endif	
 	return 0;
 }
 

@@ -406,7 +406,7 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
 	return 0;
 }
 
-int nrf_wifi_config_sr_switch(bool antenna_mode, bool external_antenna)
+int nrf_wifi_config_sr_switch(bool antenna_mode, bool bt_external_antenna)
 {
 	int ret;
 
@@ -421,17 +421,25 @@ int nrf_wifi_config_sr_switch(bool antenna_mode, bool external_antenna)
 		return -1;
 	}
 
-	if (antenna_mode) {
-		//gpio_pin_set_dt(&btrf_switch_spec, 0x0);
-		//LOG_INF("Antenna used: internal. Antenna mode: Separate. GPIO P1.10 set to 0\n");
-	} else {
-		//gpio_pin_set_dt(&btrf_switch_spec, 0x1);
-		//LOG_INF("Antenna used: internal. Antenna mode: Shared. GPIO P1.10 set to 1\n");
-	}
-	//if (external_antenna) {
+	
+	if (bt_external_antenna) {
 		gpio_pin_set_dt(&btrf_switch_spec, 0x1);
-		LOG_INF("Antenna used: external. Independent of antenna mode SHA/SEP, GPIO P1.10 set to 1\n");
-	//}
+		LOG_INF("Antenna used: Enternal.\n");
+		LOG_INF("Antenna mode: Separate/Shared.\n");
+		LOG_INF("GPIO P1.10 set to 1\n");
+	} else {
+		if (antenna_mode) {
+			gpio_pin_set_dt(&btrf_switch_spec, 0x0);
+			LOG_INF("Antenna used: Internal.\n");
+			LOG_INF("Antenna mode: Separate.\n");
+			LOG_INF("GPIO P1.10 set to 0\n");
+		} else {
+			gpio_pin_set_dt(&btrf_switch_spec, 0x1);
+			LOG_INF("Antenna used: Internal.\n");
+			LOG_INF("Antenna mode: Shared.\n");
+			LOG_INF("GPIO P1.10 set to 1\n");
+		}
+	}
 	LOG_DBG("Successfully configured GPIO P1.10\n");
 
 	return 0;

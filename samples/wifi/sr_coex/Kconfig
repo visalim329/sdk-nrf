@@ -80,7 +80,7 @@ config STA_PASSWORD
 
 config NET_CONFIG_PEER_IPV4_ADDR
 	string "Peer IPv4 address"
-	default "192.168.1.253"
+	default "192.168.1.73"
 
 config NET_CONFIG_PEER_IPV4_PORT
 	int "Peer IPv4 port"
@@ -169,6 +169,11 @@ config BT_LE_SCAN_WINDOW
 config COEX_HARDWARE_ENABLE
 	bool "Indicates if COEX hardware module enabled"
 	default y
+
+
+config BT_EXTERNAL_ANTENNA
+	bool "Indicates if external antenna used for BT"
+	default n
 
 rsource "test/Kconfig"
 endmenu

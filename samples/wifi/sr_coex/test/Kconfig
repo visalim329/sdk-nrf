@@ -183,6 +183,18 @@ config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_REGR
 config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_REGR
 	bool "Indicates test is to be run or not"
 	default n
+config BLE_CON_CENTRAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_CON_PERIPHERAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_TP_CENTRAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_TP_PERIPH_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
 
 config BLE_TEST_DURATION_REGR
 	int "test duration in milliseconds"
