@@ -8,8 +8,8 @@
 #define THROUGHPUT_MAIN_H_
 
 
-#define BLE_CONN_CENTRAL_TEST
-//#define BLE_THROUGHPUT_TEST
+//#define BLE_CONN_CENTRAL_TEST
+#define BLE_THROUGHPUT_TEST
 
 /**
  * @brief Run the test

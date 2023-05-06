@@ -5,6 +5,7 @@
 #
 
 menu "Nordic Coex sample - test"
+
 #----------------------------------- system tests
 config WIFI_SCAN_BLE_CON_CENTRAL
 	bool "Indicates test is to be run or not"
@@ -83,6 +84,22 @@ config WIFI_TP_SERVER_BLE_TP_CENTRAL
 	default n
 
 config WIFI_TP_SERVER_BLE_TP_PERIPH
+	bool "Indicates test is to be run or not"
+	default n
+
+config WIFI_TP_TCP_CLIENT_BLE_CON_CENTRAL
+	bool "Indicates test is to be run or not"
+	default n
+
+config WIFI_TP_TCP_CLIENT_BLE_CON_PERIPH
+	bool "Indicates test is to be run or not"
+	default n
+
+config WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL
+	bool "Indicates test is to be run or not"
+	default n
+
+config WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH
 	bool "Indicates test is to be run or not"
 	default n
 
@@ -165,6 +182,18 @@ config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_REGR
 	bool "Indicates test is to be run or not"
 	default n
 config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_REGR
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_CON_CENTRAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_CON_PERIPHERAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_TP_CENTRAL_WIFI_SHUTDOWN
+	bool "Indicates test is to be run or not"
+	default n
+config BLE_TP_PERIPH_WIFI_SHUTDOWN
 	bool "Indicates test is to be run or not"
 	default n
 

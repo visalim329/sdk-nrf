@@ -8,6 +8,7 @@ source "Kconfig.zephyr"
 
 menu "Nordic Coex sample"
 
+
 choice TEST_TYPE
 	prompt "Test type"
 	default TEST_TYPE_WLAN_BLE
@@ -40,7 +41,7 @@ config TEST_TYPE_BLE
 	bool "BLE"
 	default y if TEST_TYPE_BLE_ONLY || TEST_TYPE_WLAN_BLE
 	help
-	  Enable BLE
+	  Enable BLE	
 
 config STA_SSID
 	string "SSID"
@@ -128,11 +129,11 @@ config COEX_WLAN_2PT4G
 
 config WIFI_TEST_DURATION
 	int "test duration in milliseconds"
-	default 60000
+	default 30000
 
 config BLE_TEST_DURATION
 	int "test duration in milliseconds"
-	default 60000
+	default 30000
 
 config COEX_BT_CENTRAL
 	bool "BT device role"

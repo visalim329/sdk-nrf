@@ -12,6 +12,6 @@
  * Comment both to generate hex file for DUT coexistence sample.
  */
 //#define BLE_PEER_THROUGHPUT_TEST
-/*#define BLE_PEER_CONN_CENTRAL_TEST*/
+//#define BLE_PEER_CONN_CENTRAL_TEST
 
 #endif /* COMMON_H_ */

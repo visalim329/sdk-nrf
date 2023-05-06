@@ -46,7 +46,7 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 
 	#define THROUGHPUT_CONFIG_TIMEOUT (20)
 	#define SCAN_CONFIG_TIMEOUT 20
-	#define BLE_CONN_CENTRAL_TEST_DURATION 20000 /* milliseconds*/
+	#define BLE_CONN_CENTRAL_TEST_DURATION 30000 /* milliseconds*/
 
 	#define CONN_LATENCY 0
 	#define SUPERVISION_TIMEOUT 1000
@@ -90,6 +90,40 @@ static const char *phy2str(uint8_t phy)
 }
 
 	#define PRINT_BLE_UPDATES
+	#include <stddef.h>
+	#include <zephyr/sys/printk.h>
+	#include <zephyr/sys/util.h>
+	#include <zephyr/sys/byteorder.h>
+
+	//#include <zephyr/bluetooth/bluetooth.h>
+	//#include <zephyr/bluetooth/hci.h>
+	#include <zephyr/bluetooth/hci_vs.h>
+
+	//#include <zephyr/bluetooth/conn.h>
+	//#include <zephyr/bluetooth/uuid.h>
+	//#include <zephyr/bluetooth/gatt.h>
+	#include <zephyr/bluetooth/services/hrs.h>
+
+	//static struct bt_conn *default_conn;
+	static uint16_t default_conn_handle;
+
+	//static const struct bt_data ad[] = {
+	//	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
+	//	BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HRS_VAL)),
+	//};
+
+	//#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
+	//#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
+	#define DEVICE_BEACON_TXPOWER_NUM  8
+
+	static struct k_thread pwr_thread_data;
+	static K_THREAD_STACK_DEFINE(pwr_thread_stack, 512);
+
+	static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {4, 0, -3, -8,
+								-15, -18, -23, -30};
+	static const struct bt_le_adv_param *param =
+		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
+				0x0020, 0x0020, NULL);
 #endif
 
 #if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
@@ -131,9 +165,12 @@ static const char *phy2str(uint8_t phy)
 	uint32_t ble_conn_success_cnt;
 	uint32_t ble_conn_fail_cnt;
 	bool ble_periph_connected;
+	bool ble_central_connected;
 
 	uint64_t ble_scan2conn_start_time;
 	int64_t ble_scan2conn_time;
+	uint32_t ble_conn_cnt_regr;
+	uint32_t ble_disconn_cnt_regr;
 
 	static volatile bool data_length_req;
 	static volatile bool test_ready;
@@ -224,6 +261,26 @@ void throughput_received(const struct bt_throughput_metrics *met)
 		kb = (met->write_len / 1024);
 		printk("=");
 	}
+}
+
+static uint8_t throughput_read(const struct bt_throughput_metrics *met)
+{
+	LOG_INF("[peer] received %u bytes (%u KB)"
+	       " in %u GATT writes at %u bps",
+	       met->write_len, met->write_len / 1024, met->write_count,
+	       met->write_rate);
+
+	k_sem_give(&throughput_sem);
+
+	return BT_GATT_ITER_STOP;
+}
+
+void throughput_send(const struct bt_throughput_metrics *met)
+{
+	LOG_INF("[local] received %u bytes (%u KB)"
+		" in %u GATT writes at %u bps",
+		met->write_len, met->write_len / 1024,
+		met->write_count, met->write_rate);
 }
 
 int connection_configuration_set_new(const struct shell *shell,
@@ -560,7 +617,7 @@ void exchange_func(struct bt_conn *conn, uint8_t att_err,
 	struct bt_conn_info info = {0};
 	int err;
 #ifdef PRINT_BLE_UPDATES
-	LOG_ERR("MTU exchange %s", att_err == 0 ? "successful" : "failed");
+	LOG_INF("MTU exchange %s", att_err == 0 ? "successful" : "failed");
 #endif
 
 	err = bt_conn_get_info(conn, &info);
@@ -656,7 +713,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	LOG_INF("Conn. interval is %u units", info.le.interval);
 #endif
-
+	ble_conn_cnt_regr++;
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
 				       BT_UUID_THROUGHPUT,
@@ -666,6 +723,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		if (err) {
 			LOG_ERR("Discover failed (err %d)", err);
 		}
+		ble_central_connected = true;
 	} else {
 		/*#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)*/
 		ble_periph_connected = true;
@@ -745,10 +803,12 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 
 	test_ready = false;
 	ble_periph_connected = false;
+	ble_central_connected = false;
 	if (default_conn) {
 		bt_conn_unref(default_conn);
 		default_conn = NULL;
 	}
+	ble_disconn_cnt_regr++;
 }
 #endif
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -796,6 +856,7 @@ void le_data_length_updated(struct bt_conn *conn,
 	k_sem_give(&throughput_sem);
 }
 
+#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
 static uint8_t throughput_read(const struct bt_throughput_metrics *met)
 {
 	LOG_INF("[peer] received %u bytes (%u KB)"
@@ -807,7 +868,7 @@ static uint8_t throughput_read(const struct bt_throughput_metrics *met)
 
 	return BT_GATT_ITER_STOP;
 }
-#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
+
 void throughput_received(const struct bt_throughput_metrics *met)
 {
 	static uint32_t kb;
@@ -825,7 +886,6 @@ void throughput_received(const struct bt_throughput_metrics *met)
 		/* LOG_INF("="); */
 	}
 }
-#endif
 void throughput_send(const struct bt_throughput_metrics *met)
 {
 	LOG_INF("[local] received %u bytes (%u KB)"
@@ -833,6 +893,7 @@ void throughput_send(const struct bt_throughput_metrics *met)
 		met->write_len, met->write_len / 1024,
 		met->write_count, met->write_rate);
 }
+#endif
 
 static struct button_handler button = {
 	.cb = button_handler_cb,
@@ -1297,7 +1358,162 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 			LOG_ERR("Discover failed (err %d)", err);
 		}
 	}
+	
+	//--------------------------------------------------------------------------
+	printk("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+	char addr[BT_ADDR_LE_STR_LEN];
+	int8_t txp = 0; // int8_t txp;
+	int ret;
+	int8_t rssi = 0xFF;
+	int8_t txp_adaptive;
+
+	if (err) {
+		printk("Connection failed (err 0x%02x)\n", err);
+	} else {
+		default_conn = bt_conn_ref(conn);
+		ret = bt_hci_get_conn_handle(default_conn,
+					     &default_conn_handle);
+		if (ret) {
+			printk("No connection handle (err %d)\n", ret);
+		} else {
+			
+			read_conn_rssi(default_conn_handle, &rssi);
+			printk("Connected (%d) - RSSI = %d\n",
+			       default_conn_handle, rssi);
+			// if (rssi > -70) {
+				// txp_adaptive = -20;
+			// } else if (rssi > -90) {
+				// txp_adaptive = -12;
+			// } else {
+				// txp_adaptive = -4;
+			// }
+			
+			 // /* Send first at the default selected power */
+			// bt_addr_le_to_str(bt_conn_get_dst(conn),
+							  // addr, sizeof(addr));
+			// printk("Connected via connection (%d) at %s\n",
+			       // default_conn_handle, addr);
+			// get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+				     // default_conn_handle, &txp);
+			// printk("Connection (%d) - Initial Tx Power = %d\n",
+			       // default_conn_handle, txp);
+			// txp = 1;
+			// set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+				     // default_conn_handle,
+				     // txp);
+			// get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+				     // default_conn_handle, &txp);
+			// printk("Connection (%d) - Tx Power = %d\n",
+			       // default_conn_handle, txp);
+		}
+	}
+	//---------------------------
 }
+
+
+// void get_tx_power(uint8_t handle_type, uint16_t handle, int8_t *tx_pwr_lvl)
+// {
+	// struct bt_hci_cp_vs_read_tx_power_level *cp;
+	// struct bt_hci_rp_vs_read_tx_power_level *rp;
+	// struct net_buf *buf, *rsp = NULL;
+	// int err;
+
+	// *tx_pwr_lvl = 0xFF;
+	// buf = bt_hci_cmd_create(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
+				// sizeof(*cp));
+	// if (!buf) {
+		// printk("Unable to allocate command buffer\n");
+		// return;
+	// }
+
+	// cp = net_buf_add(buf, sizeof(*cp));
+	// cp->handle = sys_cpu_to_le16(handle);
+	// cp->handle_type = handle_type;
+
+	// err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
+				   // buf, &rsp);
+	// if (err) {
+		// uint8_t reason = rsp ?
+			// ((struct bt_hci_rp_vs_read_tx_power_level *)
+			  // rsp->data)->status : 0;
+		// printk("Read Tx power err: %d reason 0x%02x\n", err, reason);
+		// return;
+	// }
+
+	// rp = (void *)rsp->data;
+	// *tx_pwr_lvl = rp->tx_power_level;
+
+	// net_buf_unref(rsp);
+// }
+
+
+void read_conn_rssi(uint16_t handle, int8_t *rssi)
+{
+	struct net_buf *buf, *rsp = NULL;
+	struct bt_hci_cp_read_rssi *cp;
+	struct bt_hci_rp_read_rssi *rp;
+
+	int err;
+
+	buf = bt_hci_cmd_create(BT_HCI_OP_READ_RSSI, sizeof(*cp));
+	if (!buf) {
+		printk("Unable to allocate command buffer\n");
+		return;
+	}
+
+	cp = net_buf_add(buf, sizeof(*cp));
+	cp->handle = sys_cpu_to_le16(handle);
+
+	err = bt_hci_cmd_send_sync(BT_HCI_OP_READ_RSSI, buf, &rsp);
+	if (err) {
+		uint8_t reason = rsp ?
+			((struct bt_hci_rp_read_rssi *)rsp->data)->status : 0;
+		printk("Read RSSI err: %d reason 0x%02x\n", err, reason);
+		return;
+	}
+
+	rp = (void *)rsp->data;
+	*rssi = rp->rssi;
+
+	net_buf_unref(rsp);
+}
+
+
+// void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
+// {
+	// struct bt_hci_cp_vs_write_tx_power_level *cp;
+	// struct bt_hci_rp_vs_write_tx_power_level *rp;
+	// struct net_buf *buf, *rsp = NULL;
+	// int err;
+
+	// buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+				// sizeof(*cp));
+	// if (!buf) {
+		// printk("Unable to allocate command buffer\n");
+		// return;
+	// }
+
+	// cp = net_buf_add(buf, sizeof(*cp));
+	// cp->handle = sys_cpu_to_le16(handle);
+	// cp->handle_type = handle_type;
+	// cp->tx_power_level = tx_pwr_lvl;
+
+	// err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+				   // buf, &rsp);
+	// if (err) {
+		// uint8_t reason = rsp ?
+			// ((struct bt_hci_rp_vs_write_tx_power_level *)
+			  // rsp->data)->status : 0;
+		// printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
+		// return;
+	// }
+
+	// rp = (void *)rsp->data;
+	// printk("Actual Tx Power: %d\n", rp->selected_tx_power);
+
+	// net_buf_unref(rsp);
+// }
+
 
 #endif
 
