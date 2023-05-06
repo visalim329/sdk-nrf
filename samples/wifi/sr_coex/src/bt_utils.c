@@ -16,6 +16,9 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 
 #include "bt_utils.h"
 
+int8_t ble_txpower = 127;
+int8_t ble_rssi = 127;
+
 #if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
 	#include <zephyr/kernel.h>
 	#include <zephyr/console/console.h>
@@ -732,11 +735,11 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		LOG_ERR("Failed to get connection info %d", err);
 		return;
 	}
-#ifdef PRINT_BLE_UPDATES
-	LOG_INF("Connected as %s",
-	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
-	LOG_INF("Conn. interval is %u units", info.le.interval);
-#endif
+	#ifdef PRINT_BLE_UPDATES
+		LOG_INF("Connected as %s",
+			  info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
+		LOG_INF("Conn. interval is %u units", info.le.interval);
+	#endif
 	ble_conn_cnt_regr++;
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
@@ -749,81 +752,62 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		}
 		ble_central_connected = true;
 	} else {
-		/*#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)*/
 		ble_periph_connected = true;
-		/*#endif*/
 	}
 	#ifdef BLE_TX_PWR_CTRL_RSSI
-	//--------------------------------------------------------------------------
-	printk("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-	char addr[BT_ADDR_LE_STR_LEN];
-	int8_t get_txp = 0;
-	int8_t set_txp = 3;
-	int ret;
-	int8_t rssi = 0xFF;
-	int8_t txp_adaptive;
-	
-	printk("Target Tx power %d\n", set_txp);
-
-	
-	
-	default_conn = bt_conn_ref(conn);
-	ret = bt_hci_get_conn_handle(default_conn,
-					 &default_conn_handle);
-	if (ret) {
-		printk("No connection handle (err %d)\n", ret);
-	} else {
+		char addr[BT_ADDR_LE_STR_LEN];
+		int8_t get_txp = 0;
+		int8_t set_txp = 0;
+		int ret;
+		int8_t rssi = 0xFF;
+		int8_t txp_adaptive;
 		
-		read_conn_rssi(default_conn_handle, &rssi);
-		printk("Connected (%d) - RSSI = %d\n",
-			   default_conn_handle, rssi);
-
+		printk("BLE Target Tx power %d\n", set_txp);	
 		
-		/* Send first at the default selected power */
-		bt_addr_le_to_str(bt_conn_get_dst(conn),
-						  addr, sizeof(addr));
-		printk("Connected via connection (%d) at %s\n",
-			   default_conn_handle, addr);
-		get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				 default_conn_handle, &get_txp);
-		printk("Connection (%d) - Initial Tx Power = %d\n",
-			   default_conn_handle, get_txp);
-		 //sets Tx power to RADIO_TXP_DEFAULT
-		 printk("Changing Tx power to = %d\n", set_txp);
-		#if 0
-		set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				 default_conn_handle,
-				 BT_HCI_VS_LL_TX_POWER_LEVEL_NO_PREF);
-		#else
-		set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				 default_conn_handle,
-				 set_txp);
-		#endif
-		get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				 default_conn_handle, &get_txp);
-		printk("Connection (%d) - Tx Power = %d\n",
-			   default_conn_handle, get_txp);
-		
-		read_conn_rssi(default_conn_handle, &rssi);
-		printk("New (%d) - RSSI = %d\n",
-			   default_conn_handle, rssi);
-
-		/*
-		if (rssi > -70) {
-			txp_adaptive = -20;
-		} else if (rssi > -90) {
-			txp_adaptive = -12;
+		default_conn = bt_conn_ref(conn);
+		ret = bt_hci_get_conn_handle(default_conn,
+						 &default_conn_handle);
+		if (ret) {
+			printk("No connection handle (err %d)\n", ret);
 		} else {
-			txp_adaptive = -4;
+			
+			read_conn_rssi(default_conn_handle, &rssi);
+			//printk("Connected (%d) - RSSI = %d\n",
+			//	   default_conn_handle, rssi);
+
+			
+			/* Send first at the default selected power */
+			bt_addr_le_to_str(bt_conn_get_dst(conn),
+							  addr, sizeof(addr));
+			//printk("Connected via connection (%d) at %s\n",
+			//	   default_conn_handle, addr);
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			//printk("Connection (%d) - Initial Tx Power = %d\n",
+			//	   default_conn_handle, get_txp);
+			//sets Tx power to RADIO_TXP_DEFAULT
+			//printk("Changing Tx power to = %d\n", set_txp);
+
+			#if 0
+			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle,
+					 BT_HCI_VS_LL_TX_POWER_LEVEL_NO_PREF);
+			#else
+			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle,
+					 set_txp);
+			#endif
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			printk("BLE Connection (%d)\n", default_conn_handle);
+			printk("BLE Tx Power: %d\n", get_txp);		
+			read_conn_rssi(default_conn_handle, &rssi);
+			printk("BLE RSSI: %d\n", rssi);
+			ble_txpower = get_txp;
+			ble_rssi = rssi;
 		}
-		set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				 default_conn_handle,
-				 txp_adaptive);
-		*/
-	}
 	#endif
 
-	//---------------------------
 }
 
 #endif
@@ -1507,7 +1491,9 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 			read_conn_rssi(default_conn_handle, &rssi);
 			printk("New (%d) - RSSI = %d\n",
 				   default_conn_handle, rssi);
-
+			
+			ble_txpower = get_txp;
+			ble_rssi = rssi;
 			/*
 			if (rssi > -70) {
 				txp_adaptive = -20;
@@ -1628,7 +1614,7 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 		}
 
 		rp = (void *)rsp->data;
-		printk("Actual Tx Power: %d\n", rp->selected_tx_power);
+		//printk("Actual Tx Power: %d\n", rp->selected_tx_power);
 
 		net_buf_unref(rsp);
 	}

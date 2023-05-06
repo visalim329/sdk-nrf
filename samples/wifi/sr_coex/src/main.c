@@ -16,6 +16,10 @@
 /*#include "common.h"*/
 #include "main.h"
 
+extern int8_t wifi_rssi;
+extern int8_t ble_txpower;
+extern int8_t ble_rssi;
+
 #include <nrfx_clock.h>
 
 #if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
@@ -643,6 +647,11 @@ int main(void)
 			goto err;
 		}
 	}
+
+	LOG_INF("WiFi RSSI: %d", wifi_rssi);
+	LOG_INF("BLE Tx Power: %d", ble_txpower);		
+	LOG_INF("BLE RSSI: %d", ble_rssi);
+	LOG_INF("Test case complete");
 	return 0;
 
 err:

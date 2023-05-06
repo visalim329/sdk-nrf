@@ -10,6 +10,8 @@
 
 #include "bt_coex_test_functions.h"
 
+int8_t wifi_rssi = 127;
+
 static int print_first_time;
 
 void memset_context(void)
@@ -30,7 +32,7 @@ int cmd_wifi_status(void)
 		return -ENOEXEC;
 	}
 
-	LOG_INF("Status: successful");
+	//LOG_INF("Status: successful");
 	LOG_INF("==================");
 	LOG_INF("State: %s", wifi_state_txt(status.state));
 
@@ -42,16 +44,18 @@ int cmd_wifi_status(void)
 		LOG_INF("Link Mode: %s",
 			   wifi_link_mode_txt(status.link_mode));
 		LOG_INF("SSID: %-32s", status.ssid);
-		LOG_INF("BSSID: %s",
-			   net_sprint_ll_addr_buf(
-				status.bssid, WIFI_MAC_ADDR_LEN,
-				mac_string_buf, sizeof(mac_string_buf)));
+		//LOG_INF("BSSID: %s",
+		//	   net_sprint_ll_addr_buf(
+		//		status.bssid, WIFI_MAC_ADDR_LEN,
+		//		mac_string_buf, sizeof(mac_string_buf)));
 		LOG_INF("Band: %s", wifi_band_txt(status.band));
 		LOG_INF("Channel: %d", status.channel);
 		LOG_INF("Security: %s", wifi_security_txt(status.security));
-		LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp));
-		LOG_INF("RSSI: %d", status.rssi);
+		//LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp));
+		LOG_INF("WiFi RSSI: %d", status.rssi);
+		wifi_rssi = status.rssi;			
 	}
+	
 	return 0;
 }
 
@@ -296,7 +300,7 @@ int parse_ipv4_addr(char *host, struct sockaddr_in *addr)
 		return -EINVAL;
 	}
 
-	LOG_INF("IPv4 address %s", host);
+	LOG_INF("Peer IPv4 address %s", host);
 
 	return 0;
 }
@@ -723,7 +727,7 @@ int config_pta(bool wifi_coex_enable, bool antenna_mode, bool ble_role,
 		goto err;
 	}
 
-	LOG_INF("Configuring PTA for %s", wifi_band_txt(status.band));
+	//LOG_INF("Configuring PTA for %s", wifi_band_txt(status.band));
 	ret = nrf_wifi_coex_config_pta(wlan_band, antenna_mode, ble_role,
 			wlan_role);
 	if (ret != 0) {
