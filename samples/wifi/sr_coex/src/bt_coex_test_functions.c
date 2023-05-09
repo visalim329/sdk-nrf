@@ -388,7 +388,7 @@ void tcp_download_results_cb(enum zperf_status status,
 		LOG_INF("TCP session ended\n");
 		LOG_INF("%u bytes in %u ms:", result->total_len,
 						result->time_in_us/USEC_PER_MSEC);
-		LOG_INF("\nrate in kbps:\t%u", rate_in_kbps);
+		LOG_INF("\nrate in kbps:\t%u kbps", rate_in_kbps);
 
 		break;
 	}
@@ -437,7 +437,7 @@ void udp_download_results_cb(enum zperf_status status,
 				  result->nb_packets_outorder);
 
 
-		LOG_INF(" rate: %u Kbps", rate_in_kbps);
+		LOG_INF("\nrate in kbps:\t%u kbps", rate_in_kbps);
 		LOG_INF("");
 
 		break;
@@ -1615,7 +1615,7 @@ int wifi_tput_client_ble_tput_peripheral(bool test_wlan,
 
 	run_ble_traffic(test_ble, ble_role);
 
-	if (test_wlan && test_ble) {
+	if (test_ble) {
 		while (!wait_for_ble_central_run) {
 			LOG_INF("Run BLE central");
 			k_sleep(K_SECONDS(1));
