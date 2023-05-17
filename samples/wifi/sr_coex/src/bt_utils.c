@@ -735,11 +735,11 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		LOG_ERR("Failed to get connection info %d", err);
 		return;
 	}
-	#ifdef PRINT_BLE_UPDATES
+	//#ifdef PRINT_BLE_UPDATES
 		LOG_INF("Connected as %s",
 			  info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 		LOG_INF("Conn. interval is %u units", info.le.interval);
-	#endif
+	//#endif
 	ble_conn_cnt_regr++;
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
@@ -1442,7 +1442,7 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 		printk("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
 		char addr[BT_ADDR_LE_STR_LEN];
 		int8_t get_txp = 0;
-		int8_t set_txp = 3;
+		int8_t set_txp = 0;
 		int ret;
 		int8_t rssi = 0xFF;
 		int8_t txp_adaptive;

@@ -44,7 +44,7 @@ config TEST_TYPE_BLE
 
 config STA_SSID
 	string "SSID"
-	default "wifi_sr_coex_24"
+	default "coex_24"
 	help
 	  Specify the SSID to connect
 
@@ -80,7 +80,7 @@ config STA_PASSWORD
 
 config NET_CONFIG_PEER_IPV4_ADDR
 	string "Peer IPv4 address"
-	default "192.168.1.73"
+	default "192.168.1.253"
 
 config NET_CONFIG_PEER_IPV4_PORT
 	int "Peer IPv4 port"

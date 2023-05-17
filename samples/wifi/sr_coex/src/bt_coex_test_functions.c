@@ -44,14 +44,15 @@ int cmd_wifi_status(void)
 		LOG_INF("Link Mode: %s",
 			   wifi_link_mode_txt(status.link_mode));
 		LOG_INF("SSID: %-32s", status.ssid);
-		//LOG_INF("BSSID: %s",
-		//	   net_sprint_ll_addr_buf(
-		//		status.bssid, WIFI_MAC_ADDR_LEN,
-		//		mac_string_buf, sizeof(mac_string_buf)));
+		/**LOG_INF("BSSID: %s",
+		 *	   net_sprint_ll_addr_buf(
+		 *		status.bssid, WIFI_MAC_ADDR_LEN,
+		 *		mac_string_buf, sizeof(mac_string_buf))); 
+		 */
 		LOG_INF("Band: %s", wifi_band_txt(status.band));
 		LOG_INF("Channel: %d", status.channel);
 		LOG_INF("Security: %s", wifi_security_txt(status.security));
-		//LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp));
+		/* LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp)); */
 		LOG_INF("WiFi RSSI: %d", status.rssi);
 		wifi_rssi = status.rssi;			
 	}
