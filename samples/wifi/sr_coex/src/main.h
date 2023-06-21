@@ -211,7 +211,7 @@ int wifi_con_ble_con_central_regr(bool test_wlan, bool wifi_coex_enable, bool te
 /**
  * @brief Function to test Wi-Fi connection stability with BLE connection peripheral
  * as interference
- *  
+ *
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_con_ble_con_peripheral_regr(bool test_wlan, bool wifi_coex_enable, bool test_ble,
@@ -234,7 +234,7 @@ int wifi_con_ble_tput_peripheral(bool test_wlan, bool wifi_coex_enable,
 		bool antenna_mode, bool test_ble, bool ble_role, bool wlan_role,
 		bool coex_hardware_enable);
 /**
- * @brief Function to test BLE connection(central) stability with Wi-Fi scan as 
+ * @brief Function to test BLE connection(central) stability with Wi-Fi scan as
  * as interference
  *
  * @return Zero on success or (negative) error code otherwise.
@@ -257,7 +257,8 @@ int ble_conn_central_wifi_con_regr(bool test_wlan,
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-//PENDING: ble_conn_central_wifi_ping_regr()
+
+/* PENDING: ble_conn_central_wifi_ping_regr() */
 
 /**
  * @brief Function to test BLE connection(central) stability with Wi-Fi throughput
@@ -276,7 +277,7 @@ int ble_conn_central_wifi_tput_client_regr(bool test_wlan,
  */
 int ble_conn_central_wifi_tput_server_regr(bool test_wlan,
 	bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-	bool antenna_mode, bool coex_hardware_enable);
+	bool antenna_mode, bool coex_hardware_enable, bool zperf_udp_or_tcp);
 /**
  * @brief Function to test BLE connection(peripheral) stability with Wi-Fi scan as 
  * as interference
@@ -301,7 +302,9 @@ int ble_conn_peripheral_wifi_con_regr(bool test_wlan,
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-// PENDING: ble_conn_peripheral_wifi_ping_regr()
+
+/* PENDING: ble_conn_peripheral_wifi_ping_regr() */
+
 /**
  * @brief Function to test BLE connection(central) stability with Wi-Fi throughput
  * client as interference
@@ -310,7 +313,7 @@ int ble_conn_peripheral_wifi_con_regr(bool test_wlan,
  */
 int ble_conn_peripheral_wifi_tput_client_regr(bool test_wlan,
 	bool wifi_coex_enable, bool test_ble, bool ble_role,
-	bool wlan_role, bool antenna_mode, bool coex_hardware_enable);
+	bool wlan_role, bool antenna_mode, bool coex_hardware_enable, bool zperf_udp_or_tcp);
 /**
  * @brief Function to test BLE connection(peripheral) stability with Wi-Fi throughput
  * peripheral as interference
@@ -319,28 +322,28 @@ int ble_conn_peripheral_wifi_tput_client_regr(bool test_wlan,
  */
 int ble_conn_peripheral_wifi_tput_server_regr(bool test_wlan, bool wifi_coex_enable,
 	bool test_ble, bool ble_role, bool wlan_role, bool antenna_mode,
-	bool coex_hardware_enable);
+	bool coex_hardware_enable, bool zperf_udp_or_tcp);
 /**
  * @brief Function to test BLE connection(central) functionality with Wi-Fi shutdown
   *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_con_central_wifi_shutdown(bool ble_role);
+int ble_con_central_wifi_shutdown(bool test_ble, bool ble_role);
 /**
  * @brief Function to test BLE connection(central) functionality with Wi-Fi shutdown
   *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_con_peripheral_wifi_shutdown(bool ble_role);
+int ble_con_peripheral_wifi_shutdown(bool test_ble, bool ble_role);
 /**
  * @brief Function to test BLE throughput(central) functionality with Wi-Fi shutdown
-  *
+ *
  * @return Zero on success or (negative) error code otherwise.
  */
 int ble_tput_central_wifi_shutdown(bool test_ble, bool ble_role);
 /**
  * @brief Function to test BLE throughput(peripheral) functionality with Wi-Fi shutdown
-  *
+ *
  * @return Zero on success or (negative) error code otherwise.
  */
 int ble_tput_periph_wifi_shutdown(bool test_ble, bool ble_role);

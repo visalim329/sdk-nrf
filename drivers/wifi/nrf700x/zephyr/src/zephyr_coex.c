@@ -53,9 +53,12 @@ static struct wifi_nrf_ctx_zep *rpu_ctx = &rpu_drv_priv_zep.rpu_ctx_zep;
 #define ABS_PMB_WLAN_MAC_CTRL_PTA_CONTROL	0xA5009A34UL
 #define ABS_PMB_WLAN_MAC_CTRL_PULSED_SOFTWARE_RESET	0xA5009A00UL
 
+#if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
+	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 #define NRF_RADIO_COEX_NODE DT_NODELABEL(nrf_radio_coex)
 static const struct gpio_dt_spec btrf_switch_spec =
 	GPIO_DT_SPEC_GET(NRF_RADIO_COEX_NODE, btrf_switch_gpios);
+#endif
 
 /* PTA registers configuration of Coexistence Hardware */
 /* Separate antenna configuration tables */
@@ -284,22 +287,18 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
 				/* WLAN role server */
 				if (ble_role) {
 					/* BLE role central */
-					LOG_INF("config_buffer_server_central_SHA1\n");
 					config_buffer_ptr = config_buffer_server_central_SHA1;
 				} else {
 					/* BLE role peripheral */
-					LOG_INF("config_buffer_server_peripheral_SHA2\n");
 					config_buffer_ptr = config_buffer_server_peripheral_SHA2;
 				}
 			} else {
 				/* WLAN role client */
 				if (ble_role) {
 					/* BLE role central */
-					LOG_INF("config_buffer_client_central_SHA1\n");
 					config_buffer_ptr = config_buffer_client_central_SHA1;
 				} else {
 					/* BLE role peripheral */
-					LOG_INF("config_buffer_client_peripheral_SHA2\n");
 					config_buffer_ptr = config_buffer_client_peripheral_SHA2;
 				}
 			}
@@ -406,7 +405,9 @@ int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band,
 	return 0;
 }
 
-int nrf_wifi_config_sr_switch(bool antenna_mode)
+#if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
+	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
+int nrf_wifi_config_sr_switch(bool antenna_mode, bool bt_external_antenna)
 {
 	int ret;
 
@@ -421,18 +422,30 @@ int nrf_wifi_config_sr_switch(bool antenna_mode)
 		return -1;
 	}
 
-	if (antenna_mode) {
-		gpio_pin_set_dt(&btrf_switch_spec, 0x0);
-		LOG_INF("GPIO P1.10 set to 0\n");
-	} else {
+	
+	if (bt_external_antenna) {
 		gpio_pin_set_dt(&btrf_switch_spec, 0x1);
-		LOG_INF("GPIO P1.10 set to 1\n");
+		LOG_INF("Antenna used: External.\n");
+		//LOG_INF("Antenna mode: Separate/Shared.\n");
+		//LOG_INF("GPIO P1.10 set to 1\n");
+	} else {
+		if (antenna_mode) {
+			gpio_pin_set_dt(&btrf_switch_spec, 0x0);
+			LOG_INF("Antenna used: Chip. Separate antennas.\n");
+			//LOG_INF("Antenna mode: Separate.\n");
+			//LOG_INF("GPIO P1.10 set to 0\n");
+		} else {
+			gpio_pin_set_dt(&btrf_switch_spec, 0x1);
+			LOG_INF("Antenna used: Chip. Shared antenna.\n");
+			//LOG_INF("Antenna mode: Shared.\n");
+			//LOG_INF("GPIO P1.10 set to 1\n");
+		}
 	}
-
-	LOG_DBG("Successfully configured GPIO P1.10\n");
+	//LOG_INF("Successfully configured GPIO P1.10\n");
 
 	return 0;
 }
+#endif
 
 int nrf_wifi_coex_hw_reset(void)
 {

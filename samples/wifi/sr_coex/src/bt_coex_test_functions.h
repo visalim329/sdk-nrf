@@ -50,8 +50,9 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #define MAX_SSID_LEN 32
 #define WIFI_CONNECTION_TIMEOUT 30
 
-//#define PRINT_WIFI_SCAN_RESULT
-//#define PRINT_WIFI_CONN_RESULT
+/* #define PRINT_WIFI_SCAN_RESULT */
+/* #define PRINT_WIFI_CONN_RESULT */
+
 #define DEMARCATE_TEST_START
 
 #define HIGHEST_CHANNUM_24G 14
@@ -153,7 +154,8 @@ static struct {
 } context;
 
 K_SEM_DEFINE(wait_for_next, 0, 1);
-K_SEM_DEFINE(udp_callback, 0, 1);
+K_SEM_DEFINE(udp_tcp_callback, 0, 1);
+
 struct wifi_iface_status status = { 0 };
 uint32_t repeat_scan = 1;
 

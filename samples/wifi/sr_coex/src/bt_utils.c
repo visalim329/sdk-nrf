@@ -12,8 +12,12 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 
+#define BLE_TX_PWR_CTRL_RSSI
 
 #include "bt_utils.h"
+
+int8_t ble_txpower = 127;
+int8_t ble_rssi = 127;
 
 #if defined(BLE_PEER_THROUGHPUT_TEST) || defined(BLE_PEER_CONN_CENTRAL_TEST)
 	#include <zephyr/kernel.h>
@@ -46,7 +50,7 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 
 	#define THROUGHPUT_CONFIG_TIMEOUT (20)
 	#define SCAN_CONFIG_TIMEOUT 20
-	#define BLE_CONN_CENTRAL_TEST_DURATION 30000 /* milliseconds*/
+	#define BLE_CONN_CENTRAL_TEST_DURATION 20000 /* milliseconds*/
 
 	#define CONN_LATENCY 0
 	#define SUPERVISION_TIMEOUT 1000
@@ -88,35 +92,18 @@ static const char *phy2str(uint8_t phy)
 	default: return "Unknown";
 	}
 }
-
 	#define PRINT_BLE_UPDATES
 	#include <stddef.h>
 	#include <zephyr/sys/printk.h>
 	#include <zephyr/sys/util.h>
 	#include <zephyr/sys/byteorder.h>
-
-	//#include <zephyr/bluetooth/bluetooth.h>
-	//#include <zephyr/bluetooth/hci.h>
 	#include <zephyr/bluetooth/hci_vs.h>
-
-	//#include <zephyr/bluetooth/conn.h>
-	//#include <zephyr/bluetooth/uuid.h>
-	//#include <zephyr/bluetooth/gatt.h>
 	#include <zephyr/bluetooth/services/hrs.h>
-
-	//static struct bt_conn *default_conn;
 	static uint16_t default_conn_handle;
-
-	//static const struct bt_data ad[] = {
-	//	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-	//	BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HRS_VAL)),
-	//};
-
-	//#define DEVICE_NAME CONFIG_BT_DEVICE_NAME
-	//#define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 	#define DEVICE_BEACON_TXPOWER_NUM  8
 
 	static struct k_thread pwr_thread_data;
+
 	static K_THREAD_STACK_DEFINE(pwr_thread_stack, 512);
 
 	static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {4, 0, -3, -8,
@@ -124,6 +111,31 @@ static const char *phy2str(uint8_t phy)
 	static const struct bt_le_adv_param *param =
 		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
 				0x0020, 0x0020, NULL);
+
+#else
+	#ifdef BLE_TX_PWR_CTRL_RSSI
+		/* to get/set BLE Tx power and read BLE RSSI for coex sample */
+		#include <stddef.h>
+		#include <zephyr/sys/printk.h>
+		#include <zephyr/sys/util.h>
+		#include <zephyr/sys/byteorder.h>
+		#include <zephyr/bluetooth/hci_vs.h>
+
+		#include <zephyr/bluetooth/services/hrs.h>
+
+		static uint16_t default_conn_handle;
+		#define DEVICE_BEACON_TXPOWER_NUM  8
+
+		static struct k_thread pwr_thread_data;
+
+		static K_THREAD_STACK_DEFINE(pwr_thread_stack, 512);
+
+		static const int8_t txp[DEVICE_BEACON_TXPOWER_NUM] = {4, 0, -3, -8,
+									-15, -18, -23, -30};
+		static const struct bt_le_adv_param *param =
+			BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_USE_NAME,
+					0x0020, 0x0020, NULL);
+#endif
 #endif
 
 #if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)
@@ -708,11 +720,11 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		LOG_ERR("Failed to get connection info %d", err);
 		return;
 	}
-//#ifdef PRINT_BLE_UPDATES
+#ifdef PRINT_BLE_UPDATES
 	LOG_INF("Connected as %s",
 	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	LOG_INF("Conn. interval is %u units", info.le.interval);
-//#endif
+#endif
 	ble_conn_cnt_regr++;
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
@@ -725,10 +737,53 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		}
 		ble_central_connected = true;
 	} else {
-		/*#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)*/
 		ble_periph_connected = true;
-		/*#endif*/
 	}
+	#ifdef BLE_TX_PWR_CTRL_RSSI
+		char addr[BT_ADDR_LE_STR_LEN];
+		int8_t get_txp = 0;
+		int8_t set_txp = 0;
+		int ret;
+		int8_t rssi = 0xFF;
+		int8_t txp_adaptive;
+
+		printk("BLE Target Tx power %d\n", set_txp);
+		default_conn = bt_conn_ref(conn);
+		ret = bt_hci_get_conn_handle(default_conn,
+						 &default_conn_handle);
+		if (ret) {
+			printk("No connection handle (err %d)\n", ret);
+		} else {
+			read_conn_rssi(default_conn_handle, &rssi);
+			/* printk("Connected (%d) - RSSI = %d\n", */
+			/*	   default_conn_handle, rssi); */
+
+			/* Send first at the default selected power */
+			bt_addr_le_to_str(bt_conn_get_dst(conn),
+							  addr, sizeof(addr));
+			/* printk("Connected via connection (%d) at %s\n", */
+			/*	   default_conn_handle, addr); */
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			/* printk("Connection (%d) - Initial Tx Power = %d\n", */
+			/*    default_conn_handle, get_txp); */
+			/* sets Tx power to RADIO_TXP_DEFAULT */
+			/* printk("Changing Tx power to = %d\n", set_txp); */
+
+			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle,
+					 set_txp);
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			printk("BLE Connection (%d)\n", default_conn_handle);
+			printk("BLE Tx Power: %d\n", get_txp);
+			read_conn_rssi(default_conn_handle, &rssi);
+			printk("BLE RSSI: %d\n", rssi);
+			ble_txpower = get_txp;
+			ble_rssi = rssi;
+		}
+	#endif
+
 }
 #endif
 
@@ -1358,94 +1413,98 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 			LOG_ERR("Discover failed (err %d)", err);
 		}
 	}
-	
-	//--------------------------------------------------------------------------
-	printk("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
-	char addr[BT_ADDR_LE_STR_LEN];
-	int8_t txp = 0; // int8_t txp;
-	int ret;
-	int8_t rssi = 0xFF;
-	int8_t txp_adaptive;
+	#ifdef BLE_TX_PWR_CTRL_RSSI
+		char addr[BT_ADDR_LE_STR_LEN];
+		int8_t get_txp = 0;
+		int8_t set_txp = 0;
+		int ret;
+		int8_t rssi = 0xFF;
+		int8_t txp_adaptive;
 
-	if (err) {
-		printk("Connection failed (err 0x%02x)\n", err);
-	} else {
+		printk("Target Tx power %d\n", set_txp);
+
 		default_conn = bt_conn_ref(conn);
 		ret = bt_hci_get_conn_handle(default_conn,
-					     &default_conn_handle);
+						 &default_conn_handle);
 		if (ret) {
 			printk("No connection handle (err %d)\n", ret);
 		} else {
-			
+
 			read_conn_rssi(default_conn_handle, &rssi);
 			printk("Connected (%d) - RSSI = %d\n",
-			       default_conn_handle, rssi);
-			// if (rssi > -70) {
-				// txp_adaptive = -20;
-			// } else if (rssi > -90) {
-				// txp_adaptive = -12;
-			// } else {
-				// txp_adaptive = -4;
-			// }
-			
-			 // /* Send first at the default selected power */
-			// bt_addr_le_to_str(bt_conn_get_dst(conn),
-							  // addr, sizeof(addr));
-			// printk("Connected via connection (%d) at %s\n",
-			       // default_conn_handle, addr);
-			// get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				     // default_conn_handle, &txp);
-			// printk("Connection (%d) - Initial Tx Power = %d\n",
-			       // default_conn_handle, txp);
-			// txp = 1;
-			// set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				     // default_conn_handle,
-				     // txp);
-			// get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
-				     // default_conn_handle, &txp);
-			// printk("Connection (%d) - Tx Power = %d\n",
-			       // default_conn_handle, txp);
+				   default_conn_handle, rssi);
+
+			/* Send first at the default selected power */
+			bt_addr_le_to_str(bt_conn_get_dst(conn),
+							  addr, sizeof(addr));
+			printk("Connected via connection (%d) at %s\n",
+				   default_conn_handle, addr);
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			printk("Connection (%d) - Initial Tx Power = %d\n",
+				   default_conn_handle, get_txp);
+			 /* sets Tx power to RADIO_TXP_DEFAULT */
+			 printk("Changing Tx power to = %d\n", set_txp);
+
+			set_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle,
+					 set_txp);
+
+			get_tx_power(BT_HCI_VS_LL_HANDLE_TYPE_CONN,
+					 default_conn_handle, &get_txp);
+			printk("Connection (%d) - Tx Power = %d\n",
+				   default_conn_handle, get_txp);
+
+			read_conn_rssi(default_conn_handle, &rssi);
+			printk("New (%d) - RSSI = %d\n",
+				   default_conn_handle, rssi);
+
+			ble_txpower = get_txp;
+			ble_rssi = rssi;
+
 		}
-	}
-	//---------------------------
+	#endif
 }
 
 
-// void get_tx_power(uint8_t handle_type, uint16_t handle, int8_t *tx_pwr_lvl)
-// {
-	// struct bt_hci_cp_vs_read_tx_power_level *cp;
-	// struct bt_hci_rp_vs_read_tx_power_level *rp;
-	// struct net_buf *buf, *rsp = NULL;
-	// int err;
+#endif
 
-	// *tx_pwr_lvl = 0xFF;
-	// buf = bt_hci_cmd_create(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
-				// sizeof(*cp));
-	// if (!buf) {
-		// printk("Unable to allocate command buffer\n");
-		// return;
-	// }
+#ifdef BLE_TX_PWR_CTRL_RSSI
 
-	// cp = net_buf_add(buf, sizeof(*cp));
-	// cp->handle = sys_cpu_to_le16(handle);
-	// cp->handle_type = handle_type;
+void get_tx_power(uint8_t handle_type, uint16_t handle, int8_t *tx_pwr_lvl)
+{
+	struct bt_hci_cp_vs_read_tx_power_level *cp;
+	struct bt_hci_rp_vs_read_tx_power_level *rp;
+	struct net_buf *buf, *rsp = NULL;
+	int err;
 
-	// err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
-				   // buf, &rsp);
-	// if (err) {
-		// uint8_t reason = rsp ?
-			// ((struct bt_hci_rp_vs_read_tx_power_level *)
-			  // rsp->data)->status : 0;
-		// printk("Read Tx power err: %d reason 0x%02x\n", err, reason);
-		// return;
-	// }
+	*tx_pwr_lvl = 0xFF;
+	buf = bt_hci_cmd_create(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
+				sizeof(*cp));
+	if (!buf) {
+		printk("Unable to allocate command buffer\n");
+		return;
+	}
 
-	// rp = (void *)rsp->data;
-	// *tx_pwr_lvl = rp->tx_power_level;
+	cp = net_buf_add(buf, sizeof(*cp));
+	cp->handle = sys_cpu_to_le16(handle);
+	cp->handle_type = handle_type;
 
-	// net_buf_unref(rsp);
-// }
+	err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_READ_TX_POWER_LEVEL,
+				   buf, &rsp);
+	if (err) {
+		uint8_t reason = rsp ?
+			((struct bt_hci_rp_vs_read_tx_power_level *)
+			  rsp->data)->status : 0;
+		printk("Read Tx power err: %d reason 0x%02x\n", err, reason);
+		return;
+	}
 
+	rp = (void *)rsp->data;
+	*tx_pwr_lvl = rp->tx_power_level;
+
+	net_buf_unref(rsp);
+}
 
 void read_conn_rssi(uint16_t handle, int8_t *rssi)
 {
@@ -1479,42 +1538,40 @@ void read_conn_rssi(uint16_t handle, int8_t *rssi)
 }
 
 
-// void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
-// {
-	// struct bt_hci_cp_vs_write_tx_power_level *cp;
-	// struct bt_hci_rp_vs_write_tx_power_level *rp;
-	// struct net_buf *buf, *rsp = NULL;
-	// int err;
+void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
+{
+	struct bt_hci_cp_vs_write_tx_power_level *cp;
+	struct bt_hci_rp_vs_write_tx_power_level *rp;
+	struct net_buf *buf, *rsp = NULL;
+	int err;
 
-	// buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
-				// sizeof(*cp));
-	// if (!buf) {
-		// printk("Unable to allocate command buffer\n");
-		// return;
-	// }
+	buf = bt_hci_cmd_create(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+				sizeof(*cp));
+	if (!buf) {
+		printk("Unable to allocate command buffer\n");
+		return;
+	}
 
-	// cp = net_buf_add(buf, sizeof(*cp));
-	// cp->handle = sys_cpu_to_le16(handle);
-	// cp->handle_type = handle_type;
-	// cp->tx_power_level = tx_pwr_lvl;
+	cp = net_buf_add(buf, sizeof(*cp));
+	cp->handle = sys_cpu_to_le16(handle);
+	cp->handle_type = handle_type;
+	cp->tx_power_level = tx_pwr_lvl;
 
-	// err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
-				   // buf, &rsp);
-	// if (err) {
-		// uint8_t reason = rsp ?
-			// ((struct bt_hci_rp_vs_write_tx_power_level *)
-			  // rsp->data)->status : 0;
-		// printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
-		// return;
-	// }
+	err = bt_hci_cmd_send_sync(BT_HCI_OP_VS_WRITE_TX_POWER_LEVEL,
+				   buf, &rsp);
+	if (err) {
+		uint8_t reason = rsp ?
+			((struct bt_hci_rp_vs_write_tx_power_level *)
+			  rsp->data)->status : 0;
+		printk("Set Tx power err: %d reason 0x%02x\n", err, reason);
+		return;
+	}
 
-	// rp = (void *)rsp->data;
-	// printk("Actual Tx Power: %d\n", rp->selected_tx_power);
+	rp = (void *)rsp->data;
+	/* printk("Actual Tx Power: %d\n", rp->selected_tx_power); */
 
-	// net_buf_unref(rsp);
-// }
-
-
+	net_buf_unref(rsp);
+}
 #endif
 
 /*#if !defined(BLE_PEER_THROUGHPUT_TEST) && !defined(BLE_PEER_CONN_CENTRAL_TEST)*/

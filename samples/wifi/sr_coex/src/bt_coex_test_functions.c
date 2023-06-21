@@ -10,6 +10,8 @@
 
 #include "bt_coex_test_functions.h"
 
+int8_t wifi_rssi = 127;
+
 static int print_first_time;
 
 void memset_context(void)
@@ -30,7 +32,7 @@ int cmd_wifi_status(void)
 		return -ENOEXEC;
 	}
 
-	LOG_INF("Status: successful");
+	/* LOG_INF("Status: successful"); */
 	LOG_INF("==================");
 	LOG_INF("State: %s", wifi_state_txt(status.state));
 
@@ -49,9 +51,11 @@ int cmd_wifi_status(void)
 		LOG_INF("Band: %s", wifi_band_txt(status.band));
 		LOG_INF("Channel: %d", status.channel);
 		LOG_INF("Security: %s", wifi_security_txt(status.security));
-		LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp));
-		LOG_INF("RSSI: %d", status.rssi);
+		/* LOG_INF("MFP: %s", wifi_mfp_txt(status.mfp)); */
+		LOG_INF("WiFi RSSI: %d", status.rssi);
+		wifi_rssi = status.rssi;			
 	}
+	
 	return 0;
 }
 
@@ -296,7 +300,7 @@ int parse_ipv4_addr(char *host, struct sockaddr_in *addr)
 		return -EINVAL;
 	}
 
-	LOG_INF("IPv4 address %s", host);
+	LOG_INF("Peer IPv4 address %s", host);
 
 	return 0;
 }
@@ -351,7 +355,7 @@ void tcp_upload_results_cb(enum zperf_status status,
 		LOG_INF("Num errors:\t%u (retry or fail)\n",
 						result->nb_packets_errors);
 		LOG_INF("Rate in kbps:\t%u", client_rate_in_kbps);
-
+		k_sem_give(&udp_tcp_callback);
 		break;
 	}
 
@@ -389,7 +393,8 @@ void tcp_download_results_cb(enum zperf_status status,
 		LOG_INF("%u bytes in %u ms:", result->total_len,
 						result->time_in_us/USEC_PER_MSEC);
 		LOG_INF("\nrate in kbps:\t%u kbps", rate_in_kbps);
-
+		k_sem_give(&udp_tcp_callback);
+		
 		break;
 	}
 
@@ -439,7 +444,7 @@ void udp_download_results_cb(enum zperf_status status,
 
 		LOG_INF("\nrate in kbps:\t%u kbps", rate_in_kbps);
 		LOG_INF("");
-
+		k_sem_give(&udp_tcp_callback);
 		break;
 	}
 
@@ -480,7 +485,7 @@ void udp_upload_results_cb(enum zperf_status status,
 		LOG_INF("%u packets sent", result->nb_packets_sent);
 		LOG_INF("%u packets lost", result->nb_packets_lost);
 		LOG_INF("%u packets received", result->nb_packets_rcvd);
-		k_sem_give(&udp_callback);
+		k_sem_give(&udp_tcp_callback);
 		break;
 	case ZPERF_SESSION_ERROR:
 		LOG_ERR("UDP session error");
@@ -609,7 +614,7 @@ void check_wifi_traffic(bool test_wlan)
 {
 	if (test_wlan) {
 		/* Run Wi-Fi traffic */
-		if (k_sem_take(&udp_callback, K_FOREVER) != 0) {
+		if (k_sem_take(&udp_tcp_callback, K_FOREVER) != 0) {
 			LOG_ERR("Results are not ready");
 		} else {
 			LOG_INF("UDP SESSION FINISHED");
@@ -1437,7 +1442,8 @@ err:
 
 int wifi_tput_client_ble_con_peripheral(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role,
-			bool wlan_role, bool antenna_mode, bool coex_hardware_enable, bool zperf_udp_or_tcp)
+			bool wlan_role, bool antenna_mode, bool coex_hardware_enable,
+			bool zperf_udp_or_tcp)
 {
 	int ret = 0;
 	uint64_t test_start_time = 0;
@@ -1615,7 +1621,7 @@ int wifi_tput_client_ble_tput_peripheral(bool test_wlan,
 
 	run_ble_traffic(test_ble, ble_role);
 
-	if (test_ble) {
+	if (test_wlan && test_ble) {
 		while (!wait_for_ble_central_run) {
 			LOG_INF("Run BLE central");
 			k_sleep(K_SECONDS(1));
@@ -1952,9 +1958,6 @@ err:
 	return ret;
 }
 
-//int wifi_con_ble_con_central(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-//			bool antenna_mode, bool coex_hardware_enable)
 int wifi_con_ble_con_central_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
 			bool antenna_mode, bool coex_hardware_enable)
@@ -2025,9 +2028,7 @@ int wifi_con_ble_con_central_regr(bool test_wlan,
 	LOG_INF(" wifi_con_ble_con_central_regr complete");
 	return 0;
 }
-//int wifi_con_ble_con_peripheral(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role,
-//			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
+
 int wifi_con_ble_con_peripheral_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role,
 			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
@@ -2097,9 +2098,6 @@ int wifi_con_ble_con_peripheral_regr(bool test_wlan,
 	return 0;
 }
 
-//int wifi_con_ble_tput_central(bool test_wlan,
-//			bool wifi_coex_enable, bool antenna_mode, bool test_ble,
-//			bool ble_role, bool wlan_role, bool coex_hardware_enable)
 int wifi_con_ble_tput_central_regr(bool test_wlan,
 			bool wifi_coex_enable, bool antenna_mode, bool test_ble,
 			bool ble_role, bool wlan_role, bool coex_hardware_enable)
@@ -2136,7 +2134,6 @@ int wifi_con_ble_tput_central_regr(bool test_wlan,
 
 	if (test_ble) {
 		start_ble_traffic(test_ble, ble_role);
-		run_ble_traffic(test_ble, ble_role);
 	}
 
 	if (test_wlan) {
@@ -2150,8 +2147,7 @@ int wifi_con_ble_tput_central_regr(bool test_wlan,
 	}
 
 	if (test_ble) {
-		//run_ble_traffic(test_ble, ble_role);
-		//k_sleep(K_SECONDS(2));
+		run_ble_traffic(test_ble, ble_role);
 		disconnect_ble(test_ble, ble_role);
 	}
 
@@ -2178,9 +2174,6 @@ err:
 	return ret;
 }
 
-//int wifi_con_ble_tput_peripheral(bool test_wlan,
-//			bool wifi_coex_enable, bool antenna_mode, bool test_ble,
-//			bool ble_role, bool wlan_role, bool coex_hardware_enable)
 int wifi_con_ble_tput_peripheral_regr(bool test_wlan,
 			bool wifi_coex_enable, bool antenna_mode, bool test_ble,
 			bool ble_role, bool wlan_role, bool coex_hardware_enable)
@@ -2217,7 +2210,6 @@ int wifi_con_ble_tput_peripheral_regr(bool test_wlan,
 
 	if (test_ble) {
 		start_ble_traffic(test_ble, ble_role);
-		run_ble_traffic(test_ble, ble_role);
 	}
 
 	if (test_wlan && test_ble) {
@@ -2255,7 +2247,7 @@ int wifi_con_ble_tput_peripheral_regr(bool test_wlan,
 		}
 	}
 	if (test_ble) {
-		/* run_ble_traffic(test_ble, ble_role); */
+		run_ble_traffic(test_ble, ble_role); 
 		disconnect_ble(test_ble, ble_role);
 	}
 
@@ -2281,9 +2273,6 @@ err:
 	return ret;
 }
 
-//int wifi_scan_ble_conn_central(bool wifi_coex_enable, bool antenna_mode,
-//	bool test_ble, bool test_wlan, bool ble_role, bool wlan_role,
-//	bool coex_hardware_enable, bool wifi_connected_scan)
 int ble_conn_central_wifi_scan_regr(bool wifi_coex_enable, bool antenna_mode,
 	bool test_ble, bool test_wlan, bool ble_role, bool wlan_role,
 	bool coex_hardware_enable, bool wifi_connected_scan)
@@ -2300,7 +2289,6 @@ int ble_conn_central_wifi_scan_regr(bool wifi_coex_enable, bool antenna_mode,
 		config_pta(wifi_coex_enable, antenna_mode, ble_role, wlan_role);
 	#endif/* CONFIG_NRF700X_BT_COEX */
 		if (wifi_connected_scan) {
-			LOG_INF("connected scan");
 			wifi_connection(test_wlan, wifi_coex_enable, antenna_mode);
 			cmd_wifi_scan();
 		} else {
@@ -2351,9 +2339,6 @@ int ble_conn_central_wifi_scan_regr(bool wifi_coex_enable, bool antenna_mode,
 	return 0;
 }
 
-//int wifi_con_ble_con_central(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-//			bool antenna_mode, bool coex_hardware_enable)
 int ble_conn_central_wifi_con_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
 			bool antenna_mode, bool coex_hardware_enable)
@@ -2422,10 +2407,6 @@ int ble_conn_central_wifi_con_regr(bool test_wlan,
 
 //PENDING: ble_conn_central_wifi_ping_regr()
 
-
-//int wifi_tput_client_ble_con_central(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-//			bool antenna_mode, bool coex_hardware_enable)
 int ble_conn_central_wifi_tput_client_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
 			bool antenna_mode, bool coex_hardware_enable, bool zperf_udp_or_tcp)
@@ -2446,8 +2427,10 @@ int ble_conn_central_wifi_tput_client_regr(bool test_wlan,
 		#endif/* CONFIG_NRF700X_BT_COEX */
 
 		if (zperf_udp_or_tcp) {
+			LOG_INF("UDP traffic");
 			ret = run_wifi_traffic(test_wlan);
 		} else {
+			LOG_INF("TCP traffic");
 			ret = run_wifi_traffic_tcp(test_wlan);
 		}
 		if (ret != 0) {
@@ -2469,7 +2452,7 @@ int ble_conn_central_wifi_tput_client_regr(bool test_wlan,
 				> CONFIG_WIFI_TEST_DURATION_REGR) {
 				break;
 			}
-			k_sleep(K_SECONDS(1));
+			k_sleep(K_SECONDS(2));
 		}
 	}
 
@@ -2500,12 +2483,10 @@ int ble_conn_central_wifi_tput_client_regr(bool test_wlan,
 err:
 	return ret;
 }
-//int wifi_tput_server_ble_con_central(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-//			bool antenna_mode, bool coex_hardware_enable)
+
 int ble_conn_central_wifi_tput_server_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role, bool wlan_role,
-			bool antenna_mode, bool coex_hardware_enable)
+			bool antenna_mode, bool coex_hardware_enable,  bool zperf_udp_or_tcp)
 {
 	int ret = 0;
 	uint64_t test_start_time = 0;
@@ -2522,7 +2503,7 @@ int ble_conn_central_wifi_tput_server_regr(bool test_wlan,
 			config_pta(wifi_coex_enable, antenna_mode, ble_role, wlan_role);
 		#endif/* CONFIG_NRF700X_BT_COEX */
 
-		if (IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP)) {
+		if (zperf_udp_or_tcp) {
 			ret = run_wifi_traffic(test_wlan);
 		} else {
 			ret = run_wifi_traffic_tcp(test_wlan);
@@ -2555,7 +2536,7 @@ int ble_conn_central_wifi_tput_server_regr(bool test_wlan,
 	}
 
 	if (test_wlan) {
-		/*LOG_INF("check wifi traffic");*/
+		/* LOG_INF("check wifi traffic"); */
 		check_wifi_traffic(test_wlan);
 
 		disconnect_wifi(test_wlan);
@@ -2582,10 +2563,6 @@ err:
 	return ret;
 }
 
-
-//int wifi_scan_ble_conn_peripheral(bool wifi_coex_enable,
-//			bool antenna_mode, bool test_ble, bool test_wlan, bool ble_role,
-//			bool wlan_role, bool coex_hardware_enable, bool wifi_connected_scan)
 int ble_conn_peripheral_wifi_scan_regr(bool wifi_coex_enable,
 			bool antenna_mode, bool test_ble, bool test_wlan, bool ble_role,
 			bool wlan_role, bool coex_hardware_enable, bool wifi_connected_scan)
@@ -2608,7 +2585,6 @@ int ble_conn_peripheral_wifi_scan_regr(bool wifi_coex_enable,
 	}
 	if (test_wlan) {
 		if (wifi_connected_scan) {
-			LOG_INF("connected scan");
 			wifi_connection(test_wlan, wifi_coex_enable, antenna_mode);
 			cmd_wifi_scan();
 		} else {
@@ -2636,18 +2612,13 @@ int ble_conn_peripheral_wifi_scan_regr(bool wifi_coex_enable,
 		repeat_scan = 0;
 	}
 
-	/* one time BT disconnection */
-	/* PENDING - check if BT connection is intact */
 
-	// note - BLE disconnect is available for only central role.
-	// may be try connection and decide if connection already exists.
 	if (test_ble) {
 		if (ble_periph_connected) {
 			LOG_INF("BLE Conn Intact");
 		} else {
 			LOG_INF("BLE disconnected");
 		}
-		//bt_disconnect_central();
 		k_sleep(K_SECONDS(2));
 	}
 	if (test_wlan) {
@@ -2666,9 +2637,6 @@ int ble_conn_peripheral_wifi_scan_regr(bool wifi_coex_enable,
 }
 
 
-//int wifi_con_ble_con_peripheral(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role,
-//			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
 int ble_conn_peripheral_wifi_con_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role,
 			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
@@ -2715,10 +2683,6 @@ int ble_conn_peripheral_wifi_con_regr(bool test_wlan,
 		k_sleep(K_SECONDS(1));
 	}
 
-	/* one time BT disconnection */
-	/* PENDING - check if BT connection is intact */
-	// note - BLE disconnect is available for only central role.
-	// may be try connection and decide if connection already exists.
 	if (test_ble) {
 		if (ble_periph_connected) {
 			LOG_INF("BLE Conn Intact");
@@ -2741,12 +2705,9 @@ int ble_conn_peripheral_wifi_con_regr(bool test_wlan,
 
 //PENDING: ble_conn_peripheral_wifi_ping_regr()
 
-//int wifi_tput_client_ble_con_peripheral(bool test_wlan,
-//			bool wifi_coex_enable, bool test_ble, bool ble_role,
-//			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
 int ble_conn_peripheral_wifi_tput_client_regr(bool test_wlan,
 			bool wifi_coex_enable, bool test_ble, bool ble_role,
-			bool wlan_role, bool antenna_mode, bool coex_hardware_enable)
+			bool wlan_role, bool antenna_mode, bool coex_hardware_enable, bool zperf_udp_or_tcp)
 {
 	int ret = 0;
 	uint64_t test_start_time = 0;
@@ -2768,7 +2729,7 @@ int ble_conn_peripheral_wifi_tput_client_regr(bool test_wlan,
 		#endif/* CONFIG_NRF700X_BT_COEX */
 	}
 	if (test_wlan) {
-		if (IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP)) {
+		if (zperf_udp_or_tcp) {
 			ret = run_wifi_traffic(test_wlan);
 		} else {
 			ret = run_wifi_traffic_tcp(test_wlan);
@@ -2800,16 +2761,15 @@ int ble_conn_peripheral_wifi_tput_client_regr(bool test_wlan,
 
 		disconnect_wifi(test_wlan);
 	}
-	/* one time BT disconnection */
-	/* PENDING - check if BT connection is intact */
-	// note - BLE disconnect is available for only central role.
-	// may be try connection and decide if connection already exists.
+
 	if (test_ble) {
 		if (ble_periph_connected) {
 			LOG_INF("BLE Conn Intact");
 		} else {
 			LOG_INF("BLE disconnected");
 		}
+		LOG_INF("ble_conn_cnt_regr = %u", ble_conn_cnt_regr);
+		LOG_INF("ble_disconn_cnt_regr = %u", ble_disconn_cnt_regr);
 	}
 
 	LOG_INF(" ble_conn_peripheral_wifi_tp_udp_client_regr complete");
@@ -2818,12 +2778,10 @@ err:
 	return ret;
 }
 
-//int wifi_tput_server_ble_con_peripheral(bool test_wlan, bool wifi_coex_enable,
-//		bool test_ble, bool ble_role, bool wlan_role, bool antenna_mode,
-//		bool coex_hardware_enable)
+
 int ble_conn_peripheral_wifi_tput_server_regr(bool test_wlan, bool wifi_coex_enable,
 		bool test_ble, bool ble_role, bool wlan_role, bool antenna_mode,
-		bool coex_hardware_enable)
+		bool coex_hardware_enable,  bool zperf_udp_or_tcp)
 {
 	int ret = 0;
 	uint64_t test_start_time = 0;
@@ -2845,7 +2803,7 @@ int ble_conn_peripheral_wifi_tput_server_regr(bool test_wlan, bool wifi_coex_ena
 		#endif/* CONFIG_NRF700X_BT_COEX */
 	}
 	if (test_wlan) {
-		if (IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP)) {
+		if (zperf_udp_or_tcp) {
 			ret = run_wifi_traffic(test_wlan);
 		} else {
 			ret = run_wifi_traffic_tcp(test_wlan);
@@ -2885,16 +2843,14 @@ int ble_conn_peripheral_wifi_tput_server_regr(bool test_wlan, bool wifi_coex_ena
 		disconnect_wifi(test_wlan);
 	}
 
-	/* one time BT disconnection */
-	/* PENDING - check if BT connection is intact */
-	// note - BLE disconnect is available for only central role.
-	// may be try connection and decide if connection already exists.
 	if (test_ble) {
 		if (ble_periph_connected) {
 			LOG_INF("BLE Conn Intact");
 		} else {
 			LOG_INF("BLE disconnected");
 		}
+		LOG_INF("ble_conn_cnt_regr = %u", ble_conn_cnt_regr);
+		LOG_INF("ble_disconn_cnt_regr = %u", ble_disconn_cnt_regr);
 	}
 
 	LOG_INF(" ble_conn_peripheral_wifi_tput_server_regr complete");
@@ -2903,10 +2859,7 @@ err:
 	return ret;
 }
 
-//int wifi_scanble_conn_central(bool wifi_coex_enable, bool antenna_mode,
-//	bool test_ble, bool test_wlan, bool ble_role, bool wlan_role,
-//	bool coex_hardware_enable, bool wifi_connected_scan)
-int ble_con_central_wifi_shutdown(bool ble_role)
+int ble_con_central_wifi_shutdown(bool test_ble, bool ble_role)
 {
 	uint64_t test_start_time = 0;
 
@@ -2919,51 +2872,61 @@ int ble_con_central_wifi_shutdown(bool ble_role)
 	LOG_INF("");
 	#endif
 	test_start_time = k_uptime_get_32();
+	if (test_ble) {
+		bt_connection_init(ble_role);
+		while (true) {
+			scan_start();
+			k_sleep(K_SECONDS(1));
 
-	bt_connection_init(ble_role);
-	k_sleep(K_SECONDS(1));
-
-	bt_disconnect_central();
-	k_sleep(K_SECONDS(2));
-	
-	while (true) {
-		if ((k_uptime_get_32() - test_start_time)
-			> CONFIG_BLE_TEST_DURATION) {
-			break;
+			bt_disconnect_central();
+			k_sleep(K_SECONDS(2));
+			
+			if ((k_uptime_get_32() - test_start_time)
+				> CONFIG_BLE_TEST_DURATION) {
+				break;
+			}
+			k_sleep(K_SECONDS(1));
 		}
-		k_sleep(K_SECONDS(1));
+		
+		LOG_INF("ble_conn_success_cnt = %u", ble_conn_success_cnt);
+		LOG_INF("ble_conn_fail_cnt = %u", ble_conn_fail_cnt);
 	}
-	LOG_INF("ble_conn_success_cnt = %u", ble_conn_success_cnt);
-	LOG_INF("ble_conn_fail_cnt = %u", ble_conn_fail_cnt);
-
 	LOG_INF(" ble_con_central_wifi_shutdown complete");
 	return 0;
 }
 
-//int wifi_scan_ble_conn_peripheral(bool wifi_coex_enable,
-//			bool antenna_mode, bool test_ble, bool test_wlan, bool ble_role,
-//			bool wlan_role, bool coex_hardware_enable, bool wifi_connected_scan)
-int ble_con_peripheral_wifi_shutdown(bool ble_role)
+int ble_con_peripheral_wifi_shutdown(bool test_ble, bool ble_role)
 {
 	uint64_t test_start_time = 0;
 
 	/* disable RPU i.e. Wi-Fi shutdown */
 	rpu_disable();
-
-	bt_connection_init(ble_role);
 	
-	#ifdef DEMARCATE_TEST_START
-	LOG_INF("");
-	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-	LOG_INF("");
-	#endif
-	test_start_time = k_uptime_get_32();
-	while (true) {
-		if ((k_uptime_get_32() - test_start_time) >
-			CONFIG_BLE_TEST_DURATION) {
-			break;
+	if (test_ble) {
+		bt_connection_init(ble_role);
+		while (true) {
+			if (ble_periph_connected) {
+				break;
+			}
 		}
-		k_sleep(K_SECONDS(1));
+		
+		#ifdef DEMARCATE_TEST_START
+		LOG_INF("");
+		LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+		LOG_INF("");
+		#endif
+		test_start_time = k_uptime_get_32();
+		
+		while (true) {
+			if (!ble_periph_connected) {
+				adv_start();
+			}
+			if ((k_uptime_get_32() - test_start_time) >
+				CONFIG_BLE_TEST_DURATION) {
+				break;
+			}
+			k_sleep(K_SECONDS(1));
+		}
 	}
 
 	LOG_INF(" ble_con_peripheral_wifi_shutdown complete");
@@ -2971,9 +2934,6 @@ int ble_con_peripheral_wifi_shutdown(bool ble_role)
 	return 0;
 }
 
-//int wifi_scan_ble_tput_central(bool wifi_coex_enable, bool antenna_mode,
-//	bool test_ble, bool test_wlan, bool ble_role, bool wlan_role,
-//	bool coex_hardware_enable, bool wifi_connected_scan)
 int ble_tp_central_wifi_shutdown(bool test_ble, bool ble_role)
 {
 	uint64_t test_start_time = 0;
@@ -2987,16 +2947,18 @@ int ble_tp_central_wifi_shutdown(bool test_ble, bool ble_role)
 	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 	LOG_INF("");
 	#endif
-	test_start_time = k_uptime_get_32();
-	/* BLE connection */
-	ret = bt_throughput_test_init(ble_role);
-	if (ret != 0) {
-		LOG_ERR("Failed to BT throughput init: %d", ret);
-		goto err;
+	if (test_ble) {
+		test_start_time = k_uptime_get_32();
+		/* BLE connection */
+		ret = bt_throughput_test_init(ble_role);
+		if (ret != 0) {
+			LOG_ERR("Failed to BT throughput init: %d", ret);
+			goto err;
+		}
+		start_ble_traffic(test_ble, ble_role);
+		run_ble_traffic(test_ble, ble_role);
+		disconnect_ble(test_ble, ble_role);
 	}
-	start_ble_traffic(test_ble, ble_role);
-	run_ble_traffic(test_ble, ble_role);
-	disconnect_ble(test_ble, ble_role);
 
 	LOG_INF(" ble_tp_central_wifi_shutdown complete");
 	return 0;
@@ -3004,9 +2966,6 @@ err:
 	return ret;
 }
 
-//int wifi_scan_ble_tput_peripheral(bool wifi_coex_enable, bool antenna_mode,
-//	bool test_ble, bool test_wlan, bool ble_role, bool wlan_role,
-//	bool coex_hardware_enable, bool wifi_connected_scan)
 int ble_tp_periph_wifi_shutdown(bool test_ble, bool ble_role)
 {
 	uint64_t test_start_time = 0;
@@ -3015,37 +2974,39 @@ int ble_tp_periph_wifi_shutdown(bool test_ble, bool ble_role)
 	/* disable RPU i.e. Wi-Fi shutdown */
 	rpu_disable();
 	
-	if (!ble_role) {
-		LOG_INF("Make sure peer BLE role is central");
-		k_sleep(K_SECONDS(3));
-	}
-
-	/* BLE connection */
-	ret = bt_throughput_test_init(ble_role);
-	if (ret != 0) {
-		LOG_ERR("Failed to BT throughput init: %d", ret);
-		goto err;
-	}
-
-	#ifdef DEMARCATE_TEST_START
-	LOG_INF("");
-	LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-	LOG_INF("");
-	#endif
-	test_start_time = k_uptime_get_32();
-	/* LOG_INF("BLE Throughput started"); */
-	start_ble_traffic(test_ble, ble_role);
-
-	run_ble_traffic(test_ble, ble_role);
-
-	while (true) {
-		if (k_uptime_get_32() - test_start_time > CONFIG_BLE_TEST_DURATION) {
-			break;
+	if (test_ble) {
+		if (!ble_role) {
+			LOG_INF("Make sure peer BLE role is central");
+			k_sleep(K_SECONDS(3));
 		}
-		k_sleep(K_SECONDS(1));
-	}
 
-	disconnect_ble(test_ble, ble_role);
+		/* BLE connection */
+		ret = bt_throughput_test_init(ble_role);
+		if (ret != 0) {
+			LOG_ERR("Failed to BT throughput init: %d", ret);
+			goto err;
+		}
+
+		#ifdef DEMARCATE_TEST_START
+		LOG_INF("");
+		LOG_INF("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+		LOG_INF("");
+		#endif
+		test_start_time = k_uptime_get_32();
+		/* LOG_INF("BLE Throughput started"); */
+		start_ble_traffic(test_ble, ble_role);
+
+		run_ble_traffic(test_ble, ble_role);
+
+		while (true) {
+			if (k_uptime_get_32() - test_start_time > CONFIG_BLE_TEST_DURATION) {
+				break;
+			}
+			k_sleep(K_SECONDS(1));
+		}
+
+		disconnect_ble(test_ble, ble_role);
+	}
 
 	LOG_INF(" ble_tp_periph_wifi_shutdown complete");
 	return 0;

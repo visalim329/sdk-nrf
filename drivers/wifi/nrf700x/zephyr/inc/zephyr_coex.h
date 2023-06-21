@@ -41,19 +41,24 @@ enum nrf_wifi_pta_wlan_op_band {
 int nrf_wifi_coex_config_pta(enum nrf_wifi_pta_wlan_op_band wlan_band, bool antenna_mode,
 		bool ble_role, bool wlan_role);
 
+#if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
+	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 /**
- * @function   nrf_wifi_config_sr_switch(bool antenna_mode)
+ * @function   nrf_wifi_config_sr_switch(bool antenna_mode, bool bt_external_antenna)
  *
  * @brief      Function used to configure SR side switch (nRF5340 side switch in nRF7002 DK).
  *
  * @param[in]  antenna_mode
  *               Indicates whether separate antenans are used or not.
+  * @param[in] bt_external_antenna
+ *               Indicates whether the external antenna to be used or not.
  *
  * @return     Returns status of configuration.
  *             Returns zero upon successful configuration.
  *             Returns non-zero upon unsuccessful configuration.
  */
-int nrf_wifi_config_sr_switch(bool antenna_mode);
+int nrf_wifi_config_sr_switch(bool antenna_mode, bool bt_external_antenna);
+#endif
 
 /**
  * @function   nrf_wifi_coex_config_non_pta(bool antenna_mode)

@@ -41,7 +41,7 @@ config TEST_TYPE_BLE
 	bool "BLE"
 	default y if TEST_TYPE_BLE_ONLY || TEST_TYPE_WLAN_BLE
 	help
-	  Enable BLE	
+	  Enable BLE
 
 config STA_SSID
 	string "SSID"
@@ -171,6 +171,10 @@ config COEX_HARDWARE_ENABLE
 	bool "Indicates if COEX hardware module enabled"
 	default y
 
-rsource "test/Kconfig"
 
+config BT_EXTERNAL_ANTENNA
+	bool "Indicates if external antenna used for BT"
+	default y
+
+rsource "test/Kconfig"
 endmenu
