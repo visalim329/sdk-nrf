@@ -75,6 +75,7 @@ void print_test_params_info(bool test_wlan, bool test_ble,
 	} else {
 		LOG_INF("RPU disabled");
 	}
+	LOG_INF("ZPERF RATE: %u Kbps\n", CONFIG_WIFI_ZPERF_RATE);
 }
 
 
