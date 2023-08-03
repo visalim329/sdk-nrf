@@ -27,4 +27,8 @@ int test_run(const struct shell *shell,
  */
 void select_role(bool is_central);
 
+int connection_config_set(const struct bt_le_conn_param *conn_param,
+			const struct bt_conn_le_phy_param *phy,
+			const struct bt_conn_le_data_len_param *data_len);
+
 #endif /* THROUGHPUT_MAIN_H_ */

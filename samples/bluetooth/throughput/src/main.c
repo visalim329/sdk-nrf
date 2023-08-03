@@ -29,10 +29,21 @@
 
 #define DEVICE_NAME	CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
-#define INTERVAL_MIN	0x140	/* 320 units, 400 ms */
-#define INTERVAL_MAX	0x140	/* 320 units, 400 ms */
+#define INTERVAL_MIN	80	/* 320 units, 400 ms */
+#define INTERVAL_MAX	80	/* 320 units, 400 ms */
+
+#define WIFI_SCAN_BLE_CON_PERIPH
+//#define DEFAULT_BT_TPUT_TEST
 
 #define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
+#define SCAN_CONFIG_TIMEOUT 20 
+#define BLE_CONN_CENTRAL_TEST_DURATION 20000   //msec
+
+#define CONN_LATENCY 0
+#define SUPERVISION_TIMEOUT 1000
+
+static uint32_t ble_conn_success_cnt = 0;
+static uint32_t ble_conn_fail_cnt = 0;
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
 
@@ -126,7 +137,9 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 	}
 
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
+	#ifdef DEFAULT_BT_TPUT_TEST
 		instruction_print();
+	#endif
 		test_ready = true;
 	}
 }
@@ -629,32 +642,207 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.le_phy_updated = le_phy_updated,
 	.le_data_len_updated = le_data_length_updated
 };
-
-void main(void)
+int connection_config_set(const struct bt_le_conn_param *conn_param,
+			const struct bt_conn_le_phy_param *phy,
+			const struct bt_conn_le_data_len_param *data_len)
 {
 	int err;
+	struct bt_conn_info info = {0};
 
-	printk("Starting Bluetooth Throughput example\n");
+	err = bt_conn_get_info(default_conn, &info);
+	if (err) {
+		printk("Failed to get connection info %d", err);
+		return err;
+	}
+
+	if (info.role != BT_CONN_ROLE_CENTRAL) {
+		printk("'run' command shall be executed only on the central board");
+	}
+
+	err = bt_conn_le_phy_update(default_conn, phy);
+	if (err) {
+		printk("PHY update failed: %d\n", err);
+		return err;
+	}
+
+	printk("PHY update pending");
+	err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+	if (err) {
+		printk("PHY update timeout");
+		return err;
+	}
+
+	if (info.le.data_len->tx_max_len != data_len->tx_max_len) {
+		data_length_req = true;
+
+		err = bt_conn_le_data_len_update(default_conn, data_len);
+		if (err) {
+			printk("LE data length update failed: %d",
+				    err);
+			return err;
+		}
+
+		printk("LE Data length update pending");
+		err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+		if (err) {
+			printk("LE Data Length update timeout");
+			return err;
+		}
+	}
+
+	if (info.le.interval != conn_param->interval_max) {
+		err = bt_conn_le_param_update(default_conn, conn_param);
+		if (err) {
+			printk("Connection parameters update failed: %d",
+				    err);
+			return err;
+		}
+
+		printk("Connection parameters update pending");
+		err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+		if (err) {
+			printk("Connection parameters update timeout");
+			return err;
+		}
+	}
+
+	return 0;
+}
+
+int bt_connection_init(bool ble_role)
+{
+	int err;
+	int64_t stamp;
 
 	err = bt_enable(NULL);
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
-		return;
+		return err;
 	}
 
-	printk("Bluetooth initialized\n");
+	//printk("Bluetooth initialized\n");
 
 	scan_init();
 
-	err = bt_throughput_init(&throughput, &throughput_cb);
+	/*  err = bt_throughput_init(&throughput, &throughput_cb);
 	if (err) {
 		printk("Throughput service initialization failed.\n");
-		return;
+		return err;
+	} 
+ */	
+	select_role(ble_role);
+
+	//printk("Waiting for connection.\n");
+	//ble_scan2conn_start_time = k_uptime_get_32();
+	//ble_scan2conn_time = 0;
+	
+	stamp = k_uptime_get_32();
+	while (k_uptime_delta(&stamp) / MSEC_PER_SEC < SCAN_CONFIG_TIMEOUT) {
+		if (default_conn) {
+			break;
+		}
+		k_sleep(K_SECONDS(1));
 	}
 
-	printk("\n");
-	printk("Press button 1 or type \"central\" on the central board.\n");
-	printk("Press button 2 or type \"peripheral\" on the peripheral board.\n");
+	if (!default_conn) {
+		printk("Cannot set up connection.\n");
+		return -ENOTCONN;
+	}
 
-	buttons_init();
+	//ble_scan2conn_time = k_uptime_delta(&ble_scan2conn_start_time);
+	//printk("Time taken for scan %lld ms\n", ble_scan2conn_time);	
+
+	//ble_scan2conn_start_time = k_uptime_get_32();
+	//ble_scan2conn_time = 0;
+	
+	uint32_t conn_cfg_status = connection_config_set(
+			BT_LE_CONN_PARAM(INTERVAL_MIN,
+			INTERVAL_MAX,
+			CONN_LATENCY, SUPERVISION_TIMEOUT),
+			BT_CONN_LE_PHY_PARAM_2M,
+			BT_LE_DATA_LEN_PARAM_MAX);
+	//ble_scan2conn_time = k_uptime_delta(&ble_scan2conn_start_time);
+	//printk("Time taken for connecion %lld ms\n", ble_scan2conn_time);
+	
+	return(conn_cfg_status);
+}
+
+static int wifi_scan_ble_conn_central()
+{
+	bool ble_role = 1;
+	uint64_t test_start_time = 0;
+	test_start_time = k_uptime_get_32();
+	bt_connection_init(ble_role);
+	
+	while (true) {
+		bt_scan_start(BT_SCAN_TYPE_SCAN_PASSIVE);
+		k_sleep(K_SECONDS(3));   //Should wait for more time for conn establishment. So used 3 sec
+
+		//printk("************ Disconect BLE **********\n");
+		bt_disconnect_central();
+		k_sleep(K_SECONDS(2));
+		
+		if (k_uptime_get_32() - test_start_time > BLE_CONN_CENTRAL_TEST_DURATION) {
+			break;
+		}
+		k_sleep(K_SECONDS(1));		
+	}
+
+	printk(" ble_conn_success_cnt = %u \n", ble_conn_success_cnt);
+	printk(" ble_conn_fail_cnt = %u \n", ble_conn_fail_cnt);	
+	return 0;	
+}
+
+int bt_disconnect_central(void)
+{
+	int err;
+
+	if (!default_conn) {
+		printk("Not connected!\n");
+		ble_conn_fail_cnt++;
+		return -ENOTCONN;
+	} else {
+		ble_conn_success_cnt++;
+	}		
+
+	err = bt_conn_disconnect(default_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+	if (err) {
+		printk("Cannot disconnect!\n");
+		return err;
+	}
+	return 0;
+}
+
+void main(void)
+{
+	#ifdef DEFAULT_BT_TPUT_TEST
+		int err;
+
+		printk("Starting Bluetooth Throughput example\n");
+
+		err = bt_enable(NULL);
+		if (err) {
+			printk("Bluetooth init failed (err %d)\n", err);
+			return;
+		}
+
+		printk("Bluetooth initialized\n");
+
+		scan_init();
+
+		err = bt_throughput_init(&throughput, &throughput_cb);
+		if (err) {
+			printk("Throughput service initialization failed.\n");
+			return;
+		}		
+
+		printk("\n");
+		printk("Press button 1 or type \"central\" on the central board.\n");
+		printk("Press button 2 or type \"peripheral\" on the peripheral board.\n");
+
+		buttons_init();
+	#endif
+	#ifdef WIFI_SCAN_BLE_CON_PERIPH	
+		wifi_scan_ble_conn_central();
+	#endif
 }

@@ -8,6 +8,7 @@ source "Kconfig.zephyr"
 
 menu "Nordic Coex sample"
 
+
 choice TEST_TYPE
 	prompt "Test type"
 	default TEST_TYPE_WLAN_BLE
@@ -44,7 +45,7 @@ config TEST_TYPE_BLE
 
 config STA_SSID
 	string "SSID"
-	default "coex_24"
+	default "wifi_sr_coex_24"
 	help
 	  Specify the SSID to connect
 
@@ -80,7 +81,7 @@ config STA_PASSWORD
 
 config NET_CONFIG_PEER_IPV4_ADDR
 	string "Peer IPv4 address"
-	default "192.168.1.202"
+	default "192.168.1.253"
 
 config NET_CONFIG_PEER_IPV4_PORT
 	int "Peer IPv4 port"
@@ -128,11 +129,11 @@ config COEX_WLAN_2PT4G
 
 config WIFI_TEST_DURATION
 	int "test duration in milliseconds"
-	default 20000
+	default 60000
 
 config BLE_TEST_DURATION
 	int "test duration in milliseconds"
-	default 20000
+	default 60000
 
 config COEX_BT_CENTRAL
 	bool "BT device role"
@@ -140,14 +141,6 @@ config COEX_BT_CENTRAL
 
 config COEX_SEP_ANTENNAS
 	bool "Control if the antennas are shared/serparate for BT and WLAN"
-	default y
-
-config WIFI_COEX_ENABLE
-	bool "Indicates if Wi-Fi posts requests to PTA"
-	default y
-
-config RPU_ENABLE
-	bool "Indicates if PRU is enable"
 	default y
 
 config BT_GAP_ADV_FAST_INT_MIN_2
@@ -159,15 +152,32 @@ config BT_GAP_ADV_FAST_INT_MAX_2
 	default 240
 
 config BT_LE_SCAN_INTERVAL
-	int "BT LE Scan interval  value"
-	default 32
-
-config BT_LE_SCAN_WINDOW
-	int "BT LE Scan Window value"
+	int "BT LE Scan interval  value. Each unit is 0.625milliseconds."
 	default 16
 
-config COEX_HARDWARE_ENABLE
-	bool "Indicates if COEX hardware module enabled"
-	default y
+config BT_LE_SCAN_WINDOW
+	int "BT LE Scan Window value. Each unit is 0.625milliseconds."
+	default 16
 
+config BT_SUPERVISION_TIMEOUT
+	int "BT LE supervision timeout"
+	default 1000
+
+config BT_CONN_LATENCY
+	int "BT LE connection latency"
+	default 0
+
+config BT_EXTERNAL_ANTENNA
+	bool "Indicates if external antenna used for BT"
+	default n
+
+config DEBUG_PRINT_WIFI_SCAN_RESULT
+	bool "Print Wi-Fi Scan results for debug purposes"
+	default n
+
+config DEBUG_PRINT_WIFI_CONN_RESULT
+	bool "Print Wi-Fi Connection results for debug purposes"
+	default n
+
+rsource "test/Kconfig"
 endmenu
