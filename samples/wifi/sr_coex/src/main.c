@@ -23,7 +23,6 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 extern int8_t wifi_rssi;
 extern int8_t ble_txpower;
 extern int8_t ble_rssi;
-
 	
 void print_test_params_info(bool test_wlan, bool test_ble, bool is_ant_mode_sep,
 		bool is_wlan_server, bool is_zperf_udp, bool is_ble_central,	bool ble_coex_enable)
@@ -132,15 +131,14 @@ int main(void)
 			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) ||
 			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
 			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH) ||
-			IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_REGR) ||
-			IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_REGR);
+			IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) ||
+			IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY);
 
 #if !defined(CONFIG_COEX_SEP_ANTENNAS) && \
         !(defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
            defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP))
         BUILD_ASSERT("Shared antenna support is not available with nRF7002 shields");
 #endif
-
 
 	memset_context();
 
@@ -170,7 +168,7 @@ int main(void)
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 
-	#ifdef CONFIG_NRF700X_BT_COEX
+	#if defined(CONFIG_NRF700X_BT_COEX)
 	/* Configure SR side (nRF5340 side) switch in nRF7002 DK */
 	LOG_INF("Configure SR side (nRF5340 side) switch");
 	
@@ -182,7 +180,7 @@ int main(void)
 	#endif
 #endif
 
-#ifdef CONFIG_NRF700X_BT_COEX
+#if defined(CONFIG_NRF700X_BT_COEX)
 	/* Configure Coexistence Hardware non-PTA registers */
 	LOG_INF("Configuring non-PTA registers.");
 	ret = nrf_wifi_coex_config_non_pta(is_ant_mode_sep);
@@ -199,8 +197,8 @@ int main(void)
 		} else {
 			LOG_INF("Test case: wifi_conn_scan_ble_conn_central");
 		}
-
-		 ret = wifi_scan_ble_conn_test(is_ant_mode_sep, test_ble, test_wlan,
+		/* common for both BLE central and peripheral */
+		ret = wifi_scan_ble_connection(is_ant_mode_sep, test_ble, test_wlan,
 				is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
 			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL)) {
@@ -219,7 +217,8 @@ int main(void)
 		} else {
 			LOG_INF("Test case: wifi_conn_scan_ble_conn_peripheral");
 		}
-		 ret = wifi_scan_ble_conn_test(is_ant_mode_sep, test_ble,
+		/* common for both BLE central and peripheral */
+		ret = wifi_scan_ble_connection(is_ant_mode_sep, test_ble,
 				test_wlan, is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
 			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH)) {
@@ -238,7 +237,8 @@ int main(void)
 		} else {
 			LOG_INF("Test case: wifi_conn_scan_ble_tput_central");
 		}
-		ret = wifi_scan_ble_tput_test(is_ant_mode_sep, test_ble, test_wlan,
+		/* common for both BLE central and peripheral */
+		ret = wifi_scan_ble_tput(is_ant_mode_sep, test_ble, test_wlan,
 				is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
 			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL)) {
@@ -257,7 +257,8 @@ int main(void)
 		} else {
 			LOG_INF("Test case: wifi_conn_scan_ble_tput_peripheral");
 		}
-		ret = wifi_scan_ble_tput_test(is_ant_mode_sep, test_ble, test_wlan,
+		/* common for both BLE central and peripheral */
+		ret = wifi_scan_ble_tput(is_ant_mode_sep, test_ble, test_wlan,
 				is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
 			if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_PERIPH)) {
@@ -269,25 +270,25 @@ int main(void)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL)) {
-		LOG_INF("Test case: wifi_con_ble_con_central");
-		ret = wifi_con_ble_con_central(test_wlan, test_ble, is_ble_central,
-				is_wlan_server, is_ant_mode_sep);
-		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_con_central fail");
-			goto err;
-		}
-	}
-
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH)) {
-		LOG_INF("Test case: wifi_con_ble_con_peripheral");
-		ret = wifi_con_ble_con_peripheral(test_wlan, test_ble, is_ble_central,
-				is_wlan_server, is_ant_mode_sep);
-		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_con_peripheral fail");
-			goto err;
-		}
-	}
+	//if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL)) {
+	//	LOG_INF("Test case: wifi_con_ble_con_central");
+	//	ret = wifi_con_ble_con_central(test_wlan, test_ble, is_ble_central,
+	//			is_wlan_server, is_ant_mode_sep);
+	//	if (ret != 0) {
+	//		LOG_ERR("Running wifi_con_ble_con_central fail");
+	//		goto err;
+	//	}
+	//}
+	//
+	//if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH)) {
+	//	LOG_INF("Test case: wifi_con_ble_con_peripheral");
+	//	ret = wifi_con_ble_con_peripheral(test_wlan, test_ble, is_ble_central,
+	//			is_wlan_server, is_ant_mode_sep);
+	//	if (ret != 0) {
+	//		LOG_ERR("Running wifi_con_ble_con_peripheral fail");
+	//		goto err;
+	//	}
+	//}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL)) {
 		LOG_INF("Test case: wifi_con_ble_tput_central");
@@ -478,192 +479,175 @@ int main(void)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_REGR)) {
-		LOG_INF("Test case: wifi_con_ble_con_central_regr");
-		ret = wifi_con_ble_con_central_regr(test_wlan, test_ble, is_ble_central,
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_STABILITY)) {
+		LOG_INF("Test case: wifi_con_ble_con_central_stability");
+		ret = wifi_con_ble_con_central_stability(test_wlan, test_ble, is_ble_central,
 				is_wlan_server, is_ant_mode_sep);
 		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_con_central_regr fail");
+			LOG_ERR("Running wifi_con_ble_con_central_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_REGR)) {
-		LOG_INF("Test case: wifi_con_ble_con_peripheral_regr");
-		ret = wifi_con_ble_con_peripheral_regr(test_wlan, test_ble, is_ble_central,
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_STABILITY)) {
+		LOG_INF("Test case: wifi_con_ble_con_peripheral_stability");
+		ret = wifi_con_ble_con_peripheral_stability(test_wlan, test_ble, is_ble_central,
 				is_wlan_server, is_ant_mode_sep);
 		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_con_peripheral_regr fail");
+			LOG_ERR("Running wifi_con_ble_con_peripheral_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL_REGR)) {
-		LOG_INF("Test case: wifi_con_ble_tput_central_regr");
-		ret = wifi_con_ble_tput_central_regr(test_wlan, is_ant_mode_sep, test_ble,
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL_STABILITY)) {
+		LOG_INF("Test case: wifi_con_ble_tput_central_stability");
+		ret = wifi_con_ble_tput_central_stability(test_wlan, is_ant_mode_sep, test_ble,
 				is_ble_central, is_wlan_server);
 		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_tput_central_regr fail");
+			LOG_ERR("Running wifi_con_ble_tput_central_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_REGR)) {
-		LOG_INF("Test case: wifi_con_ble_tput_peripheral_regr");
-		ret = wifi_con_ble_tput_peripheral_regr(test_wlan, is_ant_mode_sep,
+	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY)) {
+		LOG_INF("Test case: wifi_con_ble_tput_peripheral_stability");
+		ret = wifi_con_ble_tput_peripheral_stability(test_wlan, is_ant_mode_sep,
 				test_ble, is_ble_central, is_wlan_server);
 		if (ret != 0) {
-			LOG_ERR("Running wifi_con_ble_tput_peripheral_regr fail");
+			LOG_ERR("Running wifi_con_ble_tput_peripheral_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_REGR) ||
-			IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_REGR)) {
-			LOG_ERR("Running ble_conn_central_wifi_scan_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY) ||
+			IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY)) {
+			LOG_ERR("Running ble_conn_central_wifi_scan_stability");
 		} else {
-			LOG_ERR("Running ble_conn_central_wifi_conn_scan_regr");
+			LOG_ERR("Running ble_conn_central_wifi_conn_scan_stability");
 		}
-		ret = ble_conn_central_wifi_scan_regr(is_ant_mode_sep, test_ble, test_wlan,
+		ret = ble_conn_central_wifi_scan_stability(is_ant_mode_sep, test_ble, test_wlan,
 				is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_REGR)) {
-				LOG_ERR("Running ble_conn_central_wifi_scan_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY)) {
+				LOG_ERR("Running ble_conn_central_wifi_scan_stability fail");
 			} else {
-				LOG_ERR("Running ble_conn_central_wifi_conn_scan_regr fail");
+				LOG_ERR("Running ble_conn_central_wifi_conn_scan_stability fail");
 			}
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_REGR)) {
-		LOG_INF("Test case: ble_conn_central_wifi_con_regr");
-		ret = ble_conn_central_wifi_con_regr(test_wlan, test_ble, is_ble_central,
+	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_STABILITY)) {
+		LOG_INF("Test case: ble_conn_central_wifi_con_stability");
+		ret = ble_conn_central_wifi_con_stability(test_wlan, test_ble, is_ble_central,
 				is_wlan_server,	is_ant_mode_sep);
 		if (ret != 0) {
-			LOG_ERR("Running ble_conn_central_wifi_con_regr fail");
+			LOG_ERR("Running ble_conn_central_wifi_con_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_PING_REGR)) {
-		LOG_INF("Test case: ble_conn_central_wifi_ping_regr");
-		/* PENDING: ble_conn_central_wifi_ping_regr() */
-		if (ret != 0) {
-			LOG_ERR("Running ble_conn_central_wifi_ping_regr fail");
-			goto err;
-		}
-	}
-	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_REGR) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_REGR)) {
-			LOG_INF("Test case: ble_conn_central_wifi_tput_udp_client_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY) ||
+		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY)) {
+			LOG_INF("Test case: ble_conn_central_wifi_tput_udp_client_stability");
 		} else {
-			LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_client_regr");
+			LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_client_stability");
 		}
-		ret = ble_conn_central_wifi_tput_client_regr(test_wlan, test_ble,
+		ret = ble_conn_central_wifi_tput_client_stability(test_wlan, test_ble,
 				is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_REGR)) {
-				LOG_INF("Test case: ble_conn_central_wifi_tput_udp_client_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY)) {
+				LOG_INF("Test case: ble_conn_central_wifi_tput_udp_client_stability fail");
 			} else {
-				LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_client_regr fail");
+				LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_client_stability fail");
 			}
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_REGR) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_REGR)) {
-			LOG_INF("Test case: ble_conn_central_wifi_tput_udp_server_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY) ||
+		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY)) {
+			LOG_INF("Test case: ble_conn_central_wifi_tput_udp_server_stability");
 		} else {
-			LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_server_regr");
+			LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_server_stability");
 		}		
-		ret = ble_conn_central_wifi_tput_server_regr(test_wlan, test_ble,
+		ret = ble_conn_central_wifi_tput_server_stability(test_wlan, test_ble,
 				is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_REGR)) {
-				LOG_INF("Test case: ble_conn_central_wifi_tput_udp_server_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY)) {
+				LOG_INF("Test case: ble_conn_central_wifi_tput_udp_server_stability fail");
 			} else {
-				LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_server_regr fail");
+				LOG_INF("Test case: ble_conn_central_wifi_tput_tcp_server_stability fail");
 			}
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_REGR) ||
-			IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_REGR)) {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_scan_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) ||
+			IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY)) {
+			LOG_INF("Test case: ble_conn_peripheral_wifi_scan_stability");
 		} else {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_conn_scan_regr");
+			LOG_INF("Test case: ble_conn_peripheral_wifi_conn_scan_stability");
 		}
-		ret = ble_conn_peripheral_wifi_scan_regr(is_ant_mode_sep, test_ble,
+		ret = ble_conn_peripheral_wifi_scan_stability(is_ant_mode_sep, test_ble,
 				test_wlan, is_ble_central, is_wlan_server, is_wifi_conn_scan);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_REGR)) {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_scan_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY)) {
+				LOG_INF("Test case: ble_conn_peripheral_wifi_scan_stability fail");
 			} else {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_conn_scan_regr fail");
+				LOG_INF("Test case: ble_conn_peripheral_wifi_conn_scan_stability fail");
 			}
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_REGR)) {
-		LOG_INF("Test case: ble_conn_peripheral_wifi_con_regr");
-		ret = ble_conn_peripheral_wifi_con_regr(test_wlan, test_ble, is_ble_central,
+	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_STABILITY)) {
+		LOG_INF("Test case: ble_conn_peripheral_wifi_con_stability");
+		ret = ble_conn_peripheral_wifi_con_stability(test_wlan, test_ble, is_ble_central,
 				is_wlan_server, is_ant_mode_sep);
 		if (ret != 0) {
-			LOG_ERR("Running ble_conn_peripheral_wifi_con_regr fail");
+			LOG_ERR("Running ble_conn_peripheral_wifi_con_stability fail");
 			goto err;
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_PING_REGR)) {
-		LOG_INF("Test case: ble_conn_peripheral_wifi_ping_regr");
-		/* PENDING: ble_conn_peripheral_wifi_ping_regr() */
-		if (ret != 0) {
-			LOG_ERR("Running ble_conn_peripheral_wifi_ping_regr fail");
-			goto err;
-		}
-	}
-
-	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_REGR) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_REGR)) {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_client_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY) ||
+		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY)) {
+			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_client_stability");
 		} else {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_client_regr");
+			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_client_stability");
 		}
-		ret = ble_conn_peripheral_wifi_tput_client_regr(test_wlan, test_ble,
+		ret = ble_conn_peripheral_wifi_tput_client_stability(test_wlan, test_ble,
 				is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_REGR)) {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_client_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY)) {
+				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_client_stability fail");
 			} else {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_client_regr fail");
+				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_client_stability fail");
 			}
 			goto err;
 		}
 	}
 				
-	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_REGR) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_REGR)) {
-		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_REGR)) {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_server_regr");
+	if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY) ||
+		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY)) {
+		if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY)) {
+			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_server_stability");
 		} else {
-			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_server_regr");
+			LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_server_stability");
 		}		
-		ret = ble_conn_peripheral_wifi_tput_server_regr(test_wlan, test_ble,
+		ret = ble_conn_peripheral_wifi_tput_server_stability(test_wlan, test_ble,
 				is_ble_central, is_wlan_server, is_ant_mode_sep,	is_zperf_udp);
 		if (ret != 0) {
-			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_REGR)) {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_server_regr fail");
+			if (IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY)) {
+				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_udp_server_stability fail");
 			} else {
-				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_server_regr fail");
+				LOG_INF("Test case: ble_conn_peripheral_wifi_tput_tcp_server_stability fail");
 			}
 			goto err;
 		}

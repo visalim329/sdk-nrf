@@ -129,11 +129,11 @@ config COEX_WLAN_2PT4G
 
 config WIFI_TEST_DURATION
 	int "test duration in milliseconds"
-	default 60000
+	default 20000
 
 config BLE_TEST_DURATION
 	int "test duration in milliseconds"
-	default 60000
+	default 20000
 
 config COEX_BT_CENTRAL
 	bool "BT device role"
@@ -171,13 +171,18 @@ config BT_EXTERNAL_ANTENNA
 	bool "Indicates if external antenna used for BT"
 	default n
 
-config DEBUG_PRINT_WIFI_SCAN_RESULT
-	bool "Print Wi-Fi Scan results for debug purposes"
+config DEBUG_PRINT_WIFI_SCAN_INFO
+	bool "Print Wi-Fi Scan info for debug purpose"
 	default n
-
-config DEBUG_PRINT_WIFI_CONN_RESULT
-	bool "Print Wi-Fi Connection results for debug purposes"
+config DEBUG_PRINT_WIFI_DHCP_INFO
+	bool "Print Wi-Fi DHCP info for debug purpose"
 	default n
+config DEBUG_PRINT_WIFI_CONN_INFO
+	bool "Print Wi-Fi Connection info for debug purpose"
+	default n
+config PRINTS_FOR_AUTOMATION
+	bool "Print info required for automation"
+	default y
 
 rsource "test/Kconfig"
 endmenu

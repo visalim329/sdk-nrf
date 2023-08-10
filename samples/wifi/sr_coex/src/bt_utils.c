@@ -16,8 +16,6 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 	defined(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) || \
-	defined(CONFIG_WIFI_CON_BLE_CON_CENTRAL) || \
-	defined(CONFIG_WIFI_CON_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_TP_UDP_SERVER_BLE_CON_CENTRAL) || \
@@ -93,12 +91,12 @@ int8_t ble_rssi = 127;
 #define SCAN_CONFIG_TIMEOUT 20
 
 
-/*#define PRINT_BLE_UPDATES*/
+/* #define PRINT_BLE_UPDATES */
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
 
 extern uint8_t wait_for_ble_central_run;
-uint32_t ble_conn_success_cnt;
+uint32_t ble_connection_success_cnt;
 uint32_t ble_disconnection_fail_cnt;
 bool ble_periph_connected;
 bool ble_central_connected;
@@ -106,7 +104,7 @@ bool ble_central_connected;
 uint64_t ble_scan2conn_start_time;
 int64_t ble_scan2conn_time;
 uint32_t ble_connection_success_cnt;
-uint32_t ble_disconn_cnt_regr;
+uint32_t ble_disconn_cnt_stability;
 
 static volatile bool data_length_req;
 static volatile bool test_ready;
@@ -284,11 +282,11 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		return;
 	}
 	ble_connection_success_cnt++;
-	
+#ifdef CONFIG_PRINTS_FOR_AUTOMATION	
 	LOG_INF("Connected as %s",
 	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	LOG_INF("Conn. interval is %u units", info.le.interval);
-
+#endif
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
 				       BT_UUID_THROUGHPUT,
@@ -427,7 +425,10 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		bt_conn_unref(default_conn);
 		default_conn = NULL;
 	}
-	ble_disconn_cnt_regr++;
+	/* Disconnection count for central is available in bt_disconnect_central() */
+	if(!IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
+		ble_disconnection_success_cnt++; 
+	}
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -646,7 +647,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 int bt_throughput_test_run(void)
 {
 	int err;
-	uint64_t stamp;
+	int64_t stamp;
 	int64_t delta;
 	uint32_t data = 0;
 
@@ -714,19 +715,18 @@ int bt_conn_test_run(void)
 {
 
 	int err;
-	uint64_t stamp;
+	int64_t stamp;
 	int64_t delta;
 	uint32_t data = 0;
 
 	/* get cycle stamp */
 	stamp = k_uptime_get_32();
-	LOG_INF("IN bt_conn_test_run function");
 
 	delta = 0;
 	while (true) {
-		ble_connection_attempt_cnt++;	
 		if(IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
-			/* BLE connection */		
+			/* BLE connection */
+			ble_connection_attempt_cnt++;	
 			scan_start();
 		} else  {
 			if (!ble_periph_connected) {
@@ -743,11 +743,14 @@ int bt_conn_test_run(void)
 				if success then try disconn 
 				if timeout, dont do disconn , 
 				attempt next connection in loop
-		*/		
-		if (ble_central_connected) { // check if BLE connected
-			ble_disconnection_attempt_cnt++;			
-			bt_disconnect_central();
+		*/
+		if(IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
+			if (ble_central_connected) { // check if BLE connected
+				ble_disconnection_attempt_cnt++;
+				bt_disconnect_central();
+			}
 		}
+		k_sleep(K_SECONDS(1));
 		if (k_uptime_get_32() - stamp > CONFIG_BLE_TEST_DURATION) {
 			break;
 		}
@@ -759,18 +762,15 @@ int bt_conn_test_run(void)
 int wifi_scan_test_run(void)
 {
 
-	int err;
-	uint64_t stamp;
-	int64_t delta;
-	uint32_t data = 0;
-
+	int64_t stamp;
+	
+	//LOG_INF("in wifi_scan_test_run().");
 
 	/* get cycle stamp */
 	stamp = k_uptime_get_32();
 
-	delta = 0;
-	
 	wifi_scan_cmd_cnt++;			
+	//LOG_INF("calling cmd_wifi_scan().");
 	cmd_wifi_scan();
 	
 	while (true) {	
@@ -782,13 +782,34 @@ int wifi_scan_test_run(void)
 }
 #endif
 
+
+int wifi_connection_test_run(void)
+{
+	uint64_t test_start_time;
+	bool test_wlan = 1;
+	while (true) {
+		wifi_connection(test_wlan);
+		k_sleep(K_SECONDS(2));
+		
+		if (test_wlan) {
+			wifi_disconnection(test_wlan);
+			k_sleep(K_SECONDS(2));
+		}
+		
+		if ((k_uptime_get_32() - test_start_time)
+			> CONFIG_BLE_TEST_DURATION) {
+			break;
+		}
+		k_sleep(K_SECONDS(1));	
+	}
+}
+
+
 static const struct bt_throughput_cb throughput_cb = {
 	.data_read = throughput_read,
 	.data_received = throughput_received,
 	.data_send = throughput_send
 };
-
-
 
 int bt_throughput_test_init(bool is_ble_central)
 {
@@ -933,7 +954,6 @@ int bt_disconnect_central(void)
 		ble_discon_no_conn_cnt++;
 		return -ENOTCONN;
 	}
-	ble_conn_success_cnt++;
 
 	err = bt_conn_disconnect(default_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
 	if (err) {
