@@ -782,13 +782,7 @@ void ble_iterative_conn_central(void)
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SECONDS(3));
-		
-		
-		printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt);
-		
-		
-		
+		k_sleep(K_SECONDS(3));		
 	}
 
 	printk(" ble_connection_attempt_cnt = %u\n", ble_connection_attempt_cnt);

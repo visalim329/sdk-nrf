@@ -119,19 +119,11 @@ int ble_conn_wifi_con_stability(bool test_wlan, bool test_ble, bool is_ble_centr
 
 /**
  * @brief Function to test BLE connection(central/peripheral) stability with Wi-Fi throughput
- * client as interference
+ * (client/server) as interference
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_conn_wifi_tput_client_stability(bool test_wlan, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test BLE connection(central/peripheral) stability with Wi-Fi throughput
- * server as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_wifi_tput_server_stability(bool test_wlan, bool test_ble,
+int ble_conn_wifi_tput_stability(bool test_wlan, bool test_ble,
 		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
 
 /**
