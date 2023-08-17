@@ -936,7 +936,18 @@ int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 		if (test_ble) {
 			/* Start BLE traffic for BLE_TEST_DURATION. In case of peripheral, 
 				peer device will begin traffic. */
-			start_ble_activity(test_ble, is_ble_central);
+			if (is_ble_central) {
+				start_ble_activity(test_ble, is_ble_central);
+			} else {
+				while (!wait4_peer_ble2_start_connection) {
+					/* Peer BLE starts the the test. */
+					#ifdef CONFIG_PRINTS_FOR_AUTOMATION 
+						LOG_INF("Run BLE central");
+					#endif
+					k_sleep(K_SLEEP_1SEC);
+				}
+				wait4_peer_ble2_start_connection = 0;
+			}
 		}
 
 	/* Begin Wi-Fi scan and repeat it for Test Duration period. If it is connected scan,
