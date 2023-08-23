@@ -7,7 +7,7 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-#include "common.h"
+//#include "common.h"
 
 #include <nrfx_clock.h>
 #include <zephyr/kernel.h>
@@ -40,252 +40,105 @@ static struct net_mgmt_event_callback net_addr_mgmt_cb;
  *
  * @return No return value.
  */
-void print_test_params_info(bool test_wlan, bool test_ble, bool is_ant_mode_sep,
-		bool is_wlan_server, bool is_zperf_udp, bool is_ble_central, bool ble_coex_enable);
-/**
- * @brief Function to test Wi-Fi scan and BLE connection central
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_scan_ble_conn_central(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
+void print_test_params_info(void);
 /**
  * @brief Function to test Wi-Fi scan and BLE connection central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-	bool is_ble_central,	bool is_wlan_server, bool is_wifi_conn_scan);
+		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
+
 
 /**
- * @brief Function to test Wi-Fi scan and BLE throughput central
+ * @brief Function to test Wi-Fi scan and BLE throughput central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_scan_ble_tput_central(bool is_ant_mode_sep, bool test_ble,
+int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble,
 		bool test_wlan, bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
-/**
- * @brief Function to test Wi-Fi scan and BLE throughput peripheral
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_scan_ble_tput_peripheral(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
-
-///**
-// * @brief Function to test Wi-Fi connection and BLE connection central
-// *
-// * @return Zero on success or (negative) error code otherwise.
-// */
-//int wifi_con_ble_con_central(bool test_wlan, bool test_ble,
-//		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep);
-///**
-// * @brief Function to test Wi-Fi connection and BLE connection peripheral
-// *
-// * @return Zero on success or (negative) error code otherwise.
-// */
-//int wifi_con_ble_con_peripheral(bool test_wlan, bool test_ble,
-//		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep);
 
 /**
- * @brief Function to test Wi-Fi connection and BLE throughput central
+ * @brief Function to test Wi-Fi connection and BLE throughput central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_con_ble_tput_central(bool test_wlan, bool is_ant_mode_sep,
+int wifi_con_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 		bool test_ble, bool is_ble_central, bool is_wlan_server);
+
 /**
- * @brief Function to test Wi-Fi connection and BLE throughput peripheral
+ * @brief Function to test Wi-Fi throughput client/server and BLE connection central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_con_ble_tput_peripheral(bool test_wlan,
-		bool is_ant_mode_sep, bool test_ble, bool is_ble_central, bool is_wlan_server);
-/**
- * @brief Function to test Wi-Fi throughput and BLE connection central
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_client_ble_con_central(bool test_wlan, bool test_ble, bool is_ble_central,
+int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 		bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
+
 /**
  * @brief Function to test Wi-Fi throughput client and BLE
- * connection peripheral
+ * throughput central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_tput_client_ble_con_peripheral(bool test_wlan, bool test_ble, bool is_ble_central,
-		bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi throughput client and BLE
- * throughput central
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_client_ble_tput_central(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
+int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
 		bool is_ble_central, bool is_wlan_server, bool is_zperf_udp);
 /**
- * @brief Function to test Wi-Fi throughput client and BLE
- * throughput peripheral
+ * @brief Function to test Wi-Fi connection  stability with 
+ * BLE connection/peripheral central as interference.
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_tput_client_ble_tput_peripheral(bool test_wlan, bool is_ant_mode_sep, 
-		bool test_ble, bool is_ble_central, bool is_wlan_server,	bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi throughput server and BLE
- * connection central
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_server_ble_con_central(bool test_wlan, bool test_ble, bool is_ble_central,
-		bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi throughput server and BLE
- * connection peripheral
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_server_ble_con_peripheral(bool test_wlan, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi throughput server and BLE
- * throughput central
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_server_ble_tput_central(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi throughput server and BLE
- * throughput peripheral
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_tput_server_ble_tput_peripheral(bool test_wlan, bool is_ant_mode_sep,
-		bool test_ble, bool is_ble_central, bool is_wlan_server,	bool is_zperf_udp);
-/**
- * @brief Function to test Wi-Fi connection stability with BLE connection central
- * as interference.
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_con_ble_con_central_stability(bool test_wlan, bool test_ble,
+int wifi_con_ble_con_stability(bool test_wlan, bool test_ble,
 		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep);
+
 /**
- * @brief Function to test Wi-Fi connection stability with BLE connection peripheral
+ * @brief Function to test Wi-Fi connection stability with BLE throughput central/peripheral
  * as interference
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_con_ble_con_peripheral_stability(bool test_wlan, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep);
-/**
- * @brief Function to test Wi-Fi connection stability with BLE throughput central
- * as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int wifi_con_ble_tput_central_stability(bool test_wlan, bool is_ant_mode_sep,
+int wifi_con_ble_tput_stability(bool test_wlan, bool is_ant_mode_sep,
 		bool test_ble, bool is_ble_central, bool is_wlan_server);
+
 /**
- * @brief Function to test Wi-Fi connection stability with BLE throughput peripheral
+ * @brief Function to test BLE connection(central/peripheral) stability with Wi-Fi scan as
  * as interference
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_con_ble_tput_peripheral_stability(bool test_wlan,
-		bool is_ant_mode_sep, bool test_ble, bool is_ble_central, bool is_wlan_server);
-/**
- * @brief Function to test BLE connection(central) stability with Wi-Fi scan as
- * as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_central_wifi_scan_stability(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
+int ble_conn_wifi_scan_stability(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
 /**
- * @brief Function to test BLE connection(central) stability with Wi-Fi connection
+ * @brief Function to test BLE connection(central/peripheral) stability with Wi-Fi connection
  * as interference
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_conn_central_wifi_con_stability(bool test_wlan, bool test_ble, bool is_ble_central,
+int ble_conn_wifi_con_stability(bool test_wlan, bool test_ble, bool is_ble_central,
 		bool is_wlan_server, bool is_ant_mode_sep);
 
 /**
- * @brief Function to test BLE connection(central) stability with Wi-Fi throughput
- * client as interference
+ * @brief Function to test BLE connection(central/peripheral) stability with Wi-Fi throughput
+ * (client/server) as interference
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_conn_central_wifi_tput_client_stability(bool test_wlan, bool test_ble,
+int ble_conn_wifi_tput_stability(bool test_wlan, bool test_ble,
 		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test BLE connection(central) stability with Wi-Fi throughput
- * peripheral as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_central_wifi_tput_server_stability(bool test_wlan, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test BLE connection(peripheral) stability with Wi-Fi scan as 
- * as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_peripheral_wifi_scan_stability(bool is_ant_mode_sep, bool test_ble,
-	bool test_wlan, bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
-/**
- * @brief Function to test BLE connection(peripheral) stability with Wi-Fi connection
- * as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_peripheral_wifi_con_stability(bool test_wlan, bool test_ble, bool is_ble_central,
-	bool is_wlan_server, bool is_ant_mode_sep);
 
 /**
- * @brief Function to test BLE connection(central) stability with Wi-Fi throughput
- * client as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_peripheral_wifi_tput_client_stability(bool test_wlan, bool test_ble,
-		bool is_ble_central,	bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test BLE connection(peripheral) stability with Wi-Fi throughput
- * peripheral as interference
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_conn_peripheral_wifi_tput_server_stability(bool test_wlan, bool test_ble,
-		bool is_ble_central, bool is_wlan_server, bool is_ant_mode_sep, bool is_zperf_udp);
-/**
- * @brief Function to test BLE connection(central) functionality with Wi-Fi shutdown
+ * @brief Function to test BLE connection(central/peripheral) functionality with Wi-Fi shutdown
   *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_con_central_wifi_shutdown(bool test_ble, bool is_ble_central);
+int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central);
+
 /**
- * @brief Function to test BLE connection(central) functionality with Wi-Fi shutdown
-  *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_con_peripheral_wifi_shutdown(bool test_ble, bool is_ble_central);
-/**
- * @brief Function to test BLE throughput(central) functionality with Wi-Fi shutdown
+ * @brief Function to test BLE throughput(central/peripheral) functionality with Wi-Fi shutdown
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int ble_tput_central_wifi_shutdown(bool test_ble, bool is_ble_central);
-/**
- * @brief Function to test BLE throughput(peripheral) functionality with Wi-Fi shutdown
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-int ble_tput_periph_wifi_shutdown(bool test_ble, bool is_ble_central);
+int ble_tput_wifi_shutdown(bool test_ble, bool is_ble_central);
 
 /**
  * @brief memset_context

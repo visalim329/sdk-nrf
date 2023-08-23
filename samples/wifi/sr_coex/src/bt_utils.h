@@ -7,6 +7,11 @@
 #ifndef BT_UTILS_H_
 #define BT_UTILS_H_
 
+
+#define K_SLEEP_100MSEC 100
+#define K_SLEEP_1SEC K_SECONDS(1)
+#define K_SLEEP_2SEC K_SECONDS(2)
+
 /**
  * Initialize BLE throughput test
  *
@@ -20,14 +25,12 @@ int bt_throughput_test_init(bool is_ble_central);
  * @return Zero on success or (negative) error code otherwise.
  */
 int bt_throughput_test_run(void);
-#if 1
+
 /**
  * @brief Run BLE connection test
- *
- * @return Zero on success or (negative) error code otherwise.
  */
-int bt_conn_test_run(void);
-#endif
+void bt_conn_test_run(void);
+
 /**
  * @brief Exit BLE throughput test
  *

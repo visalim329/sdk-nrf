@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Nordic Semiconductor ASA
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+//#include "common.h"
 
 #include <bluetooth/scan.h>
 
@@ -50,7 +50,7 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 
 extern bool ble_periph_connected;
 extern bool ble_central_connected;
-uint8_t wait_for_ble_central_run;
+uint8_t wait4_peer_ble2_start_connection;
 
 static uint32_t wifi_scan_cnt_24g;
 static uint32_t wifi_scan_cnt_5g;
@@ -71,10 +71,16 @@ extern uint32_t ble_discon_no_conn_cnt;
 
 extern uint32_t ble_disconn_cnt_stability;
 
+static uint32_t wifi_conn_attempt_cnt;
 static uint32_t wifi_conn_success_cnt;
 static uint32_t wifi_conn_fail_cnt;
+static uint32_t wifi_conn_timeout_cnt;
+static uint32_t wifi_dhcp_timeout_cnt;
+
+static uint32_t wifi_disconn_attempt_cnt;
 static uint32_t wifi_disconn_success_cnt;
 static uint32_t wifi_disconn_fail_cnt;
+static uint32_t wifi_disconn_no_conn_cnt;
 
 static uint32_t wifi_conn_cnt_stability;
 static uint32_t wifi_disconn_cnt_stability;
@@ -198,7 +204,7 @@ K_SEM_DEFINE(wait_for_next, 0, 1);
 K_SEM_DEFINE(udp_tcp_callback, 0, 1);
 
 struct wifi_iface_status status = { 0 };
-uint32_t repeat_scan = 1;
+uint32_t repeat_wifi_scan = 1;
 
 	
 	
@@ -385,5 +391,14 @@ void tcp_download_results_cb(enum zperf_status status,
 void tcp_upload_results_cb(enum zperf_status status,
 			struct zperf_results *result,
 			void *user_data);
+/**
+ * @brief Run Wi-Fi scan test
+ */			
+void wifi_scan_test_run(void);
+
+/**
+ * @brief Run Wi-Fi connection test
+ */			
+void wifi_connection_test_run(void);
 
 #endif /* BT_COEX_TEST_FUNCTIONS_ */
