@@ -23,6 +23,8 @@ uint32_t ble_conn_param_update_failed;
 uint32_t ble_conn_param_update_timeout;
 
 static int print_wifi_conn_status_once = 1;
+//static K_SEM_DEFINE(wifi_connection_sem, 0, 1);
+
 
 void memset_context(void)
 {
@@ -707,21 +709,28 @@ int wifi_connection(bool test_wlan)
 			goto err;
 		}
 	}
+	//k_sem_give(&wifi_connection_sem);
 	wifi_conn_success_cnt++;
 	return ret;
 err:
+	//k_sem_give(&wifi_connection_sem);
 	wifi_conn_fail_cnt++;
 	return ret;
 }
 void wifi_disconnection(bool test_wlan)
 {
+	int ret=0;
 	if (test_wlan) {
 		wifi_disconn_attempt_cnt++;
 		/* Wi-Fi disconnection */
 		if(IS_ENABLED(CONFIG_DEBUG_PRINT_WIFI_CONN_INFO)) {
 			LOG_INF("Disconnecting Wi-Fi");
 		}
-		wifi_disconnect();
+		ret=wifi_disconnect();
+		if(ret!=0)
+		{
+			LOG_INF("Disconnect failed");
+		}
 	}
 }
 
@@ -771,22 +780,32 @@ void wifi_scan_test_run(void)
 
 void wifi_connection_test_run(void)
 {
-	uint64_t test_start_time = 0;;
+	uint64_t test_start_time = 0;
+	int ret;
 	bool test_wlan = 1;
 	while (true) {
-		wifi_connection(test_wlan);
-		k_sleep(K_SLEEP_2SEC);
-		
+		ret=wifi_connection(test_wlan);
+		if (ret!=0)
+		{
+			LOG_INF("Wi-Fi connection failed");
+		}
+		k_sleep(K_MSEC(10));
+/* 		err = k_sem_take(&wifi_connection_sem, WIFI_CONNECTION_TIMEOUT);
+		if (err) {
+			shell_error(shell, "LE Data Length update timeout");
+			return err;
+		}
+		 */
 		if (test_wlan) {
 			wifi_disconnection(test_wlan);
-			k_sleep(K_SLEEP_2SEC);
+			k_sleep(K_MSEC(10));
 		}
 		
 		if ((k_uptime_get_32() - test_start_time)
 			> CONFIG_BLE_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SLEEP_1SEC);	
+		//k_sleep(K_SLEEP_1SEC);	
 	}
 }
 
@@ -907,7 +926,7 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 			 if(is_ble_central) {
 				LOG_INF("ble_connection_attempt_cnt = %u", ble_connection_attempt_cnt);
 				LOG_INF("ble_connection_success_cnt = %u", ble_connection_success_cnt-1);
-				LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt);
+				/* LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt); */
 				
 				LOG_INF("ble_disconnection_attempt_cnt = %u", ble_disconnection_attempt_cnt);
 				LOG_INF("ble_disconnection_success_cnt = %u", ble_disconnection_success_cnt-1);
@@ -1249,7 +1268,7 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 			 if(is_ble_central) {
 				LOG_INF("ble_connection_attempt_cnt = %u", ble_connection_attempt_cnt);
 				LOG_INF("ble_connection_success_cnt = %u", ble_connection_success_cnt-1);
-				LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt);
+				/* LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt); */
 				
 				LOG_INF("ble_disconnection_attempt_cnt = %u", ble_disconnection_attempt_cnt);
 				LOG_INF("ble_disconnection_success_cnt = %u", ble_disconnection_success_cnt-1);
@@ -2177,7 +2196,7 @@ int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 		 if(is_ble_central) {
 			LOG_INF("ble_connection_attempt_cnt = %u", ble_connection_attempt_cnt);
 			LOG_INF("ble_connection_success_cnt = %u", ble_connection_success_cnt-1);
-			LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt);
+			/* LOG_INF("ble_connection_fail_cnt = %u", ble_connection_fail_cnt); */
 				
 			LOG_INF("ble_disconnection_attempt_cnt = %u", ble_disconnection_attempt_cnt);
 			LOG_INF("ble_disconnection_success_cnt = %u", ble_disconnection_success_cnt-1);

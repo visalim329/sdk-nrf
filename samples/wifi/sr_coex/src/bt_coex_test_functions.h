@@ -62,7 +62,7 @@ static uint8_t wait_for_wifi_client_start;
 
 extern uint32_t ble_connection_attempt_cnt;
 extern uint32_t ble_connection_success_cnt; // in connection function
-extern uint32_t ble_connection_fail_cnt;
+/* extern uint32_t ble_connection_fail_cnt; */
 
 extern uint32_t ble_disconnection_attempt_cnt;
 extern uint32_t ble_disconnection_success_cnt;
@@ -158,7 +158,7 @@ void start_ble_traffic(bool test_ble, bool is_ble_central);
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-void start_ble_conn(bool test_ble, bool is_ble_central);
+//void start_ble_conn(bool test_ble, bool is_ble_central);
 #endif
 
 #if 1

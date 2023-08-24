@@ -33,7 +33,7 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 
 uint32_t ble_connection_success_cnt;
 uint32_t ble_connection_attempt_cnt;
-uint32_t ble_connection_fail_cnt;
+/* uint32_t ble_connection_fail_cnt; */
 
 uint32_t ble_disconnection_attempt_cnt;
 uint32_t ble_disconnection_success_cnt;
@@ -285,7 +285,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	err = bt_conn_get_info(default_conn, &info);
 	if (err) {
 		LOG_ERR("Failed to get connection info %d", err);
-		ble_connection_fail_cnt++;
+		/* ble_connection_fail_cnt++; */
 		return;
 	}
 	ble_connection_success_cnt++;
