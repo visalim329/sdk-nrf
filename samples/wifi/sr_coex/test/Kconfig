@@ -118,7 +118,7 @@ config WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL
 config WIFI_TP_TCP_SERVER_BLE_TP_PERIPH
 	bool "Indicates test is to be run or not"
 	default n
-#----------------------------------- regression tests
+#----------------------------------- stability tests
 config WIFI_CON_BLE_CON_CENTRAL_STABILITY
 	bool "Indicates test is to be run or not"
 	default n
@@ -184,6 +184,7 @@ config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY
 config BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY
 	bool "Indicates test is to be run or not"
 	default n
+#----------------------------------- Wi-Fi shutdown tests
 config BLE_CON_CENTRAL_WIFI_SHUTDOWN
 	bool "Indicates test is to be run or not"
 	default n
@@ -197,15 +198,6 @@ config BLE_TP_PERIPH_WIFI_SHUTDOWN
 	bool "Indicates test is to be run or not"
 	default n
 
-config BLE_TEST_DURATION_STABILITY
-	int "test duration in milliseconds"
-	default 120000
-#	default 7200000
-
-config WIFI_TEST_DURATION_STABILITY
-	int "test duration in milliseconds"
-	default 120000
-#	default 7200000
 
 
 endmenu

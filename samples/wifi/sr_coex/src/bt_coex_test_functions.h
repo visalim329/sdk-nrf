@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
+
 
 #include <bluetooth/scan.h>
 
@@ -42,11 +42,22 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #include "bt_utils.h"
 #include "zephyr_fmac_main.h"
 #define MAX_SSID_LEN 32
-#define WIFI_CONNECTION_TIMEOUT 30
+#define WIFI_CONNECTION_TIMEOUT 30 /* in seconds */
+#define WIFI_DHCP_TIMEOUT 10 /* in seconds */
 
 #define DEMARCATE_TEST_START
 
 #define HIGHEST_CHANNUM_24G 14
+
+#define KSLEEP_WIFI_CON_2SEC K_SECONDS(2)
+#define KSLEEP_WIFI_DISCON_2SEC K_SECONDS(2) 
+#define KSLEEP_WIFI_CON_10MSEC K_MSEC(10)
+#define KSLEEP_WIFI_DISCON_10MSEC K_MSEC(10)
+#define KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC K_SECONDS(1)
+#define KSLEEP_WHILE_PERIP_CONN_CHECK_1SEC K_SECONDS(1)
+#define KSLEEP_ADV_START_1SEC K_SECONDS(1)
+#define KSLEEP_SCAN_START_1SEC K_SECONDS(1)
+#define KSLEEP_WHILE_DISCON_CENTRAL_2SEC K_SECONDS(2)
 
 extern bool ble_periph_connected;
 extern bool ble_central_connected;
@@ -58,11 +69,10 @@ extern uint32_t wifi_scan_cmd_cnt;
 
 extern uint32_t ble_supervision_timeout;
 
-static uint8_t wait_for_wifi_client_start;
+static uint8_t wait4_peer_wifi_client_to_start_tp_test;
 
 extern uint32_t ble_connection_attempt_cnt;
-extern uint32_t ble_connection_success_cnt; // in connection function
-extern uint32_t ble_connection_fail_cnt;
+extern uint32_t ble_connection_success_cnt;
 
 extern uint32_t ble_disconnection_attempt_cnt;
 extern uint32_t ble_disconnection_success_cnt;
@@ -71,10 +81,16 @@ extern uint32_t ble_discon_no_conn_cnt;
 
 extern uint32_t ble_disconn_cnt_stability;
 
+static uint32_t wifi_conn_attempt_cnt;
 static uint32_t wifi_conn_success_cnt;
 static uint32_t wifi_conn_fail_cnt;
+static uint32_t wifi_conn_timeout_cnt;
+static uint32_t wifi_dhcp_timeout_cnt;
+
+static uint32_t wifi_disconn_attempt_cnt;
 static uint32_t wifi_disconn_success_cnt;
 static uint32_t wifi_disconn_fail_cnt;
+static uint32_t wifi_disconn_no_conn_cnt;
 
 static uint32_t wifi_conn_cnt_stability;
 static uint32_t wifi_disconn_cnt_stability;
@@ -86,33 +102,32 @@ static struct sockaddr_in in4_addr_my = {
 
 static uint32_t scan_result_count;
 /**
- * @brief BT throughtput tets run
+ * @brief BT throughtput test run
  *
  * @return Zero on success or (negative) error code otherwise.
- */ 
+ */
 void run_bt_benchmark(void);
 
 /**
- * @brief BT connection tets run
+ * @brief BT connection test run
  *
  * @return Zero on success or (negative) error code otherwise.
- */ 
+ */
 void run_bt_conn_benchmark(void);
 
 /**
- * @brief Wi-Fi scan tets run
+ * @brief Wi-Fi scan test run
  *
  * @return Zero on success or (negative) error code otherwise.
- */ 
+ */
 void run_wifi_scan_benchmark(void);
 
 /**
- * @brief Wi-Fi connection tets run
+ * @brief Wi-Fi connection test run
  *
  * @return Zero on success or (negative) error code otherwise.
- */ 
+ */
 void run_wifi_conn_benchmark(void);
-
 
 /**
  * @brief commnad to start wifi scan
@@ -141,28 +156,20 @@ int config_pta(bool is_ant_mode_sep, bool is_ble_central,
  */
 int run_wifi_traffic(bool test_wlan);
 /**
- * @brief start BLE traffic using thread start
+ * @brief start BLE connection/traffic using thread start
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-void start_ble_traffic(bool test_ble, bool is_ble_central);
-#if 1
-/**
- * @brief start BLE connection using thread start
- *
- * @return Zero on success or (negative) error code otherwise.
- */
-void start_ble_conn(bool test_ble, bool is_ble_central);
-#endif
+void start_ble_activity(bool test_ble, bool is_ble_central);
 
-#if 1
+
 /**
  * @brief start Wi-Fi scan using thread start
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 void start_wifi_activity(void);
-#endif
+
 /**
  * @brief check if iperf traffic is complete
  *
@@ -186,7 +193,7 @@ void wifi_disconnection(bool test_wlan);
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-void disconnect_ble(bool test_ble, bool is_ble_central);
+void exit_bt_throughput_test(bool test_ble, bool is_ble_central);
 
 static struct {
 	uint8_t connected :1;
@@ -200,29 +207,28 @@ K_SEM_DEFINE(udp_tcp_callback, 0, 1);
 struct wifi_iface_status status = { 0 };
 uint32_t repeat_wifi_scan = 1;
 
-	
-	
-#if defined(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_SCAN_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_CON_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL)|| \
-	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_PERIPH)|| \
-	defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL_STABILITY)|| \
-	defined(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY)|| \
-	defined(CONFIG_BLE_TP_CENTRAL_WIFI_SHUTDOWN)|| \
+
+#if defined(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_SCAN_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_CON_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL) || \
+	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_PERIPH) || \
+	defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL_STABILITY) || \
+	defined(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY) || \
+	defined(CONFIG_BLE_TP_CENTRAL_WIFI_SHUTDOWN) || \
 	defined(CONFIG_BLE_TP_PERIPH_WIFI_SHUTDOWN)
-	
+
 	#define ENABLE_BLE_TRAFFIC_TEST
-	
+
 	K_THREAD_DEFINE(run_bt_traffic,
 			CONFIG_WIFI_THREAD_STACK_SIZE,
 			run_bt_benchmark,
@@ -234,7 +240,6 @@ uint32_t repeat_wifi_scan = 1;
 			K_TICKS_FOREVER);
 #endif
 
-			
 #if defined(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) || \
@@ -250,20 +255,20 @@ uint32_t repeat_wifi_scan = 1;
 	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY) || \
 	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) || \
 	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_STABILITY) || \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY)|| \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY)|| \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_STABILITY)|| \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_STABILITY)|| \
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY) || \
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY) || \
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_STABILITY) || \
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_STABILITY) || \
 	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) || \
 	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY) || \
 	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_STABILITY) || \
-	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY)|| \
-	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY)|| \
-	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY)|| \
+	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY) || \
+	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY) || \
+	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY) || \
 	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY)
-	
+
 	#define ENABLE_BLE_CONN_TEST
-	
+
 	K_THREAD_DEFINE(run_bt_connection,
 			CONFIG_WIFI_THREAD_STACK_SIZE,
 			run_bt_conn_benchmark,
@@ -274,7 +279,7 @@ uint32_t repeat_wifi_scan = 1;
 			0,
 			K_TICKS_FOREVER);
 #endif
-	
+
 #if defined(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL) || \
@@ -283,11 +288,11 @@ uint32_t repeat_wifi_scan = 1;
 	defined(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) || \
 	defined(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)	|| \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY)	|| \
-	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY)	|| \
-	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY)	|| \
-	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)	
-	
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY) || \
+	defined(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) || \
+	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) || \
+	defined(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)
+
 	#define ENABLE_WIFI_SCAN_TEST
 
 	K_THREAD_DEFINE(run_wlan_scan,
@@ -299,13 +304,12 @@ uint32_t repeat_wifi_scan = 1;
 			CONFIG_WIFI_THREAD_PRIORITY,
 			0,
 			K_TICKS_FOREVER);
-#endif 
-		
-#if defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL) || \
-	defined(CONFIG_WIFI_CON_BLE_TP_PERIPH)
+#endif
+
+#if defined(CONFIG_WIFI_CON_BLE_TP_CENTRAL) || defined(CONFIG_WIFI_CON_BLE_TP_PERIPH)
 
 	#define ENABLE_WIFI_CONN_TEST
-	
+
 	K_THREAD_DEFINE(run_wlan_conn,
 			CONFIG_WIFI_THREAD_STACK_SIZE,
 			run_wifi_conn_benchmark,
@@ -359,40 +363,40 @@ int wait_for_next_event(const char *event_name, int timeout);
  * @return Zero on success or (negative) error code otherwise.
  */
 void udp_download_results_cb(enum zperf_status status,
-			   struct zperf_results *result,
-			   void *user_data);
+							struct zperf_results *result,
+							void *user_data);
 /**
  * @brief CB for UDP upload results
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 void udp_upload_results_cb(enum zperf_status status,
-			struct zperf_results *result,
-			void *user_data);
+							struct zperf_results *result,
+							void *user_data);
 /**
  * @brief CB for TCP download results
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 void tcp_download_results_cb(enum zperf_status status,
-			   struct zperf_results *result,
-			   void *user_data);
+							struct zperf_results *result,
+							void *user_data);
 /**
  * @brief CB for TCP upload results
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 void tcp_upload_results_cb(enum zperf_status status,
-			struct zperf_results *result,
-			void *user_data);
+							struct zperf_results *result,
+							void *user_data);
 /**
  * @brief Run Wi-Fi scan test
- */			
+ */
 void wifi_scan_test_run(void);
 
 /**
  * @brief Run Wi-Fi connection test
- */			
+ */
 void wifi_connection_test_run(void);
 
 #endif /* BT_COEX_TEST_FUNCTIONS_ */

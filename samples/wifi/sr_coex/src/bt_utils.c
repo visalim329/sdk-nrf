@@ -7,7 +7,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "common.h"
+//#include "common.h"
+
+#include "bt_utils.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
@@ -24,16 +26,17 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 	defined(CONFIG_WIFI_TP_TCP_CLIENT_BLE_CON_PERIPH) || \
 	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_CENTRAL) || \
 	defined(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_PERIPH)
-	/* nothing . These are the tests in which the BLE connection 
-		is done multiple times in a loop */
+
+	/**nothing . These are the tests in which the BLE connection
+	 *is done multiple times in a loop
+	 */
 #else
 	#define BLE_TX_PWR_CTRL_RSSI
-#endif 
-
+#endif
 
 uint32_t ble_connection_success_cnt;
 uint32_t ble_connection_attempt_cnt;
-uint32_t ble_connection_fail_cnt;
+
 
 uint32_t ble_disconnection_attempt_cnt;
 uint32_t ble_disconnection_success_cnt;
@@ -43,12 +46,16 @@ uint32_t ble_discon_no_conn_cnt;
 uint32_t wifi_scan_cmd_cnt;
 
 uint32_t ble_supervision_timeout;
-		
-
-#include "bt_utils.h"
+extern uint32_t ble_le_datalen_failed;
+extern uint32_t ble_phy_update_failed;
+extern uint32_t ble_le_datalen_timeout;
+extern uint32_t ble_phy_update_timeout;
+extern uint32_t ble_conn_param_update_failed;
+extern uint32_t ble_conn_param_update_timeout;
 
 int8_t ble_txpower = 127;
 int8_t ble_rssi = 127;
+static int print_ble_conn_status_once = 1;
 
 #ifdef BLE_TX_PWR_CTRL_RSSI
 	/* to get/set BLE Tx power and read BLE RSSI for coex sample */
@@ -89,21 +96,20 @@ int8_t ble_rssi = 127;
 
 #define THROUGHPUT_CONFIG_TIMEOUT 20
 #define SCAN_CONFIG_TIMEOUT 20
-
+#define K_SLEEP_1SEC K_SECONDS(1)
+#define K_SLEEP_2SEC K_SECONDS(2)
 
 /* #define PRINT_BLE_UPDATES */
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
 
 extern uint8_t wait4_peer_ble2_start_connection;
-uint32_t ble_connection_success_cnt;
-uint32_t ble_disconnection_fail_cnt;
+
 bool ble_periph_connected;
 bool ble_central_connected;
 
 uint64_t ble_scan2conn_start_time;
 int64_t ble_scan2conn_time;
-uint32_t ble_connection_success_cnt;
 uint32_t ble_disconn_cnt_stability;
 
 static volatile bool data_length_req;
@@ -114,7 +120,7 @@ static struct bt_uuid *uuid128 = BT_UUID_THROUGHPUT;
 static struct bt_gatt_exchange_params exchange_params;
 
 static struct bt_le_conn_param *conn_param =
-	BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN, CONFIG_INTERVAL_MAX, 0, 400);
+	BT_LE_CONN_PARAM(CONFIG_BLE_INTERVAL_MIN, CONFIG_BLE_INTERVAL_MAX, 0, 400);
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -172,10 +178,11 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
 /* #ifdef PRINT_BLE_UPDATES */
-#if 0
-	LOG_INF("Filter not match. Address: %s connectable: %d",
-				addr, connectable);
-#endif
+/**#if 0
+ *	LOG_INF("Filter not match. Address: %s connectable: %d",
+ *				addr, connectable);
+ *#endif
+ */
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -278,30 +285,40 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	err = bt_conn_get_info(default_conn, &info);
 	if (err) {
 		LOG_ERR("Failed to get connection info %d", err);
-		ble_connection_fail_cnt++;
+
 		return;
 	}
 	ble_connection_success_cnt++;
-#ifdef CONFIG_PRINTS_FOR_AUTOMATION	
-	LOG_INF("Connected as %s",
-	      info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
-	LOG_INF("Conn. interval is %u units", info.le.interval);
+	ble_central_connected = true;
+#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	if (print_ble_conn_status_once) {
+		LOG_INF("Connected as %s", info.role ==
+			BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
+		LOG_INF("Conn. interval is %u units", info.le.interval);
+		print_ble_conn_status_once = 0;
+	}
 #endif
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
-				       BT_UUID_THROUGHPUT,
-				       &discovery_cb,
-				       &throughput);
+				BT_UUID_THROUGHPUT,
+				&discovery_cb,
+				&throughput);
 
 		if (err) {
 			LOG_ERR("Discover failed (err %d)", err);
 		}
-		ble_central_connected = true;
 	} else {
-		ble_periph_connected = true;
+		/**this is moved to connection_configuration_set()
+		 * so that PHY update is  cleanly done before starting
+		 * the coex test when DUT is in peripheral role. If this is
+		 *If this is not done then coex test proceeds immediately
+		 * after connection is done (before completion of PHY update
+		 * params) and due to interference PHY update may fail
+		 */
+
+		/* ble_periph_connected = true; */
 	}
-	
-	
+
 	#ifdef BLE_TX_PWR_CTRL_RSSI
 		char addr[BT_ADDR_LE_STR_LEN];
 		int8_t get_txp = 0;
@@ -346,8 +363,6 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 			ble_rssi = rssi;
 		}
 	#endif
-	
-
 }
 
 void scan_init(void)
@@ -414,7 +429,9 @@ void adv_start(void)
 }
 void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-#ifdef PRINT_BLE_UPDATES 
+	struct bt_conn_info info = {0};
+	int err;
+#ifdef PRINT_BLE_UPDATES
 	LOG_INF("Disconnected (reason 0x%02x)", reason);
 #endif
 
@@ -426,9 +443,42 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		default_conn = NULL;
 	}
 	/* Disconnection count for central is available in bt_disconnect_central() */
-	if(!IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
-		ble_disconnection_success_cnt++; 
+	if (!IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
+		ble_disconnection_success_cnt++;
 	}
+#if 0 
+
+	err = bt_conn_get_info(conn, &info);
+	if (err) {
+		printk("Failed to get connection info (%d)\n", err);
+		return;
+	}
+
+	/* Re-connect using same roles */
+	if (info.role == BT_CONN_ROLE_CENTRAL) {
+		scan_start();
+	} else {
+		adv_start();
+	}
+	
+#else
+
+
+	err = bt_conn_get_info(conn, &info);
+	if (err) {
+		printk("Failed to get connection info (%d)\n", err);
+		return;
+	}
+
+	/* Re-connect using same roles */
+	if (info.role == BT_CONN_ROLE_CENTRAL) {
+		ble_connection_attempt_cnt++;
+		scan_start(); // dont use for central.
+		
+	} else {
+		adv_start();
+	}
+#endif
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -554,7 +604,7 @@ void button_handler_cb(uint32_t button_state, uint32_t has_changed)
 
 void buttons_init(void)
 {
-	int err;
+	int err = 0;
 
 	err = dk_buttons_init(NULL);
 	if (err) {
@@ -573,13 +623,14 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 			const struct bt_conn_le_phy_param *phy,
 			const struct bt_conn_le_data_len_param *data_len)
 {
-	int err;
+	int err=0;
 	struct bt_conn_info info = {0};
 
 	err = bt_conn_get_info(default_conn, &info);
 	if (err) {
 		LOG_ERR("Failed to get connection info %d", err);
-		return err;
+		/* return err; */
+		goto end_of_function;
 	}
 
 	if (info.role != BT_CONN_ROLE_CENTRAL) {
@@ -588,16 +639,20 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 
 	err = bt_conn_le_phy_update(default_conn, phy);
 	if (err) {
+		ble_phy_update_failed++;
 		LOG_ERR("PHY update failed: %d", err);
-		return err;
+		/* return err; */
+		goto end_of_function;
 	}
 #ifdef PRINT_BLE_UPDATES
 	LOG_INF("PHY update pending");
 #endif
 	err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 	if (err) {
+		ble_phy_update_timeout++;
 		LOG_INF("PHY update timeout");
-		return err;
+		/* return err; */
+		goto end_of_function;
 	}
 
 	if (info.le.data_len->tx_max_len != data_len->tx_max_len) {
@@ -605,42 +660,50 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 
 		err = bt_conn_le_data_len_update(default_conn, data_len);
 		if (err) {
+			ble_le_datalen_failed++;
 			LOG_ERR("LE data length update failed: %d",
 				    err);
-			return err;
+			/* return err; */
+			goto end_of_function;
 		}
 #ifdef PRINT_BLE_UPDATES
 		LOG_INF("LE Data length update pending");
 #endif
 		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
+			ble_le_datalen_timeout++;
 			LOG_INF("LE Data Length update timeout");
-			return err;
+			/* return err; */
+			goto end_of_function;
 		}
 	}
 
 	if (info.le.interval != conn_param->interval_max) {
 		err = bt_conn_le_param_update(default_conn, conn_param);
 		if (err) {
+			ble_conn_param_update_failed++;
 			LOG_ERR("Connection parameters update failed: %d",
 				    err);
-			return err;
+			/* return err; */
+			goto end_of_function;
 		}
 
 		LOG_INF("Connection parameters update pending");
 		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
+			ble_conn_param_update_timeout++;
 			LOG_INF("Connection parameters update timeout");
-			return err;
+			/* return err; */
+			goto end_of_function;
 		}
 	}
-	
-	//LOG_INF("supervision timeout %d", conn_param->timeout);
+end_of_function:
+	/* LOG_INF("supervision timeout %d", conn_param->timeout); */
 	ble_supervision_timeout = conn_param->timeout;
 
-	return 0;
+	ble_periph_connected = true;
+	return err;
 }
-
 
 int bt_throughput_test_run(void)
 {
@@ -684,7 +747,7 @@ int bt_throughput_test_run(void)
 			break;
 		}
 		data += 495;
-		if (k_uptime_get_32() - stamp > CONFIG_BLE_TEST_DURATION) {
+		if (k_uptime_get_32() - stamp > CONFIG_COEX_TEST_DURATION) {
 			break;
 		}
 	}
@@ -718,37 +781,24 @@ void bt_conn_test_run(void)
 	stamp = k_uptime_get_32();
 
 	delta = 0;
+	/*After the disconnection in loop, scan_start() in disconnected() will take of
+	repeting scan starts until the end of test duration.*/
+	ble_connection_attempt_cnt++;
+	scan_start(); 
 	while (true) {
-		if(IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
-			/* BLE connection */
-			ble_connection_attempt_cnt++;	
-			scan_start();
-		} else  {
-			if (!ble_periph_connected) {
-				adv_start();
-			}
-		}
-			
-		k_sleep(K_SLEEP_2SEC);
-		/* ToDo: check if connection is success ..do it in a while loop .
-		   if success, break. 
-			also add ....   
-				success or timeout
-				
-				if success then try disconn 
-				if timeout, dont do disconn , 
-				attempt next connection in loop
-		*/
-		if(IS_ENABLED(CONFIG_COEX_BT_CENTRAL)) {
+		
+		if(IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 			if (ble_central_connected) {
 				ble_disconnection_attempt_cnt++;
 				bt_disconnect_central();
 			}
 		}
-		k_sleep(K_SLEEP_1SEC);
-		if (k_uptime_get_32() - stamp > CONFIG_BLE_TEST_DURATION) {
+		
+		if (k_uptime_get_32() - stamp > CONFIG_COEX_TEST_DURATION) {
 			break;
 		}
+		/* Less than 2 seconds of sleep time throws coredump errors. */
+		k_sleep(K_SECONDS(2));
 	}
 }
 
@@ -794,7 +844,7 @@ int bt_throughput_test_init(bool is_ble_central)
 		if (default_conn) {
 			break;
 		}
-		k_sleep(K_SLEEP_1SEC);
+		k_sleep(K_SECONDS(1)); /* this is before test start. No need to reduce further. */
 	}
 
 	if (!default_conn) {
@@ -810,8 +860,8 @@ int bt_throughput_test_init(bool is_ble_central)
 	 */
 
 	uint32_t conn_cfg_status = connection_configuration_set(
-			BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN,
-			CONFIG_INTERVAL_MAX,
+			BT_LE_CONN_PARAM(CONFIG_BLE_INTERVAL_MIN,
+			CONFIG_BLE_INTERVAL_MAX,
 			CONFIG_BT_CONN_LATENCY, CONFIG_BT_SUPERVISION_TIMEOUT),
 			BT_CONN_LE_PHY_PARAM_2M,
 			BT_LE_DATA_LEN_PARAM_MAX);
@@ -862,7 +912,7 @@ int bt_connection_init(bool is_ble_central)
 		if (default_conn) {
 			break;
 		}
-		k_sleep(K_SLEEP_1SEC);
+		k_sleep(K_SECONDS(1)); /* this is before test start. No need to reduce further.*/
 	}
 
 	if (!default_conn) {
@@ -878,8 +928,8 @@ int bt_connection_init(bool is_ble_central)
 	 */
 
 	uint32_t conn_cfg_status = connection_configuration_set(
-			BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN,
-			CONFIG_INTERVAL_MAX,
+			BT_LE_CONN_PARAM(CONFIG_BLE_INTERVAL_MIN,
+			CONFIG_BLE_INTERVAL_MAX,
 			CONFIG_BT_CONN_LATENCY, CONFIG_BT_SUPERVISION_TIMEOUT),
 			BT_CONN_LE_PHY_PARAM_2M,
 			BT_LE_DATA_LEN_PARAM_MAX);
@@ -887,7 +937,6 @@ int bt_connection_init(bool is_ble_central)
 	 *ble_scan2conn_time = k_uptime_delta(&ble_scan2conn_start_time);
 	 *LOG_INF("Time taken for connecion %lld ms", ble_scan2conn_time);
 	 */
-
 	return conn_cfg_status;
 }
 
@@ -958,7 +1007,8 @@ void get_tx_power(uint8_t handle_type, uint16_t handle, int8_t *tx_pwr_lvl)
 		uint8_t reason = rsp ?
 			((struct bt_hci_rp_vs_read_tx_power_level *)
 			  rsp->data)->status : 0;
-		printk("coex sample, get tx pow, Read Tx power err: %d reason 0x%02x\n", err, reason);
+		printk("coex sample, get tx pow, Read Tx power err: %d reason 0x%02x\n",
+			err, reason);
 		return;
 	}
 
@@ -989,7 +1039,8 @@ void read_conn_rssi(uint16_t handle, int8_t *rssi)
 	if (err) {
 		uint8_t reason = rsp ?
 			((struct bt_hci_rp_read_rssi *)rsp->data)->status : 0;
-		printk("coex sample, read conn rssi, Read RSSI err: %d reason 0x%02x\n", err, reason);
+		printk("coex sample, read conn rssi, Read RSSI err: %d reason 0x%02x\n",
+			err, reason);
 		return;
 	}
 
@@ -1025,7 +1076,8 @@ void set_tx_power(uint8_t handle_type, uint16_t handle, int8_t tx_pwr_lvl)
 		uint8_t reason = rsp ?
 			((struct bt_hci_rp_vs_write_tx_power_level *)
 			  rsp->data)->status : 0;
-		printk("coex sample, set tx pow,  Set Tx power err: %d reason 0x%02x\n", err, reason);
+		printk("coex sample, set tx pow,  Set Tx power err: %d reason 0x%02x\n",
+			err, reason);
 		return;
 	}
 
@@ -1045,4 +1097,3 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.le_phy_updated = le_phy_updated,
 	.le_data_len_updated = le_data_length_updated
 };
-

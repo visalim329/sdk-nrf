@@ -23,64 +23,9 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 extern int8_t wifi_rssi;
 extern int8_t ble_txpower;
 extern int8_t ble_rssi;
-	
-void print_test_params_info(void)
-{
-	bool ble_coex_enable = IS_ENABLED(CONFIG_MPSL_CX);
-	bool is_ant_mode_sep = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
-	bool is_ble_central = IS_ENABLED(CONFIG_COEX_BT_CENTRAL);
-	bool is_wlan_server = IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER);
-	bool test_wlan = IS_ENABLED(CONFIG_TEST_TYPE_WLAN);
-	bool test_ble = IS_ENABLED(CONFIG_TEST_TYPE_BLE);
-	bool is_zperf_udp = IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP);
-	
-	LOG_INF("-------------------------------- Test parameters");		
-	if (test_wlan && test_ble) {		
-		LOG_INF("Running Wi-Fi and BLE tests");		
-	} else {
-		if (test_wlan) {
-			LOG_INF("Running Wi-Fi only test");
-		} else {
-			LOG_INF("Running BLE only test");
-		}
-	}
-	if (is_ant_mode_sep) {
-		LOG_INF("Antenna mode : Separate antennas");
-	} else {
-		LOG_INF("Antenna mode : Shared antennas");
-	}
 
-	if (is_wlan_server) {
-		LOG_INF("Wi-Fi role : Server");
-	} else {
-		LOG_INF("Wi-Fi role : Client");
-	}
-
-	if (is_zperf_udp) {
-		LOG_INF("Zperf: UDP");
-	} else {
-		LOG_INF("Zperf: TCP");
-	}
-	
-	if (is_ble_central) {
-		LOG_INF("BLE role : Central");
-	} else {
-		LOG_INF("BLE role : Peripheral");
-	}
-
-	if (ble_coex_enable) {
-		LOG_INF("BLE posts requests to PTA");
-	} else {
-		LOG_INF("BLE doesn't post requests to PTA");
-	}
-	
-	LOG_INF("ZPERF RATE: %u Kbps", CONFIG_WIFI_ZPERF_RATE);
-	LOG_INF("--------------------------------");
-}
-
-
-void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				    uint32_t mgmt_event, struct net_if *iface)
+void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface)
 {
 	switch (mgmt_event) {
 	case NET_EVENT_IPV4_DHCP_BOUND:
@@ -92,7 +37,7 @@ void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 }
 
 void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				uint32_t mgmt_event, struct net_if *iface)
+		uint32_t mgmt_event, struct net_if *iface)
 {
 	const struct device *dev = iface->if_dev->dev;
 	struct wifi_nrf_vif_ctx_zep *vif_ctx_zep = NULL;
@@ -123,43 +68,40 @@ int main(void)
 	int ret = 0;
 	bool ble_coex_enable = IS_ENABLED(CONFIG_MPSL_CX);
 	bool is_ant_mode_sep = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
-	bool is_ble_central = IS_ENABLED(CONFIG_COEX_BT_CENTRAL);
+	bool is_ble_central = IS_ENABLED(CONFIG_BT_ROLE_CENTRAL);
 	bool is_wlan_server = IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER);
-
+	bool is_zperf_udp = IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP);
 	bool test_wlan = IS_ENABLED(CONFIG_TEST_TYPE_WLAN);
 	bool test_ble = IS_ENABLED(CONFIG_TEST_TYPE_BLE);
-	bool is_zperf_udp = IS_ENABLED(CONFIG_WIFI_ZPERF_PROT_UDP);
-	
+
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 	bool bt_external_antenna = IS_ENABLED(CONFIG_BT_EXTERNAL_ANTENNA);
 #endif
 
 	bool is_wifi_conn_scan =
-			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
-			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) ||
-			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
-			IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH) ||
-			IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) ||
-			IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY);
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
+		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH) ||
+		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) ||
+		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY);
 
 #if !defined(CONFIG_COEX_SEP_ANTENNAS) && \
 	!(defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP))
-        BUILD_ASSERT("Shared antenna support is not available with nRF7002 shields");
+	BUILD_ASSERT("Shared antenna support is not available with nRF7002 shields");
 #endif
 
 	memset_context();
 
-	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb,
-				wifi_mgmt_event_handler,
-				WIFI_MGMT_EVENTS);
+	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb, wifi_mgmt_event_handler,
+		WIFI_MGMT_EVENTS);
 
 	net_mgmt_add_event_callback(&wifi_sta_mgmt_cb);
 
-	net_mgmt_init_event_callback(&net_addr_mgmt_cb,
-				net_mgmt_event_handler,
-				NET_EVENT_IPV4_DHCP_BOUND);
+	net_mgmt_init_event_callback(&net_addr_mgmt_cb, net_mgmt_event_handler,
+		NET_EVENT_IPV4_DHCP_BOUND);
 
 	net_mgmt_add_event_callback(&net_addr_mgmt_cb);
 
@@ -167,18 +109,13 @@ int main(void)
 	nrfx_clock_divider_set(NRF_CLOCK_DOMAIN_HFCLK, NRF_CLOCK_HFCLK_DIV_1);
 #endif
 
-	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD,
-				SystemCoreClock/MHZ(1));
-	k_sleep(K_SECONDS(1));
-
-	print_test_params_info();
+	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
 
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 	#if defined(CONFIG_NRF700X_BT_COEX)
 		/* Configure SR side (nRF5340 side) switch in nRF7002 DK */
 		LOG_INF("Configure SR side (nRF5340 side) switch");
-		
 		ret = nrf_wifi_config_sr_switch(is_ant_mode_sep, bt_external_antenna);
 		if (ret != 0) {
 			LOG_ERR("Unable to configure SR side switch: %d", ret);
@@ -198,104 +135,103 @@ int main(void)
 #endif /* CONFIG_NRF700X_BT_COEX */
 
 	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH)) {
-			ret = wifi_scan_ble_connection(is_ant_mode_sep, test_ble, test_wlan,
-				is_ble_central, is_wlan_server, is_wifi_conn_scan);
+	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH)) {
+		ret = wifi_scan_ble_connection(is_ant_mode_sep, test_ble, test_wlan,
+		is_ble_central, is_wlan_server, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)) {
-			ret = wifi_scan_ble_tput(is_ant_mode_sep, test_ble, test_wlan,
-				is_ble_central, is_wlan_server, is_wifi_conn_scan);
+	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)) {
+		ret = wifi_scan_ble_tput(is_ant_mode_sep, test_ble, test_wlan,
+		is_ble_central, is_wlan_server, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPHERAL)) {
+	IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH)) {
 		ret = wifi_con_ble_tput(test_wlan, is_ant_mode_sep, test_ble,
-				is_ble_central, is_wlan_server);
+		is_ble_central, is_wlan_server);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_CON_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_CON_PERIPHERAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_PERIPHERAL)) {
-			ret = wifi_tput_ble_con(test_wlan, test_ble, is_ble_central,
-				is_wlan_server, is_ant_mode_sep, is_zperf_udp);
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_CON_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_CON_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_CON_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_CON_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_CON_PERIPH)) {
+		ret = wifi_tput_ble_con(test_wlan, test_ble, is_ble_central,
+		is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL) ||
-	    IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_CENTRAL) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL) ||
-	    IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_PERIPH) ||
-		IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_PERIPH)) {
-			ret = wifi_tput_ble_tput(test_wlan, is_ant_mode_sep,
-				test_ble, is_ble_central, is_wlan_server, is_zperf_udp);
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_TP_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_CLIENT_BLE_TP_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_CENTRAL) ||
+	IS_ENABLED(CONFIG_WIFI_TP_UDP_SERVER_BLE_TP_PERIPH) ||
+	IS_ENABLED(CONFIG_WIFI_TP_TCP_SERVER_BLE_TP_PERIPH)) {
+		ret = wifi_tput_ble_tput(test_wlan, is_ant_mode_sep,
+		test_ble, is_ble_central, is_wlan_server, is_zperf_udp);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_STABILITY) ||
-		IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_STABILITY)) {
-		ret = wifi_con_ble_con_stability(test_wlan, test_ble, is_ble_central,
-				is_wlan_server, is_ant_mode_sep);
+	IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_STABILITY)) {
+		ret = wifi_con_stability_ble_con_interference(test_wlan, test_ble, is_ble_central,
+		is_wlan_server, is_ant_mode_sep);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL_STABILITY) ||
-		IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY)) {
-		ret = wifi_con_ble_tput_stability(test_wlan, is_ant_mode_sep, test_ble,
-				is_ble_central, is_wlan_server);
+	IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY)) {
+		ret = wifi_con_stability_ble_tput_interference(test_wlan, is_ant_mode_sep, test_ble,
+			is_ble_central, is_wlan_server);		
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) || 
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)) {
-		ret = ble_conn_wifi_scan_stability(is_ant_mode_sep, test_ble, test_wlan,
-				is_ble_central, is_wlan_server, is_wifi_conn_scan);
+	IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_SCAN_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)) {
+		ret = ble_con_stability_wifi_scan_interference(is_ant_mode_sep, test_ble, test_wlan,
+		is_ble_central, is_wlan_server, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_STABILITY)) {
-		
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_STABILITY)) {
 		if (is_ble_central) {
 			LOG_INF("Test case: ble_conn_central_wifi_con_stability");
 		} else {
 			LOG_INF("Test case: ble_conn_peripheral_wifi_con_stability");
 		}
-		ret = ble_conn_wifi_con_stability(test_wlan, test_ble, is_ble_central,
-				is_wlan_server,	is_ant_mode_sep);
+		ret = ble_con_stability_wifi_conn_interference(test_wlan, test_ble, is_ble_central,
+		is_wlan_server,	is_ant_mode_sep);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY) ||
-		IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY)) {		
-			ret = ble_conn_wifi_tput_stability(test_wlan, test_ble,
-					is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
+	IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_CLIENT_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_SERVER_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_TCP_SERVER_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY) ||
+	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY)) {
+		ret = ble_con_stability_wifi_tput_interference(test_wlan, test_ble,
+		is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 	}
 
 
 	if (IS_ENABLED(CONFIG_BLE_CON_CENTRAL_WIFI_SHUTDOWN) ||
-		IS_ENABLED(CONFIG_BLE_CON_PERIPHERAL_WIFI_SHUTDOWN)) {
-			ret = ble_con_wifi_shutdown(test_ble, is_ble_central);
+	IS_ENABLED(CONFIG_BLE_CON_PERIPHERAL_WIFI_SHUTDOWN)) {
+		ret = ble_con_wifi_shutdown(test_ble, is_ble_central);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_TP_CENTRAL_WIFI_SHUTDOWN) ||
-		IS_ENABLED(CONFIG_BLE_TP_PERIPH_WIFI_SHUTDOWN)) {
-			ret = ble_tput_wifi_shutdown(test_ble, is_ble_central);
+	IS_ENABLED(CONFIG_BLE_TP_PERIPH_WIFI_SHUTDOWN)) {
+		ret = ble_tput_wifi_shutdown(test_ble, is_ble_central);
 	}
 
 	/* common to all the above function calls */
@@ -309,7 +245,7 @@ int main(void)
 		LOG_INF("WiFi RSSI: %d", wifi_rssi);
 	} else {
 		LOG_INF("WiFi RSSI: NA");
-	}	
+	}
 	if (ble_rssi != 127) {
 		LOG_INF("BLE RSSI: %d", ble_rssi);
 	} else {

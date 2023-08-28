@@ -33,6 +33,7 @@
 #define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define SCAN_CONFIG_TIMEOUT 20
 
+bool ble_central_connected;
 
 static uint32_t ble_connection_success_cnt;
 static uint32_t ble_connection_attempt_cnt;
@@ -229,6 +230,7 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 			printk("Discover failed (err %d)\n", err);
 		}
 	}
+	ble_central_connected = true;
 }
 
 static void scan_init(void)
@@ -298,6 +300,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	int err;
 
 	printk("Disconnected (reason 0x%02x)\n", reason);
+	ble_central_connected = false;
 
 	test_ready = false;
 	if (default_conn) {
@@ -313,6 +316,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 
 	/* Re-connect using same roles */
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
+		ble_connection_attempt_cnt++;
 		scan_start();
 	} else {
 		adv_start();
@@ -757,41 +761,31 @@ void ble_iterative_conn_central(void)
 	int err;
 	
 	ble_disconnection_attempt_cnt++;
+	/* This is to undo the connection done during connection init in bt_connection_init() */
 	err = bt_disconnect_central();
 	if (err) {
 		printk("Cannot disconnect!\n");
 	}
 	k_sleep(K_SECONDS(1));
 	test_start_time = k_uptime_get_32();
-	printk(" ble_iterative_conn_central\n");
+	ble_connection_attempt_cnt++;
+	scan_start();
 	while (true) {
-		ble_connection_attempt_cnt++;
-		scan_start();
-		//printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt);
-		/* Should wait for more time for conn establishment. So used 3 sec */
-
-		k_sleep(K_SECONDS(3));
-	
-		/* printk("************ Disconect BLE **********\n"); */
-		ble_disconnection_attempt_cnt++;
-		err = bt_disconnect_central();
-		if (err) {
-			printk("Cannot disconnect!\n");
+		if (ble_central_connected) {
+			ble_disconnection_attempt_cnt++;
+			bt_disconnect_central();
 		}
-		k_sleep(K_SECONDS(3));
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SECONDS(3));		
+		k_sleep(K_SECONDS(2));		
 	}
 
 	printk(" ble_connection_attempt_cnt = %u\n", ble_connection_attempt_cnt);
 	printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt);
-	printk(" ble_connection_fail_cnt = %u\n", ble_connection_fail_cnt);
 	
 	printk(" ble_disconnection_attempt_cnt = %u\n", ble_disconnection_attempt_cnt);
 	printk(" ble_disconnection_success_cnt = %u\n", ble_disconnection_success_cnt-1);
-	printk(" ble_disconnection_fail_cnt = %u\n", ble_disconnection_fail_cnt);
 	printk(" ble_discon_no_conn_cnt = %u\n", ble_discon_no_conn_cnt);
 
 	/* to stop scan after the results are printed */

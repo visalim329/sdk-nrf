@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Nordic Semiconductor ASA
+ * Copyright (c) 2023 Nordic Semiconductor ASA
  *
  * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
  */
@@ -7,10 +7,7 @@
 #ifndef BT_UTILS_H_
 #define BT_UTILS_H_
 
-
-#define K_SLEEP_100MSEC 100
-#define K_SLEEP_1SEC K_SECONDS(1)
-#define K_SLEEP_2SEC K_SECONDS(2)
+#include <stdbool.h>
 
 /**
  * Initialize BLE throughput test
