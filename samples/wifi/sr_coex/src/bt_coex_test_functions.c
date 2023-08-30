@@ -801,78 +801,78 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
 	LOG_INF("--------------------------------");
 }
 
-#ifdef ALLOC_BLE_PTI_WINDOW
-	uint32_t device_req_window = NRF_WIFI_SR_DEVICE;
-	uint32_t window_start_or_end = NRF_WIFI_START_REQ_WINDOW;
-	uint32_t imp_of_request = NRF_WIFI_HIGHEST_IMPORTANCE;
-	uint32_t can_be_deferred = NRF_WIFI_NO;
-	uint32_t pti_window_duration = 700;
-	uint32_t gap_between_pti_windows = 50;
-	uint64_t test_start_time = 0;	
+// #ifdef ALLOC_BLE_PTI_WINDOW
+	// uint32_t device_req_window = NRF_WIFI_SR_DEVICE;
+	// uint32_t window_start_or_end = NRF_WIFI_START_REQ_WINDOW;
+	// uint32_t imp_of_request = NRF_WIFI_HIGHEST_IMPORTANCE;
+	// uint32_t can_be_deferred = NRF_WIFI_NO;
+	// uint32_t pti_window_duration = 700;
+	// uint32_t gap_between_pti_windows = 50;
+	// uint64_t test_start_time = 0;	
 
-	int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan)
-	{
-		if (test_wlan) {
-			#if defined(CONFIG_NRF700X_BT_COEX)
-				config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
-			#endif/* CONFIG_NRF700X_BT_COEX */
-		}
-		if (test_ble) {
-			/* BT init and connection */
-			bt_connection_init(is_ble_central);
-			/* BLE disconnection */
-			bt_disconnect_central();
-		}
+	// int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
+		// bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan)
+	// {
+		// if (test_wlan) {
+			// #if defined(CONFIG_NRF700X_BT_COEX)
+				// config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
+			// #endif/* CONFIG_NRF700X_BT_COEX */
+		// }
+		// if (test_ble) {
+			// /* BT init and connection */
+			// bt_connection_init(is_ble_central);
+			// /* BLE disconnection */
+			// bt_disconnect_central();
+		// }
 		
-		#ifdef DEMARCATE_TEST_START
-		LOG_INF("----------------------------------------------------------------");
-		#endif	
+		// #ifdef DEMARCATE_TEST_START
+		// LOG_INF("----------------------------------------------------------------");
+		// #endif	
 
-		if (test_ble) {
-			start_ble_activity(test_ble, is_ble_central);
-		}
+		// if (test_ble) {
+			// start_ble_activity(test_ble, is_ble_central);
+		// }
 
 
 
-		uint32_t loop_count=1;
-		for (loop_count=1; loop_count<=30; loop_count++) {
+		// uint32_t loop_count=1;
+		// for (loop_count=1; loop_count<=30; loop_count++) {
 			
-			window_start_or_end = NRF_WIFI_START_REQ_WINDOW;
-			nrf_wifi_coex_allocate_spw(device_req_window,
-				window_start_or_end, imp_of_request, can_be_deferred);
+			// window_start_or_end = NRF_WIFI_START_REQ_WINDOW;
+			// nrf_wifi_coex_allocate_spw(device_req_window,
+				// window_start_or_end, imp_of_request, can_be_deferred);
 			
-			test_start_time = k_uptime_get_32();
+			// test_start_time = k_uptime_get_32();
 			
-			while (true) {			
-				if ((k_uptime_get_32() - test_start_time) > pti_window_duration)
-				{
-					break;
-				}
-				k_sleep(K_MSEC(50));
-			}
+			// while (true) {			
+				// if ((k_uptime_get_32() - test_start_time) > pti_window_duration)
+				// {
+					// break;
+				// }
+				// k_sleep(K_MSEC(50));
+			// }
 			
-			window_start_or_end = NRF_WIFI_END_REQ_WINDOW;
-			nrf_wifi_coex_allocate_spw(device_req_window,
-				window_start_or_end, imp_of_request, can_be_deferred);
+			// window_start_or_end = NRF_WIFI_END_REQ_WINDOW;
+			// nrf_wifi_coex_allocate_spw(device_req_window,
+				// window_start_or_end, imp_of_request, can_be_deferred);
 				
-			k_sleep(K_MSEC(gap_between_pti_windows));
-		}
+			// k_sleep(K_MSEC(gap_between_pti_windows));
+		// }
 
-		repeat_wifi_scan = 0;
+		// repeat_wifi_scan = 0;
 
-		if (test_wlan) {
-			LOG_INF("wifi_scan_cnt_24g = %u", wifi_scan_cnt_24g);
-			LOG_INF("wifi_scan_cnt_5g = %u", wifi_scan_cnt_5g);
-			LOG_INF("wifi_scan_cmd_cnt = %u", wifi_scan_cmd_cnt);
-		}
+		// if (test_wlan) {
+			// LOG_INF("wifi_scan_cnt_24g = %u", wifi_scan_cnt_24g);
+			// LOG_INF("wifi_scan_cnt_5g = %u", wifi_scan_cnt_5g);
+			// LOG_INF("wifi_scan_cmd_cnt = %u", wifi_scan_cmd_cnt);
+		// }
 
-		LOG_INF("ble_supervision_timeout = %u", ble_supervision_timeout);
+		// LOG_INF("ble_supervision_timeout = %u", ble_supervision_timeout);
 	
-		return 0;
-	}
+		// return 0;
+	// }
 
-#else
+//#else
 	int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 			bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan)
 	{
@@ -919,6 +919,7 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
 			/* Initialize BLE by selecting role and connect it to peer device. */
 			ble_connection_attempt_cnt++;
 			bt_connection_init(is_ble_central);
+			k_sleep(K_SECONDS(3));
 
 			if (is_ble_central) {
 				/**If BLE is central, disconnect the connection.
@@ -943,6 +944,7 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
 		#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 		    /* peer central waits on this in automation */
 			LOG_INF("Run BLE central");
+			k_sleep(K_SECONDS(1));
 		#endif
 
 		if (!is_ble_central) {
@@ -1039,7 +1041,7 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
 		return 0;
 	}
 
-#endif
+//#endif
 int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 			bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan)
 {
@@ -1818,7 +1820,7 @@ int ble_con_stability_wifi_scan_interference(bool is_ant_mode_sep, bool test_ble
 		/* Initialize BLE by selecting role and connect it to peer device. */
 		ble_connection_attempt_cnt++;
 		bt_connection_init(is_ble_central);
-		k_sleep(K_SECONDS(2)); /* B4 start. not in loop. no need to reduce */
+		k_sleep(K_SECONDS(2)); 
 		if (is_ble_central) {
 			/* nothing */
 		} else {
@@ -2192,6 +2194,7 @@ err:
 }
 
 
+#if 0
 int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 {
 	uint64_t test_start_time = 0;
@@ -2213,8 +2216,6 @@ int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 	/* disable RPU i.e. Wi-Fi shutdown */
 	rpu_disable();
 
-
-
 	/* BLE onetime connection */
 	if (test_ble) {
 		/* Initialize BLE by selecting role and connect it to peer device. */
@@ -2225,7 +2226,7 @@ int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 			 *Connection and disconnection happens in loop later.
 			 */
 			bt_disconnect_central();
-			k_sleep(K_SECONDS(2));
+			k_sleep(K_SECONDS(3));
 		} else {
 			/**If BLE is peripheral, wait until peer BLE central
 			 * initiates the connection, DUT is connected to peer central
@@ -2240,31 +2241,28 @@ int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 		}
 	}
 
-	#ifdef DEMARCATE_TEST_START
+
+	 #ifdef DEMARCATE_TEST_START
 	LOG_INF("-------------------------");
 	#endif
 	test_start_time = k_uptime_get_32();
 	if (test_ble) {
+		ble_connection_attempt_cnt++;
+		scan_start();
 		while (true) {
-			if (is_ble_central) {
-				ble_connection_attempt_cnt++;
-				scan_start();
-				k_sleep(KSLEEP_SCAN_START_1SEC);
-
-				bt_disconnect_central();
-				k_sleep(KSLEEP_WHILE_DISCON_CENTRAL_2SEC);
-			} else {
-				if (!ble_periph_connected) {
-					/* ble_connection_attempt_cnt should be on peer BLE */
-					adv_start();
-					k_sleep(KSLEEP_ADV_START_1SEC);
+			if (is_ble_central) {				
+				if (ble_central_connected) {
+					ble_disconnection_attempt_cnt++;
+					bt_disconnect_central();
 				}
-			}
+			} 
 			if ((k_uptime_get_32() - test_start_time) > CONFIG_COEX_TEST_DURATION) {
 				break;
 			}
-			k_sleep(K_SECONDS(1)); /* this can be commented */
+			k_sleep(K_SECONDS(3)); // this can be commented 
 		}
+	} 
+
 #ifdef CONFIG_PRINTS_FOR_AUTOMATION
 		if (is_ble_central) {
 			LOG_INF("ble_connection_attempt_cnt = %u", ble_connection_attempt_cnt);
@@ -2281,8 +2279,131 @@ int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
 			LOG_INF("BLE result counts for peripheral case are printed on peer BLE");
 		}
 #endif
-	}
+
 	return 0;
+}
+#endif 
+
+int ble_con_wifi_shutdown(bool test_ble, bool is_ble_central)
+{
+	uint64_t test_start_time = 0;
+	bool ble_coex_enable = IS_ENABLED(CONFIG_MPSL_CX);
+
+	if (is_ble_central) {
+		LOG_INF("Test case: ble_con_central_wifi_shutdown");
+	} else {
+		LOG_INF("Test case: ble_con_peripheral_wifi_shutdown");
+	}
+
+	LOG_INF("Test duration in milliseconds: %d", CONFIG_COEX_TEST_DURATION);
+	if (ble_coex_enable) {
+		LOG_INF("BLE posts requests to PTA");
+	} else {
+		LOG_INF("BLE doesn't post requests to PTA");
+	}
+
+	/* disable RPU i.e. Wi-Fi shutdown */
+	//rpu_disable();
+
+	/* Initialize BLE by selecting role and connect it to peer device. */
+	ble_connection_attempt_cnt++;
+	bt_connection_init(is_ble_central);
+
+	if (is_ble_central) {
+		/**If BLE is central, disconnect the connection.
+		 * Connection and disconnection happens in loop later.
+		 */
+		ble_disconnection_attempt_cnt++;
+			bt_disconnect_central();
+	} else {
+		/**If BLE is peripheral, wait until peer BLE central
+		 *  initiates the connection, DUT is connected to peer central
+		 *  and update the PHY parameters.
+		 */
+		while (true) {
+			if (ble_periph_connected) {
+				break;
+			}
+			k_sleep(KSLEEP_WHILE_PERIP_CONN_CHECK_1SEC);
+		}
+	}
+
+
+	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+		/* peer central waits on this in automation */
+		LOG_INF("Run BLE central");
+	#endif
+
+	if (!is_ble_central) {
+		LOG_INF("DUT is in peripheral role, Check for BLE connection\
+				counts on peer BLE side");
+	}
+
+	#ifdef DEMARCATE_TEST_START
+		LOG_INF("-------------------------");
+	#endif
+	
+	test_start_time = k_uptime_get_32();
+
+	/* Begin BLE conections and disconnections for a period of BLE test duration */
+
+	/* This is dummy function in case of peripehral */
+	start_ble_activity(test_ble, is_ble_central);
+
+	/* Wait for BLE activity completion i.e., for COEX_TEST_DURATION */
+
+	/* This is dummy function in case of peripehral */
+	run_ble_activity(test_ble, is_ble_central);
+	/* If DUT BLE is in peripheral role wait for COEX_TEST_DURATION */
+	if(!is_ble_central) {
+		while(1) {
+			if (k_uptime_get_32() - test_start_time > CONFIG_COEX_TEST_DURATION) {
+				break;
+			}
+			k_sleep(KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC);
+		}
+	}
+
+	
+	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+
+	if (is_ble_central) {
+		LOG_INF("ble_connection_attempt_cnt = %u",
+			ble_connection_attempt_cnt);
+		LOG_INF("ble_connection_success_cnt = %u",
+			ble_connection_success_cnt);
+
+
+		LOG_INF("ble_disconnection_attempt_cnt = %u",
+			ble_disconnection_attempt_cnt);
+		LOG_INF("ble_disconnection_success_cnt = %u",
+			ble_disconnection_success_cnt);
+		LOG_INF("ble_disconnection_fail_cnt = %u",
+			ble_disconnection_fail_cnt);
+		LOG_INF("ble_discon_no_conn_cnt = %u",
+			ble_discon_no_conn_cnt);
+	} else {
+		LOG_INF("check peer device for result counts");
+		LOG_INF("Counts printed below are for information purpose\
+		and not actual results.");
+
+		LOG_INF("ble_le_datalen_failed = %u",
+			ble_le_datalen_failed);
+		LOG_INF("ble_phy_update_failed = %u",
+			ble_phy_update_failed);
+		LOG_INF("ble_le_datalen_timeout = %u",
+			ble_le_datalen_timeout);
+
+		LOG_INF("ble_phy_update_timeout = %u",
+			ble_phy_update_timeout);
+		LOG_INF("ble_conn_param_update_failed = %u",
+			ble_conn_param_update_failed);
+		LOG_INF("ble_conn_param_update_timeout = %u",
+			ble_conn_param_update_timeout);
+	}
+	#endif
+	err:
+		return 0;
 }
 
 int ble_tput_wifi_shutdown(bool test_ble, bool is_ble_central)

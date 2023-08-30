@@ -212,10 +212,10 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 	err = bt_conn_get_info(default_conn, &info);
 	if (err) {
 		printk("Failed to get connection info %d\n", err);
-		ble_connection_fail_cnt++;
 		return;
 	}
 	ble_connection_success_cnt++;
+	ble_central_connected = true;
 	printk("Connected as %s\n",
 	       info.role == BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 	printk("Conn. interval is %u units\n", info.le.interval);
@@ -230,7 +230,6 @@ static void connected(struct bt_conn *conn, uint8_t hci_err)
 			printk("Discover failed (err %d)\n", err);
 		}
 	}
-	ble_central_connected = true;
 }
 
 static void scan_init(void)
@@ -300,13 +299,14 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	int err;
 
 	printk("Disconnected (reason 0x%02x)\n", reason);
-	ble_central_connected = false;
-
+	//ble_central_connected = false; 
+	
 	test_ready = false;
 	if (default_conn) {
 		bt_conn_unref(default_conn);
 		default_conn = NULL;
 	}
+	ble_central_connected = false;
 
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
@@ -535,7 +535,6 @@ static int connection_configuration_set(const struct shell *shell,
 			return err;
 		}
 	}
-
 	return 0;
 }
 #endif
@@ -722,7 +721,6 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 			return err;
 		}
 	}
-
 	return 0;
 }
 
@@ -761,15 +759,18 @@ void ble_iterative_conn_central(void)
 	int err;
 	
 	ble_disconnection_attempt_cnt++;
-	/* This is to undo the connection done during connection init in bt_connection_init() */
-	err = bt_disconnect_central();
-	if (err) {
-		printk("Cannot disconnect!\n");
+	/* This is to undo the connection done during connection init in bt_connection_init()
+	In disconnected() , it starts scan/adv again for central/peripheral role.
+	This is the reason for not starting scan again in the loop below. */
+	if (ble_central_connected) {
+		err = bt_disconnect_central();
+		if (err) {
+			printk("Cannot disconnect!\n");
+		}
 	}
-	k_sleep(K_SECONDS(1));
+	//k_sleep(K_SECONDS(1));
 	test_start_time = k_uptime_get_32();
-	ble_connection_attempt_cnt++;
-	scan_start();
+
 	while (true) {
 		if (ble_central_connected) {
 			ble_disconnection_attempt_cnt++;
@@ -778,8 +779,11 @@ void ble_iterative_conn_central(void)
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SECONDS(2));		
+		k_sleep(K_SECONDS(2));
 	}
+	
+	/* to stop scan after the results are printed */
+	scan_init();
 
 	printk(" ble_connection_attempt_cnt = %u\n", ble_connection_attempt_cnt);
 	printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt);
@@ -788,8 +792,6 @@ void ble_iterative_conn_central(void)
 	printk(" ble_disconnection_success_cnt = %u\n", ble_disconnection_success_cnt-1);
 	printk(" ble_discon_no_conn_cnt = %u\n", ble_discon_no_conn_cnt);
 
-	/* to stop scan after the results are printed */
-	scan_init();
 }
 
 int bt_disconnect_central(void)
