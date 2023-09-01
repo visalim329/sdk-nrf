@@ -43,6 +43,7 @@ uint32_t ble_disconnection_attempt_cnt;
 uint32_t ble_disconnection_success_cnt;
 uint32_t ble_disconnection_fail_cnt;
 uint32_t ble_discon_no_conn_cnt;
+uint32_t ble_discon_no_conn;
 
 uint32_t wifi_scan_cmd_cnt;
 
@@ -289,14 +290,14 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	}
 	ble_connection_success_cnt++;
 	ble_central_connected = true;
-//fdef CONFIG_PRINTS_FOR_AUTOMATION
+#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 	if (print_ble_conn_status_once) {
 		LOG_INF("Connected as %s", info.role ==
 			BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
 		LOG_INF("Conn. interval is %u units", info.le.interval);
 		print_ble_conn_status_once = 0;
 	}
-//ndif
+#endif
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		err = bt_gatt_dm_start(default_conn,
 				BT_UUID_THROUGHPUT,
@@ -451,18 +452,13 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		printk("Failed to get connection info (%d)\n", err);
 		return;
 	}
-//#ifdef ENABLE_BLE_CONN_TEST
 	/* Re-connect using same roles */
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
-		//LOG_INF("----------------------------------Starting scan");
 		ble_connection_attempt_cnt++;
-		scan_start(); 
-		
+		scan_start(); 		
 	} else {
 		adv_start();
 	}
-//#endif
-
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -746,7 +742,8 @@ int bt_throughput_test_run(void)
 	k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 
 	instruction_print();
-
+	/* to stop scan after the test duration is complete */
+	scan_init();
 	return 0;
 }
 
@@ -755,7 +752,7 @@ void bt_conn_test_run(void)
 
 	int64_t stamp;
 	int64_t delta;
-	int64_t iter_cnt=0;
+
 	/* get cycle stamp */
 	stamp = k_uptime_get_32();
 
@@ -765,12 +762,17 @@ void bt_conn_test_run(void)
 	ble_connection_attempt_cnt++;
 	scan_start(); 
 	while (true) {
-		//LOG_INF("Iteration count: %d", iter_cnt);
-		if(IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
-			if (ble_central_connected) {
+		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
+			/* if (ble_central_connected) { */
 				ble_disconnection_attempt_cnt++;
 				bt_disconnect_central();
-			}
+			/* } */
+		}		
+		/* start scan to attempt a new connection, if BLE is not connected */
+		if (ble_discon_no_conn != 0) {
+			ble_discon_no_conn = 0;
+			ble_connection_attempt_cnt++;
+			scan_start();			
 		}
 		
 		if (k_uptime_get_32() - stamp > CONFIG_COEX_TEST_DURATION) {
@@ -801,7 +803,6 @@ int bt_throughput_test_init(bool is_ble_central)
 	}
 
 	/* LOG_INF("Bluetooth initialized"); */
-
 	scan_init();
 
 	err = bt_throughput_init(&throughput, &throughput_cb);
@@ -868,7 +869,6 @@ int bt_connection_init(bool is_ble_central)
 	}
 
 	/* LOG_INF("Bluetooth initialized"); */
-
 	scan_init();
 
 	/**
@@ -927,14 +927,15 @@ int bt_disconnect_central(void)
 	int err;
 
 	if (!default_conn) {
-		LOG_INF("Not connected!");
+		/* LOG_INF("Not connected!"); */
 		ble_discon_no_conn_cnt++;
+		ble_discon_no_conn++;
 		return -ENOTCONN;
 	}
 
 	err = bt_conn_disconnect(default_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
 	if (err) {
-		LOG_INF("Cannot disconnect!");
+		/* LOG_INF("Cannot disconnect!"); */
 		ble_disconnection_fail_cnt++;
 		return err;
 	}

@@ -78,6 +78,7 @@ extern uint32_t ble_disconnection_attempt_cnt;
 extern uint32_t ble_disconnection_success_cnt;
 extern uint32_t ble_disconnection_fail_cnt;
 extern uint32_t ble_discon_no_conn_cnt;
+extern uint32_t ble_discon_no_conn;
 
 extern uint32_t ble_disconn_cnt_stability;
 

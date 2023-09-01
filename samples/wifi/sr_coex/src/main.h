@@ -29,8 +29,7 @@
 #include <zephyr_coex.h>
 
 
-#define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | \
-				NET_EVENT_WIFI_DISCONNECT_RESULT)
+#define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT)
 
 static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
 static struct net_mgmt_event_callback net_addr_mgmt_cb;
@@ -189,14 +188,15 @@ void print_dhcp_ip(struct net_mgmt_event_callback *cb);
  *
  * @return No return value.
  */
-void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				    uint32_t mgmt_event, struct net_if *iface);
+void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface);
+
 /**
  * @brief Handle Wi-Fi management events
  *
  * @return No return value.
  */
-void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				uint32_t mgmt_event, struct net_if *iface);
+void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface);
 
 #endif /* MAIN_H_ */

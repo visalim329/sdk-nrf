@@ -43,6 +43,7 @@ static uint32_t ble_disconnection_attempt_cnt;
 static uint32_t ble_disconnection_success_cnt;
 static uint32_t ble_disconnection_fail_cnt;
 static uint32_t ble_discon_no_conn_cnt;
+static uint32_t ble_discon_no_conn;
 
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
@@ -757,6 +758,7 @@ void ble_iterative_conn_central(void)
 {
 	uint64_t test_start_time = 0;
 	int err;
+	uint32_t ble_conn_attempts_before_test_starts = 1;
 	
 	ble_disconnection_attempt_cnt++;
 	/* This is to undo the connection done during connection init in bt_connection_init()
@@ -772,9 +774,14 @@ void ble_iterative_conn_central(void)
 	test_start_time = k_uptime_get_32();
 
 	while (true) {
-		if (ble_central_connected) {
+		//if (ble_central_connected) {
 			ble_disconnection_attempt_cnt++;
 			bt_disconnect_central();
+		//}
+		if (ble_discon_no_conn != 0) { /* not connected */
+			ble_discon_no_conn = 0;
+			ble_connection_attempt_cnt++;
+			scan_start();			
 		}
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
@@ -785,8 +792,8 @@ void ble_iterative_conn_central(void)
 	/* to stop scan after the results are printed */
 	scan_init();
 
-	printk(" ble_connection_attempt_cnt = %u\n", ble_connection_attempt_cnt);
-	printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt);
+	printk(" ble_connection_attempt_cnt = %u\n", ble_connection_attempt_cnt - ble_conn_attempts_before_test_starts);
+	printk(" ble_connection_success_cnt = %u\n", ble_connection_success_cnt - ble_conn_attempts_before_test_starts);
 	
 	printk(" ble_disconnection_attempt_cnt = %u\n", ble_disconnection_attempt_cnt);
 	printk(" ble_disconnection_success_cnt = %u\n", ble_disconnection_success_cnt-1);
@@ -799,15 +806,16 @@ int bt_disconnect_central(void)
 	int err;
 
 	if (!default_conn) {
-		printk("Not connected!\n");
+		/*printk("Not connected!\n");*/
 		ble_discon_no_conn_cnt++;
+		ble_discon_no_conn++;
 	} 
 	if (!default_conn) {
 		return -ENOTCONN;
 	}
 	err = bt_conn_disconnect(default_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
 	if (err) {
-		printk("Cannot disconnect!\n");
+		/*printk("Cannot disconnect!\n");*/
 		ble_disconnection_fail_cnt++;
 		return err;
 	}

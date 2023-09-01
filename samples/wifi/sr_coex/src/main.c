@@ -24,8 +24,8 @@ extern int8_t wifi_rssi;
 extern int8_t ble_txpower;
 extern int8_t ble_rssi;
 
-void net_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-				    uint32_t mgmt_event, struct net_if *iface)
+void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface)
 {
 	switch (mgmt_event) {
 	case NET_EVENT_IPV4_DHCP_BOUND:
@@ -95,15 +95,13 @@ int main(void)
 
 	memset_context();
 
-	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb,
-				wifi_mgmt_event_handler,
-				WIFI_MGMT_EVENTS);
+	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb, wifi_mgmt_event_handler,
+		WIFI_MGMT_EVENTS);
 
 	net_mgmt_add_event_callback(&wifi_sta_mgmt_cb);
 
-	net_mgmt_init_event_callback(&net_addr_mgmt_cb,
-				net_mgmt_event_handler,
-				NET_EVENT_IPV4_DHCP_BOUND);
+	net_mgmt_init_event_callback(&net_addr_mgmt_cb, net_mgmt_event_handler,
+		NET_EVENT_IPV4_DHCP_BOUND);
 
 	net_mgmt_add_event_callback(&net_addr_mgmt_cb);
 
@@ -111,9 +109,8 @@ int main(void)
 	nrfx_clock_divider_set(NRF_CLOCK_DOMAIN_HFCLK, NRF_CLOCK_HFCLK_DIV_1);
 #endif
 
-	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD,
-				SystemCoreClock/MHZ(1));
-	 /* removing this will cause wlan connection failure */
+	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
+
 	k_sleep(K_SECONDS(1)); 
 
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
