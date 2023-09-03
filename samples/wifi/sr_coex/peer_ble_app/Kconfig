@@ -1,0 +1,72 @@
+#
+# Copyright (c) 2022 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+source "Kconfig.zephyr"
+
+menu "Nordic BLE throughput sample"
+
+
+config BT_THROUGHPUT_FILE
+	bool "BT file based throughput"
+	default n
+
+config BT_THROUGHPUT_DURATION
+	int "Throughput test duration in milliseconds"
+	default 20000
+
+config BT_CONN_CENTRAL_TEST_DURATION
+	int "test duration in milliseconds"
+	default 20000
+
+config INTERVAL_MIN
+	int "BLE min connection interval. Each unit 1.25milliseconds"
+	default 80
+
+config INTERVAL_MAX
+	int "BLE max connection interval. Each unit 1.25milliseconds"
+	default 80
+
+config BT_GAP_ADV_FAST_INT_MIN_2
+	int "BT GAP ADV interval min value. Each unit 0.625milliseconds"
+	default 160
+
+config BT_GAP_ADV_FAST_INT_MAX_2
+	int "BT GAP ADV interval max value. Each unit 0.625milliseconds"
+	default 240
+
+config BT_LE_SCAN_INTERVAL
+	int "BT LE Scan interval  value. Each unit is 0.625milliseconds."
+	default 16
+
+config BT_LE_SCAN_WINDOW
+	int "BT LE Scan Window value. Each unit is 0.625milliseconds."
+	default 16
+
+config BT_SUPERVISION_TIMEOUT
+	int "BT LE supervision timeout"
+	default 1000
+
+config BT_CONN_LATENCY
+	int "BT LE connection latency"
+	default 0
+
+choice BT_TEST_TYPE
+	prompt "Test type"
+	default BLE_THROUGHPUT_TEST
+
+config BLE_THROUGHPUT_TEST
+	bool "BT LE throughput test"
+	help
+	  Enable BT LE throughput test only
+
+config BLE_CONN_CENTRAL_TEST
+	bool "BT LE connection test"
+	help
+	  Enable BT LE connection test only
+endchoice
+
+
+endmenu
