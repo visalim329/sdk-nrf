@@ -20,9 +20,7 @@
 
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
-extern int8_t wifi_rssi;
-extern int8_t ble_txpower;
-extern int8_t ble_rssi;
+#define RSSI_INIT_VALUE 127
 
 void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
 		struct net_if *iface)
@@ -66,7 +64,6 @@ void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
 int main(void)
 {
 	int ret = 0;
-	bool ble_coex_enable = IS_ENABLED(CONFIG_MPSL_CX);
 	bool is_ant_mode_sep = IS_ENABLED(CONFIG_COEX_SEP_ANTENNAS);
 	bool is_ble_central = IS_ENABLED(CONFIG_BT_ROLE_CENTRAL);
 	bool is_wlan_server = IS_ENABLED(CONFIG_WIFI_ZPERF_SERVER);
@@ -116,18 +113,18 @@ int main(void)
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
 	#if defined(CONFIG_NRF700X_BT_COEX)
-		/* Configure SR side (nRF5340 side) switch in nRF7002 DK */
+		/* Configure SR side (nRF5340 side) switch in nRF7x */
 		LOG_INF("Configure SR side (nRF5340 side) switch");
 		ret = nrf_wifi_config_sr_switch(is_ant_mode_sep, bt_external_antenna);
 		if (ret != 0) {
 			LOG_ERR("Unable to configure SR side switch: %d", ret);
 			goto err;
 		}
-	#endif
+	#endif /* CONFIG_NRF700X_BT_COEX */
 #endif
 
 #if defined(CONFIG_NRF700X_BT_COEX)
-	/* Configure Coexistence Hardware non-PTA registers */
+	/* Configure non-PTA registers of Coexistence Hardware */
 	LOG_INF("Configuring non-PTA registers.");
 	ret = nrf_wifi_coex_config_non_pta(is_ant_mode_sep);
 	if (ret != 0) {
@@ -228,12 +225,12 @@ int main(void)
 
 	if (IS_ENABLED(CONFIG_BLE_CON_CENTRAL_WIFI_SHUTDOWN) ||
 	IS_ENABLED(CONFIG_BLE_CON_PERIPHERAL_WIFI_SHUTDOWN)) {
-		ret = ble_con_wifi_shutdown(test_ble, is_ble_central);
+		ret = ble_con_wifi_shutdown(is_ble_central);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_TP_CENTRAL_WIFI_SHUTDOWN) ||
 	IS_ENABLED(CONFIG_BLE_TP_PERIPH_WIFI_SHUTDOWN)) {
-		ret = ble_tput_wifi_shutdown(test_ble, is_ble_central);
+		ret = ble_tput_wifi_shutdown(is_ble_central);
 	}
 
 	/* common to all the above function calls */
@@ -243,12 +240,12 @@ int main(void)
 	}
 
 	LOG_INF("BLE Tx Power: %d", ble_txpower);
-	if (wifi_rssi != 127) {
+	if (wifi_rssi != RSSI_INIT_VALUE) {
 		LOG_INF("WiFi RSSI: %d", wifi_rssi);
 	} else {
 		LOG_INF("WiFi RSSI: NA");
 	}
-	if (ble_rssi != 127) {
+	if (ble_rssi != RSSI_INIT_VALUE) {
 		LOG_INF("BLE RSSI: %d", ble_rssi);
 	} else {
 		LOG_INF("BLE RSSI: NA");

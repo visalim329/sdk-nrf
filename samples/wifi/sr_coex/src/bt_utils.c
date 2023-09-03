@@ -55,8 +55,8 @@ extern uint32_t ble_phy_update_timeout;
 extern uint32_t ble_conn_param_update_failed;
 extern uint32_t ble_conn_param_update_timeout;
 
-int8_t ble_txpower = 127;
-int8_t ble_rssi = 127;
+int8_t ble_txpower = RSSI_INIT_VALUE;
+int8_t ble_rssi = RSSI_INIT_VALUE;
 static int print_ble_conn_status_once = 1;
 
 #ifdef BLE_TX_PWR_CTRL_RSSI
@@ -177,12 +177,10 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-/* #ifdef PRINT_BLE_UPDATES */
-/**#if 0
- *	LOG_INF("Filter not match. Address: %s connectable: %d",
- *				addr, connectable);
- *#endif
- */
+	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	printk("Filter not match. Address: %s connectable: %d\n",
+				addr, connectable);
+	#endif
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -325,7 +323,6 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		int8_t set_txp = 0;
 		int ret;
 		int8_t rssi = 0xFF;
-		int8_t txp_adaptive;
 
 		printk("BLE Target Tx power %d\n", set_txp);
 		default_conn = bt_conn_ref(conn);
@@ -525,15 +522,19 @@ void throughput_received(const struct bt_throughput_metrics *met)
 
 	if (met->write_len == 0) {
 		kb = 0;
-		wait4_peer_ble2_start_connection = 1;
-		LOG_INF("");
+		#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+			wait4_peer_ble2_start_connection = 1;
+			LOG_INF("");
+		#endif
 
 		return;
 	}
 
 	if ((met->write_len / 1024) != kb) {
 		kb = (met->write_len / 1024);
-		/* LOG_INF("="); */
+		#ifndef CONFIG_PRINTS_FOR_AUTOMATION
+			LOG_INF("=");
+		#endif
 	}
 }
 void throughput_send(const struct bt_throughput_metrics *met)
