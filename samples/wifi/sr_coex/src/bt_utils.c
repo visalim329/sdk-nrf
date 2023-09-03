@@ -452,7 +452,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 	/* Re-connect using same roles */
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		ble_connection_attempt_cnt++;
-		scan_start(); 		
+		scan_start();
 	} else {
 		adv_start();
 	}
@@ -604,7 +604,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 			const struct bt_conn_le_phy_param *phy,
 			const struct bt_conn_le_data_len_param *data_len)
 {
-	int err=0;
+	int err = 0;
 	struct bt_conn_info info = {0};
 
 	err = bt_conn_get_info(default_conn, &info);
@@ -758,24 +758,23 @@ void bt_conn_test_run(void)
 	stamp = k_uptime_get_32();
 
 	delta = 0;
-	/*After the disconnection in loop, scan_start() in disconnected() will take of
-	repeting scan starts until the end of test duration.*/
+	/**After the disconnection in loop, scan_start() in disconnected() will take of
+	 * repeting scan starts until the end of test duration.
+	 */
 	ble_connection_attempt_cnt++;
-	scan_start(); 
+	scan_start();
 	while (true) {
 		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
-			/* if (ble_central_connected) { */
-				ble_disconnection_attempt_cnt++;
-				bt_disconnect_central();
-			/* } */
-		}		
+			ble_disconnection_attempt_cnt++;
+			bt_disconnect_central();
+		}
 		/* start scan to attempt a new connection, if BLE is not connected */
 		if (ble_discon_no_conn != 0) {
 			ble_discon_no_conn = 0;
 			ble_connection_attempt_cnt++;
-			scan_start();			
+			scan_start();
 		}
-		
+
 		if (k_uptime_get_32() - stamp > CONFIG_COEX_TEST_DURATION) {
 			break;
 		}
@@ -940,7 +939,7 @@ int bt_disconnect_central(void)
 		ble_disconnection_fail_cnt++;
 		return err;
 	}
-	
+
 	ble_disconnection_success_cnt++;
 	return 0;
 }
@@ -959,9 +958,6 @@ int bt_throughput_test_exit(void)
 	}
 	return 0;
 }
-
-
-
 
 #ifdef BLE_TX_PWR_CTRL_RSSI
 

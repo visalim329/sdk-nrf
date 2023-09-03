@@ -108,7 +108,7 @@ int main(void)
 
 	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
 
-	k_sleep(K_SECONDS(1)); 
+	k_sleep(K_SECONDS(1));
 
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
@@ -138,7 +138,7 @@ int main(void)
 	IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) ||
 	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_PERIPH)) {
 		ret = wifi_scan_ble_connection(is_ant_mode_sep, test_ble, test_wlan,
-		is_ble_central, is_wlan_server, is_wifi_conn_scan);
+		is_ble_central, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_CENTRAL) ||
@@ -146,13 +146,12 @@ int main(void)
 	IS_ENABLED(CONFIG_WIFI_SCAN_BLE_TP_PERIPH) ||
 	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_TP_PERIPH)) {
 		ret = wifi_scan_ble_tput(is_ant_mode_sep, test_ble, test_wlan,
-		is_ble_central, is_wlan_server, is_wifi_conn_scan);
+		is_ble_central, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL) ||
 	IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH)) {
-		ret = wifi_con_ble_tput(test_wlan, is_ant_mode_sep, test_ble,
-		is_ble_central, is_wlan_server);
+		ret = wifi_con_ble_tput(test_wlan, is_ant_mode_sep, test_ble, is_ble_central);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_TP_UDP_CLIENT_BLE_CON_CENTRAL) ||
@@ -182,13 +181,13 @@ int main(void)
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_STABILITY) ||
 	IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_STABILITY)) {
 		ret = wifi_con_stability_ble_con_interference(test_wlan, test_ble, is_ble_central,
-		is_wlan_server, is_ant_mode_sep);
+		is_ant_mode_sep);
 	}
 
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_CENTRAL_STABILITY) ||
 	IS_ENABLED(CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY)) {
 		ret = wifi_con_stability_ble_tput_interference(test_wlan, is_ant_mode_sep, test_ble,
-			is_ble_central, is_wlan_server);		
+			is_ble_central);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_SCAN_STABILITY) ||
@@ -196,7 +195,7 @@ int main(void)
 	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY) ||
 	IS_ENABLED(CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY)) {
 		ret = ble_con_stability_wifi_scan_interference(is_ant_mode_sep, test_ble, test_wlan,
-		is_ble_central, is_wlan_server, is_wifi_conn_scan);
+		is_ble_central, is_wifi_conn_scan);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_CON_STABILITY) ||
@@ -207,7 +206,7 @@ int main(void)
 			LOG_INF("Test case: ble_conn_peripheral_wifi_con_stability");
 		}
 		ret = ble_con_stability_wifi_conn_interference(test_wlan, test_ble, is_ble_central,
-		is_wlan_server,	is_ant_mode_sep);
+		is_ant_mode_sep);
 	}
 
 	if (IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_WIFI_TP_UDP_CLIENT_STABILITY) ||

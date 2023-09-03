@@ -42,7 +42,7 @@ static struct net_mgmt_event_callback net_addr_mgmt_cb;
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
+		bool is_ble_central, bool is_wifi_conn_scan);
 
 /**
  * @brief Function to test Wi-Fi scan/connected-scan and BLE throughput central/peripheral
@@ -50,15 +50,14 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
+		bool is_ble_central, bool is_wifi_conn_scan);
 
 /**
  * @brief Function to test Wi-Fi connection and BLE throughput central/peripheral
  *
  * @return Zero on success or (negative) error code otherwise.
  */
-int wifi_con_ble_tput(bool test_wlan, bool is_ant_mode_sep,	bool test_ble, bool is_ble_central,
-		bool is_wlan_server);
+int wifi_con_ble_tput(bool test_wlan, bool is_ant_mode_sep,	bool test_ble, bool is_ble_central);
 
 /**
  * @brief Function to test Wi-Fi throughput client/server and BLE connection central/peripheral
@@ -83,7 +82,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_con_stability_ble_con_interference(bool test_wlan, bool test_ble, bool is_ble_central,
-	bool is_wlan_server, bool is_ant_mode_sep);
+	bool is_ant_mode_sep);
 
 /**
  * @brief Function to test Wi-Fi connection stability with BLE throughput central/peripheral
@@ -92,7 +91,7 @@ int wifi_con_stability_ble_con_interference(bool test_wlan, bool test_ble, bool 
  * @return Zero on success or (negative) error code otherwise.
  */
 int wifi_con_stability_ble_tput_interference(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
-	bool is_ble_central, bool is_wlan_server);
+	bool is_ble_central);
 
 /**
  * @brief Function to test BLE connection central/peripheral stability with Wi-Fi scan/
@@ -101,7 +100,7 @@ int wifi_con_stability_ble_tput_interference(bool test_wlan, bool is_ant_mode_se
  * @return Zero on success or (negative) error code otherwise.
  */
 int ble_con_stability_wifi_scan_interference(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-		bool is_ble_central, bool is_wlan_server, bool is_wifi_conn_scan);
+		bool is_ble_central, bool is_wifi_conn_scan);
 
 /**
  * @brief Function to test BLE connection central/peripheral stability with Wi-Fi connection
@@ -110,7 +109,7 @@ int ble_con_stability_wifi_scan_interference(bool is_ant_mode_sep, bool test_ble
  * @return Zero on success or (negative) error code otherwise.
  */
 int ble_con_stability_wifi_conn_interference(bool test_wlan, bool test_ble, bool is_ble_central,
-		bool is_wlan_server, bool is_ant_mode_sep);
+		bool is_ant_mode_sep);
 
 /**
  * @brief Function to test BLE connection central/peripheral stability with Wi-Fi throughput
