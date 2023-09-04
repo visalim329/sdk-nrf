@@ -21,7 +21,7 @@ uint32_t ble_phy_update_timeout;
 uint32_t ble_conn_param_update_failed;
 uint32_t ble_conn_param_update_timeout;
 
-uint32_t ble_conn_attempts_before_test_starts = 0;
+uint32_t ble_conn_attempts_before_test_starts;
 
 static int print_wifi_conn_status_once = 1;
 
@@ -105,14 +105,13 @@ void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb)
 
 	if (context.disconnect_requested) {
 		#ifndef CONFIG_PRINTS_FOR_AUTOMATION
-			LOG_INF("Disconnection request %s (%d)",
-		 	 status->status ? "failed" : "done",
-		 			status->status); 
+		LOG_INF("Disconnection request %s (%d)",
+		status->status ? "failed" : "done", status->status);
 		#endif
 		context.disconnect_requested = false;
 	} else {
 		#ifndef CONFIG_PRINTS_FOR_AUTOMATION
-		 LOG_INF("Disconnected");
+		LOG_INF("Disconnected");
 		#endif
 		context.connected = false;
 	}
@@ -644,14 +643,15 @@ err:
 void wifi_disconnection(bool test_wlan)
 {
 	int ret = 0;
+
 	if (test_wlan) {
 		wifi_disconn_attempt_cnt++;
 		/* Wi-Fi disconnection */
-		if(IS_ENABLED(CONFIG_DEBUG_PRINT_WIFI_CONN_INFO)) {
+		if (IS_ENABLED(CONFIG_DEBUG_PRINT_WIFI_CONN_INFO)) {
 			LOG_INF("Disconnecting Wi-Fi");
 		}
 		ret = wifi_disconnect();
-		if (ret!=0) {
+		if (ret != 0) {
 			LOG_INF("Disconnect failed");
 		}
 	}
@@ -766,8 +766,8 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 	if (test_wlan) {
 		wifi_connection(test_wlan);
 		if (ret != 0) {
-			LOG_ERR("Wi-Fi connection failed. Running the test\
-					further is not meaningful. So, exiting the test");
+			LOG_ERR("Wi-Fi connection failed. Running the test");
+			LOG_ERR("further is not meaningful. So, exiting the test");
 			goto err;
 		}
 		#if defined(CONFIG_NRF700X_BT_COEX)
@@ -795,7 +795,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 						/* Peer BLE starts the the test. */
 						LOG_INF("Run BLE central");
 						k_sleep(K_SECONDS(1));
-					}			
+					}
 					wait4_peer_ble2_start_connection = 0;
 					#endif
 				}
@@ -823,7 +823,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 				#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 				LOG_INF("start WiFi client");
 				#endif
-				k_sleep(K_SECONDS(1)); /* Before test start. in a loop. can be reducd to 100ms*/
+				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_wifi_client_to_start_tp_test = 0;
 		}

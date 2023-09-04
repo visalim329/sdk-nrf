@@ -101,8 +101,8 @@ int main(void)
 #endif
 
 	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
-	
-	k_sleep(K_SECONDS(1)); 
+
+	k_sleep(K_SECONDS(1));
 
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)

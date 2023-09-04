@@ -7,8 +7,6 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
-//#include "common.h"
-
 #include <nrfx_clock.h>
 #include <zephyr/kernel.h>
 #include <zephyr/init.h>

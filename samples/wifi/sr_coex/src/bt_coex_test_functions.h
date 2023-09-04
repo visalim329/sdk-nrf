@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #include <bluetooth/scan.h>
 
 #include <zephyr/logging/log.h>
@@ -50,7 +48,7 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #define HIGHEST_CHANNUM_24G 14
 
 #define KSLEEP_WIFI_CON_2SEC K_SECONDS(2)
-#define KSLEEP_WIFI_DISCON_2SEC K_SECONDS(2) 
+#define KSLEEP_WIFI_DISCON_2SEC K_SECONDS(2)
 #define KSLEEP_WIFI_CON_10MSEC K_MSEC(10)
 #define KSLEEP_WIFI_DISCON_10MSEC K_MSEC(10)
 #define KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC K_SECONDS(1)
