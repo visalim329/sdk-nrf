@@ -31,8 +31,9 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 	/**nothing . These are the tests in which the BLE connection
 	 *is done multiple times in a loop
 	 */
+	 #define BLE_ITERATIVE_CONNECTION
 #else
-	#define BLE_TX_PWR_CTRL_RSSI
+	//#define BLE_TX_PWR_CTRL_RSSI
 #endif
 
 uint32_t ble_connection_success_cnt;
@@ -177,10 +178,11 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-	printk("Filter not match. Address: %s connectable: %d\n",
-				addr, connectable);
-	#endif
+	/**#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	 *printk("Filter not match. Address: %s connectable: %d\n",
+	 *		addr, connectable);
+	 *#endif
+	 */
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -288,6 +290,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	}
 	ble_connection_success_cnt++;
 	ble_central_connected = true;
+	ble_periph_connected = true;
 #ifdef CONFIG_PRINTS_FOR_AUTOMATION
 	if (print_ble_conn_status_once) {
 		LOG_INF("Connected as %s", info.role ==
@@ -305,16 +308,6 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 		if (err) {
 			LOG_ERR("Discover failed (err %d)", err);
 		}
-	} else {
-		/**this is moved to connection_configuration_set()
-		 * so that PHY update is  cleanly done before starting
-		 * the coex test when DUT is in peripheral role. If this is
-		 *If this is not done then coex test proceeds immediately
-		 * after connection is done (before completion of PHY update
-		 * params) and due to interference PHY update may fail
-		 */
-
-		/* ble_periph_connected = true; */
 	}
 
 	#ifdef BLE_TX_PWR_CTRL_RSSI
@@ -449,13 +442,15 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		printk("Failed to get connection info (%d)\n", err);
 		return;
 	}
-	/* Re-connect using same roles */
-	if (info.role == BT_CONN_ROLE_CENTRAL) {
-		ble_connection_attempt_cnt++;
-		scan_start();
-	} else {
-		adv_start();
-	}
+	#ifdef BLE_ITERATIVE_CONNECTION
+		/* Re-connect using same roles */
+		if (info.role == BT_CONN_ROLE_CENTRAL) {
+			ble_connection_attempt_cnt++;
+			scan_start(); 		
+		} else {
+			adv_start();
+		}
+	#endif
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -610,7 +605,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 	err = bt_conn_get_info(default_conn, &info);
 	if (err) {
 		LOG_ERR("Failed to get connection info %d", err);
-		goto end_of_function;
+		return err;
 	}
 
 	if (info.role != BT_CONN_ROLE_CENTRAL) {
@@ -620,17 +615,17 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 	err = bt_conn_le_phy_update(default_conn, phy);
 	if (err) {
 		ble_phy_update_failed++;
-		LOG_ERR("PHY update failed: %d", err);
-		goto end_of_function;
+		LOG_ERR("PHY update failed: %d\n", err);
+		return err;
 	}
-#ifdef PRINT_BLE_UPDATES
+//#if 0 //#ifdef PRINT_BLE_UPDATES
 	LOG_INF("PHY update pending");
-#endif
+//#endif
 	err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 	if (err) {
 		ble_phy_update_timeout++;
 		LOG_INF("PHY update timeout");
-		goto end_of_function;
+		return err;
 	}
 
 	if (info.le.data_len->tx_max_len != data_len->tx_max_len) {
@@ -641,16 +636,16 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 			ble_le_datalen_failed++;
 			LOG_ERR("LE data length update failed: %d",
 				    err);
-			goto end_of_function;
+			return err;
 		}
-#ifdef PRINT_BLE_UPDATES
+//#if 0 //ifdef PRINT_BLE_UPDATES
 		LOG_INF("LE Data length update pending");
-#endif
+//#endif
 		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			ble_le_datalen_timeout++;
 			LOG_INF("LE Data Length update timeout");
-			goto end_of_function;
+			return err;
 		}
 	}
 
@@ -660,8 +655,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 			ble_conn_param_update_failed++;
 			LOG_ERR("Connection parameters update failed: %d",
 				    err);
-
-			goto end_of_function;
+			return err;
 		}
 
 		LOG_INF("Connection parameters update pending");
@@ -669,15 +663,13 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 		if (err) {
 			ble_conn_param_update_timeout++;
 			LOG_INF("Connection parameters update timeout");
-			goto end_of_function;
+			return err;
 		}
 	}
-end_of_function:
 	/* LOG_INF("supervision timeout %d", conn_param->timeout); */
 	ble_supervision_timeout = conn_param->timeout;
 
-	ble_periph_connected = true;
-	return err;
+	return 0;
 }
 
 int bt_throughput_test_run(void)
@@ -744,7 +736,7 @@ int bt_throughput_test_run(void)
 
 	instruction_print();
 	/* to stop scan after the test duration is complete */
-	scan_init();
+	//scan_init();
 	return 0;
 }
 
@@ -779,6 +771,7 @@ void bt_conn_test_run(void)
 			break;
 		}
 		/* sleep time of less than 2 seconds throws coredump errors.*/
+//		k_sleep(K_SECONDS(3));
 		k_sleep(K_SECONDS(2));
 	}
 	/* to stop scan after the test duration is complete */

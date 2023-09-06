@@ -68,11 +68,11 @@ static const struct bt_data sd[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-//#ifdef CONFIG_BLE_THROUGHPUT_TEST
+
 static const char img[] =
 #include "img.file"
 ;
-//#endif
+
 static void button_handler_cb(uint32_t button_state, uint32_t has_changed);
 
 static const char *phy2str(uint8_t phy)
@@ -139,9 +139,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 	}
 
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
-	//#if defined(CONFIG_BLE_THROUGHPUT_TEST) || defined(CONFIG_BLE_CONN_CENTRAL_TEST)	
 	instruction_print();
-	//#endif
 		test_ready = true;
 	}
 }
@@ -300,7 +298,6 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 	int err;
 
 	printk("Disconnected (reason 0x%02x)\n", reason);
-	//ble_central_connected = false; 
 	
 	test_ready = false;
 	if (default_conn) {
@@ -365,7 +362,7 @@ static void le_data_length_updated(struct bt_conn *conn,
 	data_length_req = false;
 	k_sem_give(&throughput_sem);
 }
-//#ifdef CONFIG_BLE_THROUGHPUT_TEST
+
 static uint8_t throughput_read(const struct bt_throughput_metrics *met)
 {
 	printk("[peer] received %u bytes (%u KB)"
@@ -409,7 +406,7 @@ static const struct bt_throughput_cb throughput_cb = {
 	.data_received = throughput_received,
 	.data_send = throughput_send
 };
-//#endif
+
 
 static struct button_handler button = {
 	.cb = button_handler_cb,
@@ -770,14 +767,14 @@ void ble_iterative_conn_central(void)
 			printk("Cannot disconnect!\n");
 		}
 	}
-	//k_sleep(K_SECONDS(1));
+
 	test_start_time = k_uptime_get_32();
 
 	while (true) {
-		//if (ble_central_connected) {
-			ble_disconnection_attempt_cnt++;
-			bt_disconnect_central();
-		//}
+
+		ble_disconnection_attempt_cnt++;
+		bt_disconnect_central();
+
 		if (ble_discon_no_conn != 0) { /* not connected */
 			ble_discon_no_conn = 0;
 			ble_connection_attempt_cnt++;
@@ -825,8 +822,7 @@ int bt_disconnect_central(void)
 
 void main(void)
 {
-	//if (IS_ENABLED(CONFIG_BLE_THROUGHPUT_TEST) || IS_ENABLED(CONFIG_BLE_CONN_CENTRAL_TEST))
-	//{
+
 		int err;
 		if(IS_ENABLED(CONFIG_BLE_THROUGHPUT_TEST)) {
 			printk("Starting Bluetooth Throughput example\n");
@@ -866,5 +862,4 @@ void main(void)
 			bt_connection_init();
 		}
 
-	//}
 }

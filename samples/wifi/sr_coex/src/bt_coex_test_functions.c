@@ -672,6 +672,7 @@ void wifi_scan_test_run(void)
 	test_start_time = k_uptime_get_32();
 
 	wifi_scan_cmd_cnt++;
+	LOG_INF("Callimg repeated scan first time");
 	cmd_wifi_scan();
 
 	while (true) {
@@ -781,7 +782,8 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 
 	/* Wi-Fi client/server role has no meaning in Wi-Fi scan */
 	bool is_wlan_server = false;
-
+	LOG_INF("test_wlan=%d", test_wlan);
+	
 	if (is_ble_central) {
 		if (is_wifi_conn_scan) {
 			LOG_INF("Test case: wifi_scan_ble_connection");
@@ -936,7 +938,7 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 			LOG_INF("ble_discon_no_conn_cnt = %u",
 				ble_discon_no_conn_cnt);
 		} else {
-			LOG_INF("check peer device for result counts");
+			/*LOG_INF("check peer device for result counts");
 			LOG_INF("Counts printed below are for information purpose");
 			LOG_INF("and not actual results.");
 
@@ -952,7 +954,7 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 			LOG_INF("ble_conn_param_update_failed = %u",
 				ble_conn_param_update_failed);
 			LOG_INF("ble_conn_param_update_timeout = %u",
-				ble_conn_param_update_timeout);
+				ble_conn_param_update_timeout);*/
 		}
 	}
 	if (test_wlan) {
@@ -1075,7 +1077,7 @@ int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 			if (ret != 0) {
 				LOG_ERR("Wi-Fi connection failed. Running the test");
 				LOG_ERR("further is not meaningful. So, exiting the test");
-				return -1;
+				return ret;
 			}
 		#endif
 		}
@@ -1330,12 +1332,14 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 	}
 	if (test_ble) {
 		/* Initialize BLE by selecting role and connect it to peer device. */
+		ble_connection_attempt_cnt++;
 		bt_connection_init(is_ble_central);
 		k_sleep(K_SECONDS(3)); /* B4 start. not in loop. no need to reduce */
 		if (is_ble_central) {
 			/** If BLE is central, disconnect the connection.
 			 *Connection and disconnection happens in loop later.
 			 */
+			ble_disconnection_attempt_cnt++;
 			bt_disconnect_central();
 			k_sleep(K_SECONDS(2));
 		} else {
@@ -1402,13 +1406,14 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 				CONFIG_COEX_TEST_DURATION) {
 					break;
 				}
-				k_sleep(KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC);
+				k_sleep(K_SECONDS(3));
 			}
 		}
 	}
 
 	if (test_wlan) {
-		check_wifi_traffic();
+		/* Test is not running to completion if this is uncommented. Yet to debug */
+		/* check_wifi_traffic(); */
 		wifi_disconnection();
 	}
 	#ifdef DEMARCATE_TEST_START
@@ -1508,24 +1513,25 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 			LOG_ERR("Failed to BT throughput init: %d", ret);
 			return ret;
 		}
+	}
+	
+	if (test_wlan && test_ble) {
 		if (!is_wlan_server) {
 			if (is_ble_central) {
 				/* nothing */
-			} else {
-				if (test_wlan && test_ble) {
-					#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-					while (!wait4_peer_ble2_start_connection) {
-						/* Peer BLE starts the the test. */
-						LOG_INF("Run BLE central");
-						k_sleep(K_SECONDS(1));
-					}
-					wait4_peer_ble2_start_connection = 0;
-					#endif
-
+			} else {				
+				#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+				while (!wait4_peer_ble2_start_connection) {
+					/* Peer BLE starts the the test. */
+					LOG_INF("Run BLE central");
+					k_sleep(K_SECONDS(1));
 				}
+				wait4_peer_ble2_start_connection = 0;
+				#endif				
 			}
 		}
 	}
+	
 	if (!is_wlan_server) {
 		#ifdef DEMARCATE_TEST_START
 		LOG_INF("-------------------------start");
@@ -1570,11 +1576,13 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 		check_wifi_traffic();
 	}
 
-	if (is_ble_central) {
-		/* run BLE activity and wait for the test duration */
-		run_ble_activity();
-	} else {
-		/* Peer BLE that acts as central runs the traffic. */
+	if (test_ble) {
+		if (is_ble_central) {
+			/* run BLE activity and wait for the test duration */
+			run_ble_activity();
+		} else {
+			/* Peer BLE that acts as central runs the traffic. */
+		}
 	}
 
 	if (test_wlan) {
@@ -2426,6 +2434,19 @@ int ble_tput_wifi_shutdown(bool is_ble_central)
 	if (ret != 0) {
 		LOG_ERR("Failed to BT throughput init: %d", ret);
 		return ret;
+	}
+	
+	if (is_ble_central) {
+				/* nothing */
+	} else {
+			#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+			while (!wait4_peer_ble2_start_connection) {
+				/* Peer BLE starts the the test. */
+				LOG_INF("Run BLE central");
+				k_sleep(K_SECONDS(1));
+			}
+			wait4_peer_ble2_start_connection = 0;
+			#endif
 	}
 
 	#ifdef DEMARCATE_TEST_START

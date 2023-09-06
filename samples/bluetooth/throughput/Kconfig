@@ -19,7 +19,7 @@ config BT_THROUGHPUT_DURATION
 
 config BT_CONN_CENTRAL_TEST_DURATION
 	int "test duration in milliseconds"
-	default 20000
+	default 60000
 
 config INTERVAL_MIN
 	int "BLE min connection interval. Each unit 1.25milliseconds"
