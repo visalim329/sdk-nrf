@@ -23,14 +23,11 @@ int bt_throughput_test_init(bool is_ble_central);
  */
 int bt_throughput_test_run(void);
 
-
 /**
  * @brief Exit BLE throughput test
  *
  * @return Zero on success or (negative) error code otherwise.
  */
 int bt_throughput_test_exit(void);
-
-
 
 #endif /* BT_UTILS_H_ */

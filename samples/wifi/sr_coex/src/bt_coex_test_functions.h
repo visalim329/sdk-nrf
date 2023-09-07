@@ -57,11 +57,11 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #define KSLEEP_SCAN_START_1SEC K_SECONDS(1)
 #define KSLEEP_WHILE_DISCON_CENTRAL_2SEC K_SECONDS(2)
 
-uint8_t wait4_peer_ble2_start_connection;
+
 static uint32_t wifi_scan_cnt_24g;
 static uint32_t wifi_scan_cnt_5g;
 extern uint32_t wifi_scan_cmd_cnt;
-static uint8_t wait4_peer_wifi_client_to_start_tp_test;
+
 
 static uint32_t wifi_conn_attempt_cnt;
 static uint32_t wifi_conn_success_cnt;
@@ -74,6 +74,8 @@ static uint32_t wifi_disconn_fail_cnt;
 static uint32_t wifi_disconn_no_conn_cnt;
 
 static uint32_t wifi_disconn_cnt_stability;
+uint8_t wait4_peer_ble2_start_connection;
+static uint8_t wait4_peer_wifi_client_to_start_tp_test;
 
 static struct sockaddr_in in4_addr_my = {
 	.sin_family = AF_INET,

@@ -34,13 +34,7 @@
 static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
 static struct net_mgmt_event_callback net_addr_mgmt_cb;
 
-/**
- * @brief Print common test test parameters info
- *
- * @return No return value.
- */
-void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-	bool is_ble_central);
+
 
 /**
  * @brief Function to test Wi-Fi throughput client/server and BLE throughput central/peripheral
@@ -107,4 +101,11 @@ void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_ev
 void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
 		struct net_if *iface);
 
+/**
+ * @brief Print common test test parameters info
+ *
+ * @return No return value.
+ */
+void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
+	bool is_ble_central);
 #endif /* MAIN_H_ */

@@ -660,12 +660,6 @@ int bt_throughput_test_init(bool is_ble_central)
 	return conn_cfg_status;
 }
 
-
-
-
-
-
-
 int bt_throughput_test_exit(void)
 {
 	int err;

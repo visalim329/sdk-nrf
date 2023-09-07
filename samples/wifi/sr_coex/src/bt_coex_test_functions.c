@@ -11,20 +11,20 @@
 #include "bt_coex_test_functions.h"
 
 int8_t wifi_rssi = 127;
-uint32_t print_wifi_scan_time;
+
 uint64_t wifi_scan_start_time;
 uint64_t wifi_scan_time;
+uint32_t print_wifi_scan_time;
+static int print_wifi_conn_status_once = 1;
+
+
 uint32_t ble_le_datalen_failed;
 uint32_t ble_phy_update_failed;
 uint32_t ble_le_datalen_timeout;
 uint32_t ble_phy_update_timeout;
 uint32_t ble_conn_param_update_failed;
 uint32_t ble_conn_param_update_timeout;
-
 uint32_t ble_conn_attempts_before_test_starts;
-
-static int print_wifi_conn_status_once = 1;
-
 
 void memset_context(void)
 {
@@ -558,16 +558,7 @@ err:
 	return ret;
 }
 
-void start_ble_activity(bool test_ble, bool is_ble_central)
-{
-	if (test_ble) {
 
-		if (is_ble_central) {
-			k_thread_start(run_bt_traffic);
-		}
-
-	}
-}
 
 
 void check_wifi_traffic(bool test_wlan)
@@ -582,15 +573,7 @@ void check_wifi_traffic(bool test_wlan)
 	}
 }
 
-void run_ble_activity(bool test_ble, bool is_ble_central)
-{
-	if (test_ble) {
-		/* In case BLE is peripheral, skip running BLE connection/traffic */
-		if (is_ble_central) {
-			k_thread_join(run_bt_traffic, K_FOREVER);
-		}
-	}
-}
+
 
 void run_wifi_activity(void)
 {
@@ -602,18 +585,7 @@ void run_wifi_activity(void)
 	#endif
 }
 
-void exit_bt_throughput_test(bool test_ble, bool is_ble_central)
-{
-	if (test_ble) {
-		/** Disconnect BLE if role is central. Disconnection in the case of
-		 * peripheral role is taken care by the peer central
-		 */
-		if (is_ble_central) {
-			LOG_INF("Disconnecting BLE");
-			bt_throughput_test_exit();
-		}
-	}
-}
+
 int wifi_connection(bool test_wlan)
 {
 	int ret = 0;
@@ -679,6 +651,39 @@ err:
 	return ret;
 }
 
+void start_ble_activity(bool test_ble, bool is_ble_central)
+{
+	if (test_ble) {
+
+		if (is_ble_central) {
+			k_thread_start(run_bt_traffic);
+		}
+
+	}
+}
+
+void run_ble_activity(bool test_ble, bool is_ble_central)
+{
+	if (test_ble) {
+		/* In case BLE is peripheral, skip running BLE connection/traffic */
+		if (is_ble_central) {
+			k_thread_join(run_bt_traffic, K_FOREVER);
+		}
+	}
+}
+
+void exit_bt_throughput_test(bool test_ble, bool is_ble_central)
+{
+	if (test_ble) {
+		/** Disconnect BLE if role is central. Disconnection in the case of
+		 * peripheral role is taken care by the peer central
+		 */
+		if (is_ble_central) {
+			LOG_INF("Disconnecting BLE");
+			bt_throughput_test_exit();
+		}
+	}
+}
 
 void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 		bool is_ble_central)
