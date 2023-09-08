@@ -464,6 +464,7 @@ void udp_upload_results_cb(enum zperf_status status, struct zperf_results *resul
 		LOG_INF("%u packets sent", result->nb_packets_sent);
 		LOG_INF("%u packets lost", result->nb_packets_lost);
 		LOG_INF("%u packets received", result->nb_packets_rcvd);
+		LOG_INF("client_rate_in_kbps = %u kbps", client_rate_in_kbps);
 		k_sem_give(&udp_tcp_callback);
 		break;
 	case ZPERF_SESSION_ERROR:
@@ -672,7 +673,6 @@ void wifi_scan_test_run(void)
 	test_start_time = k_uptime_get_32();
 
 	wifi_scan_cmd_cnt++;
-	LOG_INF("Callimg repeated scan first time");
 	cmd_wifi_scan();
 
 	while (true) {
@@ -773,6 +773,19 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
 		LOG_INF("BLE doesn't post requests to PTA");
 	}
 	LOG_INF("--------------------------------");
+	#ifdef ENABLE_BLE_CONN_TEST
+	if (is_ble_central) {
+		LOG_INF("BLE Scan interval max %u\n", CONFIG_BT_LE_SCAN_INTERVAL);
+		LOG_INF("BLE Scan window %u\n", CONFIG_BT_LE_SCAN_WINDOW);
+	} else {
+		LOG_INF("BLE advertisement interval min %u\n", CONFIG_BT_GAP_ADV_FAST_INT_MIN_2);
+		LOG_INF("BLE advertisement interval max %u\n", CONFIG_BT_GAP_ADV_FAST_INT_MAX_2);
+	}
+		LOG_INF("BLE connection interval min %u\n", CONFIG_BLE_INTERVAL_MIN);
+		LOG_INF("BLE connection interval max %u\n", CONFIG_BLE_INTERVAL_MAX);
+		LOG_INF("BLE supervision timeout %u\n", CONFIG_BT_SUPERVISION_TIMEOUT);
+		LOG_INF("BLE connection latency %u\n", CONFIG_BT_CONN_LATENCY);
+	#endif
 }
 
 int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
@@ -1413,7 +1426,7 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 
 	if (test_wlan) {
 		/* Test is not running to completion if this is uncommented. Yet to debug */
-		/* check_wifi_traffic(); */
+		check_wifi_traffic();
 		wifi_disconnection();
 	}
 	#ifdef DEMARCATE_TEST_START
@@ -1452,6 +1465,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 	bool test_ble, bool is_ble_central, bool is_wlan_server, bool is_zperf_udp)
 {
 	int ret = 0;
+	uint64_t test_start_time = 0;
 
 	if (is_ble_central) {
 		if (is_wlan_server) {
@@ -1527,7 +1541,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 					k_sleep(K_SECONDS(1));
 				}
 				wait4_peer_ble2_start_connection = 0;
-				#endif				
+				#endif
 			}
 		}
 	}
@@ -1536,6 +1550,9 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 		#ifdef DEMARCATE_TEST_START
 		LOG_INF("-------------------------start");
 		#endif
+	}
+	if (!is_wlan_server) {
+		test_start_time = k_uptime_get_32();
 	}
 	if (test_wlan) {
 		if (is_zperf_udp) {
@@ -1556,6 +1573,8 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_wifi_client_to_start_tp_test = 0;
+			test_start_time = k_uptime_get_32();
+
 		}
 	}
 	if (is_wlan_server) {
@@ -1569,6 +1588,13 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 			start_ble_activity();
 		} else {
 			/* If DUT BLE is peripheral then the peer starts the activity. */
+			while (true) {
+			if (k_uptime_get_32() - test_start_time >
+				CONFIG_COEX_TEST_DURATION) {
+				break;
+			}
+			k_sleep(KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC);
+		}
 		}
 	}
 

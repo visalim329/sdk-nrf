@@ -102,8 +102,10 @@ static int print_ble_conn_status_once = 1;
 
 
 /* #define PRINT_BLE_UPDATES */
+#define SCAN_START_CONFIG_TIMEOUT K_SECONDS(10)
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
+static K_SEM_DEFINE(connected_sem, 0, 1);
 
 extern uint8_t wait4_peer_ble2_start_connection;
 bool ble_periph_connected;
@@ -419,7 +421,9 @@ void adv_start(void)
 }
 void disconnected(struct bt_conn *conn, uint8_t reason)
 {
+	#ifdef BLE_ITERATIVE_CONNECTION
 	struct bt_conn_info info = {0};
+	#endif 
 	int err;
 #ifdef PRINT_BLE_UPDATES
 	LOG_INF("Disconnected (reason 0x%02x)", reason);
@@ -432,6 +436,8 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		bt_conn_unref(default_conn);
 		default_conn = NULL;
 	}
+
+	#ifdef BLE_ITERATIVE_CONNECTION
 	/* Disconnection count for central is available in bt_disconnect_central() */
 	if (!IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 		ble_disconnection_success_cnt++;
@@ -442,7 +448,6 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		printk("Failed to get connection info (%d)\n", err);
 		return;
 	}
-	#ifdef BLE_ITERATIVE_CONNECTION
 		/* Re-connect using same roles */
 		if (info.role == BT_CONN_ROLE_CENTRAL) {
 			ble_connection_attempt_cnt++;
@@ -450,6 +455,8 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		} else {
 			adv_start();
 		}
+		LOG_INF("Gave the semaphore");
+		k_sem_give(&connected_sem);
 	#endif
 }
 
@@ -675,7 +682,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 int bt_throughput_test_run(void)
 {
 	int err;
-	int64_t stamp;
+	uint64_t stamp;
 	int64_t delta;
 	uint32_t data = 0;
 
@@ -745,7 +752,7 @@ void bt_conn_test_run(void)
 
 	int64_t stamp;
 	int64_t delta;
-
+	int err = 0;
 	/* get cycle stamp */
 	stamp = k_uptime_get_32();
 
@@ -772,7 +779,12 @@ void bt_conn_test_run(void)
 		}
 		/* sleep time of less than 2 seconds throws coredump errors.*/
 //		k_sleep(K_SECONDS(3));
-		k_sleep(K_SECONDS(2));
+		//k_sleep(K_SECONDS(4));
+		err = k_sem_take(&connected_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+		if (err) {
+			LOG_ERR("scan_start timeout");
+			return err;
+		}
 	}
 	/* to stop scan after the test duration is complete */
 	scan_init();

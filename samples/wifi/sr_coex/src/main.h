@@ -193,7 +193,7 @@ void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_e
 		struct net_if *iface);
 
 /**
- * @brief Print test parameters information
+ * @brief Print common test parameters info
  *
  * @return None
  */
