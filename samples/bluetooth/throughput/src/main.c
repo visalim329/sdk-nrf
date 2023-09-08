@@ -30,8 +30,8 @@
 #define DEVICE_NAME	CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
-#define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
-#define SCAN_CONFIG_TIMEOUT 20
+//#define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
+#define THROUGHPUT_CONFIG_TIMEOUT 20
 
 bool ble_central_connected;
 
@@ -112,8 +112,9 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
 
-	printk("Filter not match. Address: %s connectable: %d\n",
-				addr, connectable);
+	/**printk("Filter not match. Address: %s connectable: %d\n",
+	 *			addr, connectable);
+	 */
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -492,7 +493,7 @@ static int connection_configuration_set(const struct shell *shell,
 	}
 
 	shell_print(shell, "PHY update pending");
-	err = k_sem_take(&throughput_sem, THROUGHPUT_CONFIG_TIMEOUT);
+	err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 	if (err) {
 		shell_error(shell, "PHY update timeout");
 		return err;
@@ -509,7 +510,7 @@ static int connection_configuration_set(const struct shell *shell,
 		}
 
 		shell_print(shell, "LE Data length update pending");
-		err = k_sem_take(&throughput_sem, THROUGHPUT_CONFIG_TIMEOUT);
+		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			shell_error(shell, "LE Data Length update timeout");
 			return err;
@@ -526,7 +527,7 @@ static int connection_configuration_set(const struct shell *shell,
 		}
 
 		shell_print(shell, "Connection parameters update pending");
-		err = k_sem_take(&throughput_sem, THROUGHPUT_CONFIG_TIMEOUT);
+		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			shell_error(shell,
 				    "Connection parameters update timeout");
@@ -639,7 +640,7 @@ int test_run(const struct shell *shell,
 			return err;
 		}
 
-		k_sem_take(&throughput_sem, THROUGHPUT_CONFIG_TIMEOUT);
+		k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 
 		instruction_print();
 
@@ -680,7 +681,7 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 
 	printk("PHY update pending");
 
-	err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+	err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 	if (err) {
 		printk("PHY update timeout");
 		return err;
@@ -697,7 +698,7 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 		}
 
 		printk("LE Data length update pending");
-		err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			printk("LE Data Length update timeout");
 			return err;
@@ -713,7 +714,7 @@ int connection_config_set(const struct bt_le_conn_param *conn_param,
 		}
 
 		printk("Connection parameters update pending");
-		err = k_sem_take(&throughput_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
+		err = k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 		if (err) {
 			printk("Connection parameters update timeout");
 			return err;
@@ -727,7 +728,7 @@ int bt_connection_init(void)
 	int64_t stamp;
 
 	stamp = k_uptime_get_32();
-	while (k_uptime_delta(&stamp) / MSEC_PER_SEC < SCAN_CONFIG_TIMEOUT) {
+	while (k_uptime_delta(&stamp) / MSEC_PER_SEC < THROUGHPUT_CONFIG_TIMEOUT) {
 		if (default_conn) {
 			break;
 		}
