@@ -32,6 +32,7 @@
 
 //#define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define THROUGHPUT_CONFIG_TIMEOUT 20
+static K_SEM_DEFINE(connected_sem, 0, 1);
 
 bool ble_central_connected;
 
@@ -306,20 +307,20 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 		default_conn = NULL;
 	}
 	ble_central_connected = false;
-
+	k_sem_give(&connected_sem);
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
 		printk("Failed to get connection info (%d)\n", err);
 		return;
 	}
-
+	
 	/* Re-connect using same roles */
 	if (info.role == BT_CONN_ROLE_CENTRAL) {
 		ble_connection_attempt_cnt++;
 		scan_start();
 	} else {
 		adv_start();
-	}
+	}	
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -773,9 +774,6 @@ void ble_iterative_conn_central(void)
 
 	while (true) {
 
-		ble_disconnection_attempt_cnt++;
-		bt_disconnect_central();
-
 		if (ble_discon_no_conn != 0) { /* not connected */
 			ble_discon_no_conn = 0;
 			ble_connection_attempt_cnt++;
@@ -784,7 +782,11 @@ void ble_iterative_conn_central(void)
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SECONDS(2));
+		//k_sleep(K_SECONDS(2));
+		err = k_sem_take(&connected_sem, K_SECONDS(5));
+		
+		ble_disconnection_attempt_cnt++;
+		bt_disconnect_central();
 	}
 	
 	/* to stop scan after the results are printed */

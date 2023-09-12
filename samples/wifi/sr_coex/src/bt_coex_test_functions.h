@@ -97,11 +97,31 @@ extern uint32_t ble_discon_no_conn;
 
 extern uint32_t ble_disconn_cnt_stability;
 
+static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
+static struct net_mgmt_event_callback net_addr_mgmt_cb;
 
 static struct sockaddr_in in4_addr_my = {
 	.sin_family = AF_INET,
 	.sin_port = htons(CONFIG_NET_CONFIG_PEER_IPV4_PORT),
 };
+
+#define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT)
+
+/**
+ * @brief Handle net management events
+ *
+ * @return No return value.
+ */
+void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface);
+
+/**
+ * @brief Handle Wi-Fi management events
+ *
+ * @return No return value.
+ */
+void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
+		struct net_if *iface);
 
 static uint32_t scan_result_count;
 
@@ -433,4 +453,58 @@ void adv_start(void);
  * @return None
  */
 void scan_start(void);
+
+/**
+ * @brief Callback for Wi-Fi DHCP IP address
+ *
+ * @return None
+ */
+void print_dhcp_ip(struct net_mgmt_event_callback *cb);
+/**
+ * @brief Callback for Wi-Fi connection result
+ *
+ * @return No return value.
+ */
+void handle_wifi_connect_result(struct net_mgmt_event_callback *cb);
+
+/**
+ * @brief Callback for Wi-Fi disconnection result
+ *
+ * @return No return value.
+ */
+void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb);
+/**
+ * @brief Callback for Wi-Fi scan result
+ *
+ * @return No return value.
+ */
+void handle_wifi_scan_result(struct net_mgmt_event_callback *cb);
+
+/**
+ * @brief Callback for Wi-Fi scan done
+ *
+ * @return No return value.
+ */
+void handle_wifi_scan_done(struct net_mgmt_event_callback *cb);
+
+/**
+ * @brief Callback for Wi-Fi DHCP IP addreds assigned
+ *
+ * @return No return value.
+ */
+void print_dhcp_ip(struct net_mgmt_event_callback *cb);
+/**
+ * @brief Print common test parameters info
+ *
+ * @return None
+ */
+void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
+	bool is_ble_central);
+/**
+ * @brief Print BLE connection test parameters info
+ *
+ * @return None
+ */
+void print_ble_connection_test_params(bool is_ble_central);
+
 #endif /* BT_COEX_TEST_FUNCTIONS_ */

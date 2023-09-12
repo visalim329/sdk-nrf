@@ -27,14 +27,9 @@
 
 #include <zephyr_coex.h>
 
-#define WIFI_MGMT_EVENTS (NET_EVENT_WIFI_CONNECT_RESULT | NET_EVENT_WIFI_DISCONNECT_RESULT)
-
 extern int8_t wifi_rssi;
 extern int8_t ble_txpower;
 extern int8_t ble_rssi;
-
-static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
-static struct net_mgmt_event_callback net_addr_mgmt_cb;
 
 /**
  * @brief Function to test Wi-Fi scan/connected-scan and BLE connection central/peripheral
@@ -140,64 +135,11 @@ int ble_tput_wifi_shutdown(bool is_ble_central);
  * @return No return value.
  */
 void memset_context(void);
-
 /**
- * @brief Callback for Wi-Fi connection result
+ * @brief Handle net management callbacks
  *
  * @return No return value.
  */
-void handle_wifi_connect_result(struct net_mgmt_event_callback *cb);
-
-/**
- * @brief Callback for Wi-Fi disconnection result
- *
- * @return No return value.
- */
-void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb);
-
-/**
- * @brief Callback for Wi-Fi scan result
- *
- * @return No return value.
- */
-void handle_wifi_scan_result(struct net_mgmt_event_callback *cb);
-
-/**
- * @brief Callback for Wi-Fi scan done
- *
- * @return No return value.
- */
-void handle_wifi_scan_done(struct net_mgmt_event_callback *cb);
-
-/**
- * @brief Callback for Wi-Fi DHCP IP addreds assigned
- *
- * @return No return value.
- */
-void print_dhcp_ip(struct net_mgmt_event_callback *cb);
-
-/**
- * @brief Handle net management events
- *
- * @return No return value.
- */
-void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
-		struct net_if *iface);
-
-/**
- * @brief Handle Wi-Fi management events
- *
- * @return No return value.
- */
-void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
-		struct net_if *iface);
-
-/**
- * @brief Print common test parameters info
- *
- * @return None
- */
-void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
-	bool is_ble_central);
+void wifi_net_mgmt_callback_functions(void);
 
 #endif /* MAIN_H_ */

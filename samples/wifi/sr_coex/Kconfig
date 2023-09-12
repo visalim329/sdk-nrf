@@ -176,6 +176,10 @@ config DEBUG_PRINT_WIFI_CONN_INFO
 config PRINTS_FOR_AUTOMATION
 	bool "Print info required for automation"
 	default y
+	
+config BLE_TX_PWR_CTRL_RSSI
+	bool "Enable TX power control for BLE"
+	default n
 
 rsource "test/Kconfig"
 endmenu

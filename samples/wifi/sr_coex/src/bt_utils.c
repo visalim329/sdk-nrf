@@ -180,11 +180,10 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-	/**#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-	 *printk("Filter not match. Address: %s connectable: %d\n",
-	 *		addr, connectable);
-	 *#endif
-	 */
+	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	printk("Filter not match. Address: %s connectable: %d\n",
+				addr, connectable);
+	#endif
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -423,8 +422,9 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	#ifdef BLE_ITERATIVE_CONNECTION
 	struct bt_conn_info info = {0};
+	int err = 0;
 	#endif 
-	int err;
+
 #ifdef PRINT_BLE_UPDATES
 	LOG_INF("Disconnected (reason 0x%02x)", reason);
 #endif
@@ -442,7 +442,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 	if (!IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 		ble_disconnection_success_cnt++;
 	}
-
+	//k_sem_give(&connected_sem);
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
 		printk("Failed to get connection info (%d)\n", err);
@@ -455,7 +455,6 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		} else {
 			adv_start();
 		}
-		LOG_INF("Gave the semaphore");
 		k_sem_give(&connected_sem);
 	#endif
 }
@@ -682,7 +681,7 @@ int connection_configuration_set(const struct bt_le_conn_param *conn_param,
 int bt_throughput_test_run(void)
 {
 	int err;
-	uint64_t stamp;
+	int64_t stamp;
 	int64_t delta;
 	uint32_t data = 0;
 
@@ -742,8 +741,7 @@ int bt_throughput_test_run(void)
 	k_sem_take(&throughput_sem, K_SECONDS(THROUGHPUT_CONFIG_TIMEOUT));
 
 	instruction_print();
-	/* to stop scan after the test duration is complete */
-	//scan_init();
+
 	return 0;
 }
 
@@ -763,10 +761,6 @@ void bt_conn_test_run(void)
 	ble_connection_attempt_cnt++;
 	scan_start();
 	while (true) {
-		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
-			ble_disconnection_attempt_cnt++;
-			bt_disconnect_central();
-		}
 		/* start scan to attempt a new connection, if BLE is not connected */
 		if (ble_discon_no_conn != 0) {
 			ble_discon_no_conn = 0;
@@ -778,13 +772,15 @@ void bt_conn_test_run(void)
 			break;
 		}
 		/* sleep time of less than 2 seconds throws coredump errors.*/
-//		k_sleep(K_SECONDS(3));
-		//k_sleep(K_SECONDS(4));
-		err = k_sem_take(&connected_sem, K_SECONDS(SCAN_CONFIG_TIMEOUT));
-		if (err) {
-			LOG_ERR("scan_start timeout");
-			return err;
+		//k_sleep(K_SECONDS(3));
+		//k_sleep(K_SECONDS(4));	
+		err = k_sem_take(&connected_sem, K_SECONDS(3));
+		
+		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
+			ble_disconnection_attempt_cnt++;
+			bt_disconnect_central();
 		}
+		
 	}
 	/* to stop scan after the test duration is complete */
 	scan_init();

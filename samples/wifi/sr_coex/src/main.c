@@ -22,45 +22,6 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
 #define RSSI_INIT_VALUE 127
 
-void net_mgmt_event_handler(struct net_mgmt_event_callback *cb, uint32_t mgmt_event,
-		struct net_if *iface)
-{
-	switch (mgmt_event) {
-	case NET_EVENT_IPV4_DHCP_BOUND:
-		print_dhcp_ip(cb);
-		break;
-	default:
-		break;
-	}
-}
-
-void wifi_mgmt_event_handler(struct net_mgmt_event_callback *cb,
-		uint32_t mgmt_event, struct net_if *iface)
-{
-	const struct device *dev = iface->if_dev->dev;
-	struct wifi_nrf_vif_ctx_zep *vif_ctx_zep = NULL;
-
-	vif_ctx_zep = dev->data;
-
-	switch (mgmt_event) {
-	case NET_EVENT_WIFI_CONNECT_RESULT:
-		handle_wifi_connect_result(cb);
-		break;
-	case NET_EVENT_WIFI_DISCONNECT_RESULT:
-		handle_wifi_disconnect_result(cb);
-		break;
-	case NET_EVENT_WIFI_SCAN_RESULT:
-		vif_ctx_zep->scan_in_progress = 0;
-		handle_wifi_scan_result(cb);
-		break;
-	case NET_EVENT_WIFI_SCAN_DONE:
-		handle_wifi_scan_done(cb);
-		break;
-	default:
-		break;
-	}
-}
-
 int main(void)
 {
 	int ret = 0;
@@ -91,24 +52,10 @@ int main(void)
 #endif
 
 	memset_context();
+	
+	wifi_net_mgmt_callback_functions();
 
-	net_mgmt_init_event_callback(&wifi_sta_mgmt_cb, wifi_mgmt_event_handler,
-		WIFI_MGMT_EVENTS);
-
-	net_mgmt_add_event_callback(&wifi_sta_mgmt_cb);
-
-	net_mgmt_init_event_callback(&net_addr_mgmt_cb, net_mgmt_event_handler,
-		NET_EVENT_IPV4_DHCP_BOUND);
-
-	net_mgmt_add_event_callback(&net_addr_mgmt_cb);
-
-#ifdef CLOCK_FEATURE_HFCLK_DIVIDE_PRESENT
-	nrfx_clock_divider_set(NRF_CLOCK_DOMAIN_HFCLK, NRF_CLOCK_HFCLK_DIV_1);
-#endif
-
-	LOG_INF("Starting %s with CPU frequency: %d MHz", CONFIG_BOARD, SystemCoreClock/MHZ(1));
-
-	k_sleep(K_SECONDS(1));
+	
 
 #if defined(CONFIG_BOARD_NRF7002DK_NRF7001_NRF5340_CPUAPP) || \
 	defined(CONFIG_BOARD_NRF7002DK_NRF5340_CPUAPP)
