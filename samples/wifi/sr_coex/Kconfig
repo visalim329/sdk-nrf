@@ -181,5 +181,39 @@ config BLE_TX_PWR_CTRL_RSSI
 	bool "Enable TX power control for BLE"
 	default n
 
+#------------------------- TWT 
+config CONNECTION_IDLE_TIMEOUT
+	int "Time to be waited for a station to connect"
+	default 30
+
+config TWT_TRIGGER_ENABLE
+	bool "Enable trigger mode"
+	help
+	  STA expects AP to send triggers for start of every service period.
+	default y
+
+config TWT_ANNOUNCED_MODE
+	bool "Enable announced mode"
+	help
+	  STA announces its wakeup to AP for every service period start.
+	default y
+
+config TWT_WAKE_INTERVAL
+	int "TWT awake interval"
+	help
+	  The period where STA is awake and does data transfer, interval should be in us.
+	default 65000
+
+config TWT_INTERVAL
+	int "TWT service interval"
+	help
+	  The period for TWT that includes both wake and sleep durations, interval should be in us.
+	  Please note higher intervals can be rejected by AP or cause interoperability issues.
+	default 524000
+#--------------------------------- TWT
+config TWT_ENABLE
+	bool "Indicates test is to be run or not"
+	default n
+
 rsource "test/Kconfig"
 endmenu

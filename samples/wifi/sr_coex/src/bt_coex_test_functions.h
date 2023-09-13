@@ -507,4 +507,38 @@ void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wla
  */
 void print_ble_connection_test_params(bool is_ble_central);
 
+#ifdef CONFIG_TWT_ENABLE
+	/**
+	 * @brief Tear down TWT
+	 *
+	 * @return success/fail
+	 */
+	static int teardown_twt(void);
+
+	/**
+	 * @brief Wait for TWT response
+	 *
+	 * @return success/fail
+	 */
+	static int wait_for_twt_resp_received(void);
+
+	/**
+	 * @brief Setup TWT
+	 *
+	 * @return success/fail
+	 */
+	static int setup_twt(void);
+
+	/**
+	 * @brief Print TWT parameters
+	 *
+	 * @return None
+	 */
+	void print_twt_params(uint8_t dialog_token, uint8_t flow_id,
+				     enum wifi_twt_negotiation_type negotiation_type,
+				     bool responder, bool implicit, bool announce,
+				     bool trigger, uint32_t twt_wake_interval,
+				     uint64_t twt_interval);
+#endif
+
 #endif /* BT_COEX_TEST_FUNCTIONS_ */
