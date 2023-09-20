@@ -180,10 +180,10 @@ void scan_filter_no_match(struct bt_scan_device_info *device_info,
 	char addr[BT_ADDR_LE_STR_LEN];
 
 	bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
-	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	/* #ifdef CONFIG_PRINTS_FOR_AUTOMATION
 	printk("Filter not match. Address: %s connectable: %d\n",
 				addr, connectable);
-	#endif
+	#endif */
 }
 
 void scan_connecting_error(struct bt_scan_device_info *device_info)
@@ -442,7 +442,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 	if (!IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 		ble_disconnection_success_cnt++;
 	}
-	//k_sem_give(&connected_sem);
+
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
 		printk("Failed to get connection info (%d)\n", err);
@@ -455,7 +455,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		} else {
 			adv_start();
 		}
-		k_sem_give(&connected_sem);
+		//k_sem_give(&connected_sem);
 	#endif
 }
 
@@ -772,9 +772,9 @@ void bt_conn_test_run(void)
 			break;
 		}
 		/* sleep time of less than 2 seconds throws coredump errors.*/
-		//k_sleep(K_SECONDS(3));
+		k_sleep(K_SECONDS(3));
 		//k_sleep(K_SECONDS(4));	
-		err = k_sem_take(&connected_sem, K_SECONDS(3));
+		//err = k_sem_take(&connected_sem, K_SECONDS(3));
 		
 		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 			ble_disconnection_attempt_cnt++;

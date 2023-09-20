@@ -782,8 +782,8 @@ void ble_iterative_conn_central(void)
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		//k_sleep(K_SECONDS(2));
-		err = k_sem_take(&connected_sem, K_SECONDS(5));
+		k_sleep(K_SECONDS(3));
+		//err = k_sem_take(&connected_sem, K_SECONDS(3));
 		
 		ble_disconnection_attempt_cnt++;
 		bt_disconnect_central();
