@@ -543,7 +543,7 @@ void tcp_upload_results_cb(enum zperf_status status, struct zperf_results *resul
 		LOG_INF("Num packets:\t%u", result->nb_packets_sent);
 		LOG_INF("Num errors:\t%u (retry or fail)\n",
 						result->nb_packets_errors);
-		LOG_INF("\nrate in kbps:%u kbps", client_rate_in_kbps);
+		LOG_INF("\nclient data rate = %u kbps", client_rate_in_kbps);
 		k_sem_give(&udp_tcp_callback);
 		break;
 	}
@@ -580,7 +580,8 @@ void tcp_download_results_cb(enum zperf_status status, struct zperf_results *res
 		LOG_INF("TCP session ended\n");
 		LOG_INF("%u bytes in %u ms:", result->total_len,
 					result->time_in_us/USEC_PER_MSEC);
-		LOG_INF("\nrate in kbps:%u kbps", rate_in_kbps);
+		LOG_INF("\nThroughput:%u kbps", rate_in_kbps);
+		LOG_INF("");
 		k_sem_give(&udp_tcp_callback);
 		break;
 	}
@@ -627,7 +628,7 @@ void udp_download_results_cb(enum zperf_status status, struct zperf_results *res
 		 *LOG_INF(" nb packets outorder:\t%u",
 		 *		  result->nb_packets_outorder);
 		 */
-		LOG_INF("\nrate in kbps:%u kbps", rate_in_kbps);
+		LOG_INF("\nThroughput:%u kbps", rate_in_kbps);
 		LOG_INF("");
 		k_sem_give(&udp_tcp_callback);
 		break;
@@ -666,10 +667,11 @@ void udp_upload_results_cb(enum zperf_status status, struct zperf_results *resul
 		LOG_INF("%u bytes in %u ms",
 				(result->nb_packets_sent * result->packet_size),
 				(result->client_time_in_us / USEC_PER_MSEC));
-		LOG_INF("%u packets sent", result->nb_packets_sent);
-		LOG_INF("%u packets lost", result->nb_packets_lost);
-		LOG_INF("%u packets received", result->nb_packets_rcvd);
-		LOG_INF("client_rate_in_kbps = %u kbps", client_rate_in_kbps);
+		/**LOG_INF("%u packets sent", result->nb_packets_sent);
+		 *LOG_INF("%u packets lost", result->nb_packets_lost);
+		 *LOG_INF("%u packets received", result->nb_packets_rcvd);
+		 */
+		LOG_INF("client data rate = %u kbps", client_rate_in_kbps);
 		k_sem_give(&udp_tcp_callback);
 		break;
 	case ZPERF_SESSION_ERROR:
@@ -1338,7 +1340,7 @@ int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 			#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 			while (!wait4_peer_ble2_start_connection) {
 				/* Peer BLE starts the the test. */
-				LOG_INF("Run BLE central");
+				LOG_INF("Run BLE central on peer");
 				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_ble2_start_connection = 0;
@@ -1450,7 +1452,7 @@ int wifi_con_ble_tput(bool test_wlan, bool is_ant_mode_sep,	bool test_ble, bool 
 			#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 			while (!wait4_peer_ble2_start_connection) {
 				/* Peer BLE starts the the test. */
-				LOG_INF("Run BLE central");
+				LOG_INF("Run BLE central on peer");
 				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_ble2_start_connection = 0;
@@ -1602,7 +1604,7 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 		if (is_wlan_server) {
 			while (!wait4_peer_wifi_client_to_start_tp_test) {
 				#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-				LOG_INF("start WiFi client");
+				LOG_INF("start WiFi client on peer");
 				#endif
 				k_sleep(K_SECONDS(1));
 			}
@@ -1638,7 +1640,6 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 	}
 
 	if (test_wlan) {
-		/* Test is not running to completion if this is uncommented. Yet to debug */
 		check_wifi_traffic();
 		wifi_disconnection();
 	}
@@ -1649,25 +1650,24 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 		ble_conn_attempts_before_test_starts = 1;
 		if (test_ble) {
-			if (is_ble_central) {
-				LOG_INF("ble_connection_attempt_cnt = %u",
-					ble_connection_attempt_cnt -
-					ble_conn_attempts_before_test_starts);
-				LOG_INF("ble_connection_success_cnt = %u",
-					ble_connection_success_cnt -
-					ble_conn_attempts_before_test_starts);
+			//if (is_ble_central) {
+			LOG_INF("ble_connection_attempt_cnt = %u",
+				ble_connection_attempt_cnt -
+				ble_conn_attempts_before_test_starts);
+			LOG_INF("ble_connection_success_cnt = %u",
+				ble_connection_success_cnt -
+				ble_conn_attempts_before_test_starts);
 
-				LOG_INF("ble_disconnection_attempt_cnt = %u",
-					ble_disconnection_attempt_cnt);
-				LOG_INF("ble_disconnection_success_cnt = %u",
-					ble_disconnection_success_cnt);
-				LOG_INF("ble_disconnection_fail_cnt = %u",
-					ble_disconnection_fail_cnt);
-				LOG_INF("ble_discon_no_conn_cnt = %u", ble_discon_no_conn_cnt);
-			} else {
+			LOG_INF("ble_disconnection_attempt_cnt = %u",
+				ble_disconnection_attempt_cnt);
+			LOG_INF("ble_disconnection_success_cnt = %u",
+				ble_disconnection_success_cnt);
+			LOG_INF("ble_disconnection_fail_cnt = %u",
+				ble_disconnection_fail_cnt);
+			LOG_INF("ble_discon_no_conn_cnt = %u", ble_discon_no_conn_cnt);
+			} //else {
 				/* counts for peripheral case are printed on peer BLE */
-			}
-		}
+			//}
 	#endif
 
 	return 0;
@@ -1774,7 +1774,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 					#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 					while (!wait4_peer_ble2_start_connection) {
 						/* Peer BLE starts the the test. */
-						LOG_INF("Run BLE central");
+						LOG_INF("Run BLE central on peer");
 						k_sleep(K_SECONDS(1));
 					}
 					wait4_peer_ble2_start_connection = 0;
@@ -1805,7 +1805,7 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 		if (is_wlan_server) {
 			while (!wait4_peer_wifi_client_to_start_tp_test) {
 				#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-				LOG_INF("start WiFi client");
+				LOG_INF("start WiFi client on peer");
 				#endif
 				k_sleep(K_SECONDS(1));
 			}
@@ -2054,7 +2054,7 @@ int wifi_con_stability_ble_tput_interference(bool test_wlan, bool is_ant_mode_se
 			#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 			while (!wait4_peer_ble2_start_connection) {
 				/* Peer BLE starts the the test. */
-				LOG_INF("Run BLE central");
+				LOG_INF("Run BLE central on peer");
 				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_ble2_start_connection = 0;
@@ -2135,19 +2135,19 @@ int ble_con_stability_wifi_scan_interference(bool is_ant_mode_sep, bool test_ble
 
 	if (is_ble_central) {
 		if (is_wifi_conn_scan) {
-			LOG_ERR("Test case: ble_con_stability_wifi_scan_interference");
-			LOG_ERR("BLE central, Wi-Fi connected scan");
+			LOG_INF("Test case: ble_con_stability_wifi_scan_interference");
+			LOG_INF("BLE central, Wi-Fi connected scan");
 		} else {
-			LOG_ERR("Test case: ble_con_stability_wifi_scan_interference");
-			LOG_ERR("BLE central, Wi-Fi scan");
+			LOG_INF("Test case: ble_con_stability_wifi_scan_interference");
+			LOG_INF("BLE central, Wi-Fi scan");
 		}
 	} else {
 		if (is_wifi_conn_scan) {
 			LOG_INF("Test case: ble_con_stability_wifi_scan_interference");
-			LOG_ERR("BLE central, Wi-Fi connected scan");
+			LOG_INF("BLE central, Wi-Fi connected scan");
 		} else {
 			LOG_INF("Test case: ble_con_stability_wifi_scan_interference");
-			LOG_ERR("BLE peripheral, Wi-Fi scan");
+			LOG_INF("BLE peripheral, Wi-Fi scan");
 		}
 	}
 
@@ -2265,9 +2265,9 @@ int ble_con_stability_wifi_conn_interference(bool test_wlan, bool test_ble, bool
 	bool is_wlan_server = false;
 
 	if (is_ble_central) {
-		LOG_ERR("Test case: ble_con_stability_wifi_conn_interference, BLE central");
+		LOG_INF("Test case: ble_con_stability_wifi_conn_interference, BLE central");
 	} else {
-		LOG_ERR("Test case: ble_con_stability_wifi_conn_interference, BLE peripheral");
+		LOG_INF("Test case: ble_con_stability_wifi_conn_interference, BLE peripheral");
 	}
 
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
@@ -2478,7 +2478,7 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 		if (is_wlan_server) {
 			while (!wait4_peer_wifi_client_to_start_tp_test) {
 				#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-				LOG_INF("start peer WiFi client");
+				LOG_INF("start WiFi client on peer");
 				#endif
 				k_sleep(K_SECONDS(1));
 			}
@@ -2714,7 +2714,7 @@ int ble_tput_wifi_shutdown(bool is_ble_central)
 			#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 			while (!wait4_peer_ble2_start_connection) {
 				/* Peer BLE starts the the test. */
-				LOG_INF("Run BLE central");
+				LOG_INF("Run BLE central on peer");
 				k_sleep(K_SECONDS(1));
 			}
 			wait4_peer_ble2_start_connection = 0;

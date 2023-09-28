@@ -30,9 +30,13 @@
 #define DEVICE_NAME	CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
+#define WAIT_TIME_FOR_BLE_CON K_SECONDS(3)
+#define WAIT_TIME_FOR_BLE_DISCON K_SECONDS(5)
+
 //#define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define THROUGHPUT_CONFIG_TIMEOUT 20
 static K_SEM_DEFINE(connected_sem, 0, 1);
+static K_SEM_DEFINE(disconnected_sem, 0, 1);
 
 bool ble_central_connected;
 
@@ -144,6 +148,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t att_err,
 	instruction_print();
 		test_ready = true;
 	}
+	k_sem_give(&connected_sem);
 }
 
 static void discovery_complete(struct bt_gatt_dm *dm,
@@ -307,7 +312,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
 		default_conn = NULL;
 	}
 	ble_central_connected = false;
-	k_sem_give(&connected_sem);
+	k_sem_give(&disconnected_sem);
 	err = bt_conn_get_info(conn, &info);
 	if (err) {
 		printk("Failed to get connection info (%d)\n", err);
@@ -782,11 +787,12 @@ void ble_iterative_conn_central(void)
 		if (k_uptime_get_32() - test_start_time > CONFIG_BT_CONN_CENTRAL_TEST_DURATION) {
 			break;
 		}
-		k_sleep(K_SECONDS(3));
-		//err = k_sem_take(&connected_sem, K_SECONDS(3));
+		//k_sleep(K_SECONDS(5));
+		err = k_sem_take(&connected_sem, WAIT_TIME_FOR_BLE_CON);
 		
 		ble_disconnection_attempt_cnt++;
 		bt_disconnect_central();
+		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
 	}
 	
 	/* to stop scan after the results are printed */

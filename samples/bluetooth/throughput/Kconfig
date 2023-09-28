@@ -15,7 +15,7 @@ config BT_THROUGHPUT_FILE
 
 config BT_THROUGHPUT_DURATION
 	int "Throughput test duration in milliseconds"
-	default 20000
+	default 43200000
 
 config BT_CONN_CENTRAL_TEST_DURATION
 	int "test duration in milliseconds"

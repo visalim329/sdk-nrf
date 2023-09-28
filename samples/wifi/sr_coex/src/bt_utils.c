@@ -103,8 +103,12 @@ static int print_ble_conn_status_once = 1;
 
 /* #define PRINT_BLE_UPDATES */
 #define SCAN_START_CONFIG_TIMEOUT K_SECONDS(10)
+#define WAIT_TIME_FOR_BLE_CON K_SECONDS(3)
+#define WAIT_TIME_FOR_BLE_DISCON K_SECONDS(5)
+
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
+static K_SEM_DEFINE(disconnected_sem, 0, 1);
 static K_SEM_DEFINE(connected_sem, 0, 1);
 
 extern uint8_t wait4_peer_ble2_start_connection;
@@ -213,6 +217,7 @@ void exchange_func(struct bt_conn *conn, uint8_t att_err,
 		instruction_print();
 		test_ready = true;
 	}
+	k_sem_give(&connected_sem);
 }
 
 void discovery_complete(struct bt_gatt_dm *dm,
@@ -310,7 +315,7 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 			LOG_ERR("Discover failed (err %d)", err);
 		}
 	}
-
+	//k_sem_give(&connected_sem);
 	#ifdef BLE_TX_PWR_CTRL_RSSI
 		char addr[BT_ADDR_LE_STR_LEN];
 		int8_t get_txp = 0;
@@ -455,7 +460,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		} else {
 			adv_start();
 		}
-		//k_sem_give(&connected_sem);
+		k_sem_give(&disconnected_sem);
 	#endif
 }
 
@@ -772,15 +777,18 @@ void bt_conn_test_run(void)
 			break;
 		}
 		/* sleep time of less than 2 seconds throws coredump errors.*/
-		k_sleep(K_SECONDS(3));
-		//k_sleep(K_SECONDS(4));	
-		//err = k_sem_take(&connected_sem, K_SECONDS(3));
+		//k_sleep(K_SECONDS(5));
+		//k_sleep(K_SECONDS(3));
+		/* Common Wait for connection to complete after scan_start() from disconnected (),
+		 scan_start() at the start of the while loop */
+		err = k_sem_take(&connected_sem, WAIT_TIME_FOR_BLE_CON);
 		
 		if (IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 			ble_disconnection_attempt_cnt++;
 			bt_disconnect_central();
 		}
-		
+		/* Scan for next iteration starts in the disconnected() function.*/ 
+		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
 	}
 	/* to stop scan after the test duration is complete */
 	scan_init();
