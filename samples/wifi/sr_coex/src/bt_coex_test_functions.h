@@ -51,8 +51,10 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 
 #define KSLEEP_WIFI_CON_2SEC K_SECONDS(2)
 #define KSLEEP_WIFI_DISCON_2SEC K_SECONDS(2)
-#define KSLEEP_WIFI_CON_10MSEC K_MSEC(10)
-#define KSLEEP_WIFI_DISCON_10MSEC K_MSEC(10)
+//#define KSLEEP_WIFI_CON_10MSEC K_MSEC(10)
+#define KSLEEP_WIFI_CON_10MSEC K_SECONDS(1)
+//#define KSLEEP_WIFI_DISCON_10MSEC K_MSEC(10)
+#define KSLEEP_WIFI_DISCON_10MSEC K_SECONDS(1)
 #define KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC K_SECONDS(1)
 #define KSLEEP_WHILE_PERIP_CONN_CHECK_1SEC K_SECONDS(1)
 #define KSLEEP_ADV_START_1SEC K_SECONDS(1)
@@ -83,6 +85,7 @@ static uint8_t wait4_peer_wifi_client_to_start_tp_test;
 extern bool ble_periph_connected;
 extern bool ble_central_connected;
 uint8_t wait4_peer_ble2_start_connection;
+uint32_t run_ble_central_wait_in_conn;
 
 extern uint32_t ble_supervision_timeout;
 

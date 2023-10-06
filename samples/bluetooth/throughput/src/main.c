@@ -793,6 +793,7 @@ void ble_iterative_conn_central(void)
 		ble_disconnection_attempt_cnt++;
 		bt_disconnect_central();
 		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
+		k_yield();
 	}
 	
 	/* to stop scan after the results are printed */

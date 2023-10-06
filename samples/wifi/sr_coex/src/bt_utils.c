@@ -47,6 +47,7 @@ uint32_t ble_discon_no_conn_cnt;
 uint32_t ble_discon_no_conn;
 
 uint32_t wifi_scan_cmd_cnt;
+extern uint32_t run_ble_central_wait_in_conn;
 
 uint32_t ble_supervision_timeout;
 extern uint32_t ble_le_datalen_failed;
@@ -59,6 +60,7 @@ extern uint32_t ble_conn_param_update_timeout;
 int8_t ble_txpower = RSSI_INIT_VALUE;
 int8_t ble_rssi = RSSI_INIT_VALUE;
 static int print_ble_conn_status_once = 1;
+static int is_calback_from_loop = 0;
 
 #ifdef BLE_TX_PWR_CTRL_RSSI
 	/* to get/set BLE Tx power and read BLE RSSI for coex sample */
@@ -103,7 +105,7 @@ static int print_ble_conn_status_once = 1;
 
 /* #define PRINT_BLE_UPDATES */
 #define SCAN_START_CONFIG_TIMEOUT K_SECONDS(10)
-#define WAIT_TIME_FOR_BLE_CON K_SECONDS(3)
+#define WAIT_TIME_FOR_BLE_CON K_SECONDS(4)
 #define WAIT_TIME_FOR_BLE_DISCON K_SECONDS(5)
 
 
@@ -298,6 +300,10 @@ void connected(struct bt_conn *conn, uint8_t hci_err)
 	ble_central_connected = true;
 	ble_periph_connected = true;
 #ifdef CONFIG_PRINTS_FOR_AUTOMATION
+	is_calback_from_loop++;
+	if (is_calback_from_loop == 2) { 
+		run_ble_central_wait_in_conn = 1;
+	}
 	if (print_ble_conn_status_once) {
 		LOG_INF("Connected as %s", info.role ==
 			BT_CONN_ROLE_CENTRAL ? "central" : "peripheral");
@@ -790,8 +796,6 @@ void bt_conn_test_run(void)
 		/* Scan for next iteration starts in the disconnected() function.*/ 
 		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
 	}
-	/* to stop scan after the test duration is complete */
-	scan_init();
 }
 
 static const struct bt_throughput_cb throughput_cb = {

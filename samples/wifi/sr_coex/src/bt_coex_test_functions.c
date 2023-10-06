@@ -831,13 +831,15 @@ int wifi_connection(void)
 		wifi_conn_fail_cnt++;
 		return -1;
 	}
+	
+	wifi_conn_success_cnt++;
+	
 	if (wait_for_next_event("Wi-Fi DHCP", WIFI_DHCP_TIMEOUT)) {
 		wifi_dhcp_timeout_cnt++;
 		wifi_conn_fail_cnt++;
 		return -1;
 	}
 
-	wifi_conn_success_cnt++;
 	return 0;
 }
 
@@ -896,7 +898,7 @@ void wifi_scan_test_run(void)
 
 void wifi_connection_test_run(void)
 {
-	uint64_t test_start_time = 0;
+	uint64_t test_start_time = k_uptime_get_32();
 	int ret = 0;
 
 	while (true) {
@@ -995,11 +997,13 @@ void print_ble_connection_test_params(bool is_ble_central)
 		LOG_INF("BLE advertisement interval min %u\n", CONFIG_BT_GAP_ADV_FAST_INT_MIN_2);
 		LOG_INF("BLE advertisement interval max %u\n", CONFIG_BT_GAP_ADV_FAST_INT_MAX_2);
 	}
-		LOG_INF("BLE connection interval min %u\n", CONFIG_BLE_INTERVAL_MIN);
-		LOG_INF("BLE connection interval max %u\n", CONFIG_BLE_INTERVAL_MAX);
-		LOG_INF("BLE supervision timeout %u\n", CONFIG_BT_SUPERVISION_TIMEOUT);
-		LOG_INF("BLE connection latency %u\n", CONFIG_BT_CONN_LATENCY);
+	LOG_INF("BLE connection interval min %u\n", CONFIG_BLE_INTERVAL_MIN);
+	LOG_INF("BLE connection interval max %u\n", CONFIG_BLE_INTERVAL_MAX);
+	LOG_INF("BLE supervision timeout %u\n", CONFIG_BT_SUPERVISION_TIMEOUT);
+	LOG_INF("BLE connection latency %u\n", CONFIG_BT_CONN_LATENCY);
 }
+
+#ifdef CONFIG_RUN_SPT_TESTS
 
 int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 		bool is_ble_central, bool is_wifi_conn_scan)
@@ -1147,24 +1151,24 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 	#ifdef CONFIG_PRINTS_FOR_AUTOMATION
 	ble_conn_attempts_before_test_starts = 1;
 	if (test_ble) {
-		if (is_ble_central) {
-			LOG_INF("ble_connection_attempt_cnt = %u",
-				ble_connection_attempt_cnt -
-				ble_conn_attempts_before_test_starts);
-			LOG_INF("ble_connection_success_cnt = %u",
-				ble_connection_success_cnt -
-				ble_conn_attempts_before_test_starts);
+		//if (is_ble_central) {
+		LOG_INF("ble_connection_attempt_cnt = %u",
+			ble_connection_attempt_cnt -
+			ble_conn_attempts_before_test_starts);
+		LOG_INF("ble_connection_success_cnt = %u",
+			ble_connection_success_cnt -
+			ble_conn_attempts_before_test_starts);
 
 
-			LOG_INF("ble_disconnection_attempt_cnt = %u",
-				ble_disconnection_attempt_cnt);
-			LOG_INF("ble_disconnection_success_cnt = %u",
-				ble_disconnection_success_cnt);
-			LOG_INF("ble_disconnection_fail_cnt = %u",
-				ble_disconnection_fail_cnt);
-			LOG_INF("ble_discon_no_conn_cnt = %u",
-				ble_discon_no_conn_cnt);
-		} else {
+		LOG_INF("ble_disconnection_attempt_cnt = %u",
+			ble_disconnection_attempt_cnt);
+		LOG_INF("ble_disconnection_success_cnt = %u",
+			ble_disconnection_success_cnt);
+		LOG_INF("ble_disconnection_fail_cnt = %u",
+			ble_disconnection_fail_cnt);
+		LOG_INF("ble_discon_no_conn_cnt = %u",
+			ble_discon_no_conn_cnt);
+		//} else {
 			/*LOG_INF("check peer device for result counts");
 			LOG_INF("Counts printed below are for information purpose");
 			LOG_INF("and not actual results.");
@@ -1182,7 +1186,6 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 				ble_conn_param_update_failed);
 			LOG_INF("ble_conn_param_update_timeout = %u",
 				ble_conn_param_update_timeout);*/
-		}
 	}
 	if (test_wlan) {
 		LOG_INF("wifi_scan_cmd_cnt = %u", wifi_scan_cmd_cnt);
@@ -1584,6 +1587,22 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 		}
 	}
 
+		if (!is_wlan_server) {
+			if (is_ble_central) {
+				/* nothing */
+			} else {
+				if (test_wlan && test_ble) {
+					#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+					while (!run_ble_central_wait_in_conn) {
+						/* Peer BLE starts the the test. */
+						LOG_INF("Run BLE central on peer");
+						k_sleep(K_SECONDS(1));
+					}
+					run_ble_central_wait_in_conn = 0;
+					#endif
+				}
+			}
+		}
 	#ifdef DEMARCATE_TEST_START
 	LOG_INF("-------------------------start");
 	#endif
@@ -1643,6 +1662,13 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 		check_wifi_traffic();
 		wifi_disconnection();
 	}
+	if (test_ble) {
+		if (is_ble_central) {
+			/* to stop scan after the test duration is complete */
+			scan_init();
+		}
+	}
+
 	#ifdef DEMARCATE_TEST_START
 	LOG_INF("-------------------------end");
 	#endif
@@ -1870,6 +1896,9 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 
 	return 0;
 }
+#endif
+
+#ifdef CONFIG_RUN_ST_TESTS
 
 int wifi_con_stability_ble_con_interference(bool test_wlan, bool test_ble, bool is_ble_central,
 	bool is_ant_mode_sep)
@@ -2379,11 +2408,12 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 	int ret = 0;
 	uint64_t test_start_time = 0;
 	uint64_t ble_con_intact_cnt = 0;
-
+	//LOG_INF("test_ble=%d", test_ble);
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
+
 	print_ble_connection_test_params(is_ble_central);
 
-	if (is_wlan_server) {
+	 if (is_wlan_server) {
 		if (is_ble_central) {
 			if (is_zperf_udp) {
 				LOG_INF("Test case:	ble_con_stability_wifi_tput_interference");
@@ -2419,7 +2449,7 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 				LOG_INF("BLE peripheral, Wi-Fi TCP client");
 			}
 		}
-	}
+	} 
 
 	/* one time BT connection */
 	if (test_ble) {
@@ -2527,6 +2557,7 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 			}
 		}
 	}
+
 	#ifdef DEMARCATE_TEST_START
 	LOG_INF("-------------------------end");
 	#endif
@@ -2544,7 +2575,8 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 
 	return 0;
 }
-
+#endif
+#ifdef CONFIG_RUN_WST_TESTS
 int ble_con_wifi_shutdown(bool is_ble_central)
 {
 	uint64_t test_start_time = 0;
@@ -2757,3 +2789,4 @@ int ble_tput_wifi_shutdown(bool is_ble_central)
 
 	return 0;
 }
+#endif

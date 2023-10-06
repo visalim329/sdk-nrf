@@ -198,6 +198,14 @@ config BLE_TP_PERIPH_WIFI_SHUTDOWN
 	bool "Indicates test is to be run or not"
 	default n
 
-
+config RUN_SPT_TESTS
+	bool "Indicates test is to be run or not"
+	default n
+config RUN_ST_TESTS
+	bool "Indicates test is to be run or not"
+	default n
+config RUN_WST_TESTS
+	bool "Indicates test is to be run or not"
+	default n
 
 endmenu
