@@ -17,14 +17,13 @@
 #define MIN_CONN_INTERVAL   6
 #define MAX_CONN_INTERVAL   3200
 
-
 static struct test_params {
 	struct bt_le_conn_param *conn_param;
 	struct bt_conn_le_phy_param *phy;
 	struct bt_conn_le_data_len_param *data_len;
 } test_params = {
-	.conn_param = BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN, CONFIG_INTERVAL_MAX, CONFIG_BT_CONN_LATENCY,
-				       CONFIG_BT_SUPERVISION_TIMEOUT),
+	.conn_param = BT_LE_CONN_PARAM(CONFIG_INTERVAL_MIN, CONFIG_INTERVAL_MAX,
+	CONFIG_BT_CONN_LATENCY, CONFIG_BT_SUPERVISION_TIMEOUT),
 	.phy = BT_CONN_LE_PHY_PARAM_2M,
 	.data_len = BT_LE_DATA_LEN_PARAM_MAX
 };
@@ -136,7 +135,6 @@ static int cmd_phy_coded_s8(const struct shell *shell, size_t argc,
 #endif /* defined(RADIO_MODE_MODE_Ble_LR125Kbit) ||
 	* defined(NRF5340_XXAA_APPLICATION)
 	*/
-
 
 static int data_len_cmd(const struct shell *shell, size_t argc,
 			char **argv)
@@ -273,4 +271,3 @@ SHELL_CMD_REGISTER(config, &sub_config, "Configure the example", default_cmd);
 SHELL_CMD_REGISTER(run, NULL, "Run the test", test_run_cmd);
 SHELL_CMD_REGISTER(central, NULL, "Select central role", test_central_cmd);
 SHELL_CMD_REGISTER(peripheral, NULL, "Select peripheral role", test_peripheral_cmd);
-

@@ -1,0 +1,109 @@
+================================
+wifi scan BLE conn central:
+================================
+Coex Disable:
+-------------
+ble_connection_attempt_cnt = 7
+bt_coex_test_func: ble_connection_success_cnt = 7
+bt_coex_test_func: ble_connection_fail_cnt = 0
+bt_coex_test_func: ble_disconnection_attempt_cnt = 7
+bt_coex_test_func: ble_disconnection_success_cnt = 7
+bt_coex_test_func: ble_disconnection_fail_cnt = 0
+bt_coex_test_func: ble_discon_no_conn_cnt = 0
+bt_coex_test_func: wifi_scan_cnt_24g = 22
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 23
+
+Coex Enable:
+-------------
+ble_connection_attempt_cnt = 7
+bt_coex_test_func: ble_connection_success_cnt = 0
+bt_coex_test_func: ble_connection_fail_cnt = 0
+bt_coex_test_func: ble_disconnection_attempt_cnt = 1
+bt_coex_test_func: ble_disconnection_success_cnt = 1
+bt_coex_test_func: ble_disconnection_fail_cnt = 0
+bt_coex_test_func: ble_discon_no_conn_cnt = 0
+bt_coex_test_func: wifi_scan_cnt_24g = 21
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 22
+bt_coex_test_func:  wifi_scan_ble_connection test complete
+main: BLE Tx Power: 127
+
+================================
+wifi scan BLE TP peripheral:
+================================
+Coex Disable:
+-------------
+wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+bt_coex_test_func:  wifi_scan_ble_tput test complete
+main: BLE Tx Power: 0
+main: WiFi RSSI: NA
+main: BLE RSSI: -62
+main: Test case(s) complete
+bt_utils: [local] received 7544295 bytes (7367 KB) in 15241 s
+
+Coex Enable:
+-------------
+==== Starting throughput test ====
+PHY update pending
+GATT write failed (err -128)
+GATT read failed (err -128)
+LE PHY updated: TX PHY LE 2M, RX PHY LE 2M
+Disconnected (reason 0x08)
+[00:00:46.146,484] <wrn> bt_att: att_get: Not connected
+
+ wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+bt_coex_test_func:  wifi_scan_ble_tput test complete
+
+================================
+wifi scan BLE conn peripheral:
+================================
+
+Coex Disable: 
+-------------
+ble_disconnection_success_cnt = 3
+bt_coex_test_func: wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+NO result in peer BLE side.
+
+Coex Enable:
+-------------
+ble_disconnection_success_cnt = 1
+bt_coex_test_func: wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+
+NO result in peer BLE side.
+
+================================
+wifi scan ble TP central:
+================================
+
+Coex Disable:
+-------------
+Disconnecting BLE
+bt_coex_test_func: wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+
+[local] received 1597860 bytes (1560 KB) in 3228 GATT writes at 641420 bps
+
+Coex Enable:
+-------------
+bt_utils: GATT write failed (err -128)
+bt_utils: Done
+bt_utils: [local] sent 4455 bytes (4 KB) in 3999 ms at 8 kbps
+bt_throughput: Characteristic read failed.
+bt_utils: GATT read failed (err -128)
+bt_coex_test_func: Disconnecting BLE
+bt_utils: Not connected!
+bt_coex_test_func: wifi_scan_cnt_24g = 20
+bt_coex_test_func: wifi_scan_cnt_5g = 0
+bt_coex_test_func: wifi_scan_cmd_cnt = 21
+bt_coex_test_func:  wifi_scan_ble_tput test complete
+

@@ -1,0 +1,161 @@
+user: visalim329, Codebase: ncs_co_08aug2023_plus_fullcode, SHA: aa6953aa9d21582e071481cc1dd9749ab484d2d1
+Duration : 20sec
+
+CONFIG_WIFI_CON_BLE_TP_PERIPH_STABILITY
+	WLAN-BLE Coex Disable:
+		[local] received 3034350 bytes (2963 KB) in 6130 GATT writes at 1211872 bps
+		Wi-Fi connection intact
+		Disconnection request done (0)
+		wifi_conn_attempt_cnt = 1
+		wifi_conn_success_cnt = 1
+		wifi_con_intact_cnt = 1
+
+
+	WLAN-BLE Coex Enable:
+		[local] received 1621620 bytes (1583 KB) in 3276 GATT writes at 648235 bps
+		Wi-Fi connection intact
+		Disconnection request done (0)
+		wifi_conn_attempt_cnt = 1
+		wifi_conn_success_cnt = 1
+		wifi_con_intact_cnt = 1
+
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_SCAN_STABILITY: Run on 7001 board
+	WLAN-BLE Coex Disable:
+		BLE Conn Intact
+		 ble_connection_attempt_cnt = 1
+		 ble_connection_success_cnt = 1
+		 ble_con_intact_cnt = 1
+		 wifi_scan_cmd_cnt = 22
+		 wifi_scan_cnt_24g = 23
+		 wifi_scan_cnt_5g = 0
+
+	WLAN-BLE Coex Enable:
+		BLE disconnected
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 0
+		wifi_scan_cmd_cnt = 20
+		wifi_scan_cnt_24g = 21
+		wifi_scan_cnt_5g = 0
+
+
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_CON_SCAN_STABILITY
+	WLAN-BLE Coex Disable:
+		BLE Conn Intact
+		 ble_connection_attempt_cnt = 1
+		 ble_connection_success_cnt = 1
+		 ble_con_intact_cnt = 1
+		 wifi_scan_cmd_cnt = 35
+		 wifi_scan_cnt_24g = 36
+		 wifi_scan_cnt_5g = 0
+	WLAN-BLE Coex Enable:
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+		wifi_scan_cmd_cnt = 34
+		wifi_scan_cnt_24g = 35
+		wifi_scan_cnt_5g = 0
+
+	
+	
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_CLIENT_STABILITY
+	WLAN-BLE Coex Disable:
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+		[  3]  0.0-20.0 sec  24.0 MBytes  10.1 Mbits/sec   0.903 ms  292/24829 (1.2%)
+
+	WLAN-BLE Coex Enable:
+		: BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+		[  3]  0.0-60.0 sec  72.1 MBytes  10.1 Mbits/sec   0.979 ms 2254/76069 (3%)
+
+
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_UDP_SERVER_STABILITY
+	WLAN-BLE Coex Disable:
+		rate in kbps:6830 kbps
+		 UDP SESSION FINISHED
+		 Disconnection request done (0)
+		 BLE Conn Intact
+		 ble_connection_attempt_cnt = 1
+		 ble_connection_success_cnt = 1
+		 ble_con_intact_cnt = 1
+
+	WLAN-BLE Coex Enable:
+		rate in kbps:6913 kbps
+
+		 UDP SESSION FINISHED
+		 Disconnection request done (0)
+		 BLE Conn Intact
+		 ble_connection_attempt_cnt = 1
+		 ble_connection_success_cnt = 1
+		 ble_con_intact_cnt = 1
+
+
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_CLIENT_STABILITY
+	WLAN-BLE Coex Disable:
+		rate in kbps:6205 kbps
+		UDP SESSION FINISHED
+		Disconnection request done (0)
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+
+
+	WLAN-BLE Coex Enable:
+		rate in kbps:5756 kbps
+		UDP SESSION FINISHED
+		Disconnection request done (0)
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+
+
+CONFIG_BLE_CONN_PERIPHERAL_WIFI_TP_TCP_SERVER_STABILITY
+	WLAN-BLE Coex Disable:
+		rate in kbps:3920 kbps
+		UDP SESSION FINISHED
+		Disconnection request done (0)
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+
+	WLAN-BLE Coex Enable:
+		rate in kbps:3837 kbps
+		UDP SESSION FINISHED
+		Disconnection request done (0)
+		BLE Conn Intact
+		ble_connection_attempt_cnt = 1
+		ble_connection_success_cnt = 1
+		ble_con_intact_cnt = 1
+		
+CONFIG_BLE_CON_PERIPHERAL_WIFI_SHUTDOWN
+	WLAN-BLE Coex Disable:
+	 ble_connection_attempt_cnt = 13
+	 ble_connection_success_cnt = 12
+	 ble_disconnection_attempt_cnt = 12
+	 ble_disconnection_success_cnt = 11
+	 ble_discon_no_conn_cnt = 0
+
+	WLAN-BLE Coex Enable:
+	
+	 ble_connection_attempt_cnt = 14
+	 ble_connection_success_cnt = 13
+	 ble_disconnection_attempt_cnt = 12
+	 ble_disconnection_success_cnt = 11
+	 ble_discon_no_conn_cnt = 0
+
+	
+CONFIG_BLE_TP_PERIPHERAL_WIFI_SHUTDOWN
+	WLAN-BLE Coex Disable:
+	1166799 bps
+	WLAN-BLE Coex Enable:
+	1184705 bps
+	

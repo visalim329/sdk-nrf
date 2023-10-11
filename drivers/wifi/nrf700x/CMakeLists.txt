@@ -115,3 +115,12 @@ if (CONFIG_NRF_WIFI_PATCHES_EXT_FLASH)
 # Run patches from the external flash (XIP). No need to copy.
 zephyr_code_relocate(FILES zephyr/src/zephyr_fw_load.c LOCATION EXTFLASH_RODATA NOCOPY)
 endif()
+
+if (CONFIG_NRF700X_ON_QSPI)
+# These are XIP related anomalies and aren't applicable for nRF7002 and cause
+# throughput issues.
+zephyr_compile_definitions(
+	-DNRF53_ERRATA_43_ENABLE_WORKAROUND=0
+	-DNRF52_ERRATA_215_ENABLE_WORKAROUND=0
+)
+endif()

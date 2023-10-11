@@ -15,11 +15,11 @@ config BT_THROUGHPUT_FILE
 
 config BT_THROUGHPUT_DURATION
 	int "Throughput test duration in milliseconds"
-	default 43200000
+	default 20000
 
 config BT_CONN_CENTRAL_TEST_DURATION
 	int "test duration in milliseconds"
-	default 60000
+	default 20000
 
 config INTERVAL_MIN
 	int "BLE min connection interval. Each unit 1.25milliseconds"
@@ -28,7 +28,7 @@ config INTERVAL_MIN
 config INTERVAL_MAX
 	int "BLE max connection interval. Each unit 1.25milliseconds"
 	default 80
-	
+
 config BT_GAP_ADV_FAST_INT_MIN_2
 	int "BT GAP ADV interval min value. Each unit 0.625milliseconds"
 	default 160
@@ -52,10 +52,10 @@ config BT_SUPERVISION_TIMEOUT
 config BT_CONN_LATENCY
 	int "BT LE connection latency"
 	default 0
-	
+
 choice BT_TEST_TYPE
 	prompt "Test type"
-	default BLE_CONN_CENTRAL_TEST
+	default BLE_THROUGHPUT_TEST
 
 config BLE_THROUGHPUT_TEST
 	bool "BT LE throughput test"
