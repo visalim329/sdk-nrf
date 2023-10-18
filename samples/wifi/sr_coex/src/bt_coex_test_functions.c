@@ -9,6 +9,7 @@
  */
 
 #include "bt_coex_test_functions.h"
+#define CHECK_WIFI_CONN_STATUS
 
 int8_t wifi_rssi = RSSI_INIT_VALUE;
 uint64_t wifi_scan_start_time;
@@ -1003,8 +1004,6 @@ void print_ble_connection_test_params(bool is_ble_central)
 	LOG_INF("BLE connection latency %u\n", CONFIG_BT_CONN_LATENCY);
 }
 
-#ifdef CONFIG_RUN_SPT_TESTS
-
 int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 		bool is_ble_central, bool is_wifi_conn_scan)
 {
@@ -1551,12 +1550,17 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 	print_ble_connection_test_params(is_ble_central);
 
 	if (test_wlan) {
-		ret=wifi_connection();
-		//if (ret != 0) {
-		//	LOG_ERR("Wi-Fi connection failed. Running the test");
-		//	LOG_ERR("further is not meaningful.So, exiting the test");
-		//	return ret;
-		//}
+		#ifndef CHECK_WIFI_CONN_STATUS
+			wifi_connection(); /* for connected scan */
+		#else
+			ret = wifi_connection(); /* for connected scan */
+			k_sleep(K_SECONDS(3));
+			if (ret != 0) {
+				LOG_ERR("Wi-Fi connection failed. Running the test");
+				LOG_ERR("further is not meaningful. So, exiting the test");
+				return ret;
+			}
+		#endif
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
@@ -1747,13 +1751,17 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
 
 	if (test_wlan) {
-		ret = wifi_connection();
-		/**if (ret != 0) {
-		 *	LOG_ERR("Wi-Fi connection failed. Running the test");
-		 *	LOG_ERR("further is not meaningful. So, exiting the test");
-		 *	return ret;
-		 *}
-		 */
+		#ifndef CHECK_WIFI_CONN_STATUS
+			wifi_connection(); /* for connected scan */
+		#else
+			ret = wifi_connection(); /* for connected scan */
+			k_sleep(K_SECONDS(3));
+			if (ret != 0) {
+				LOG_ERR("Wi-Fi connection failed. Running the test");
+				LOG_ERR("further is not meaningful. So, exiting the test");
+				return ret;
+			}
+		#endif
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
@@ -1898,9 +1906,6 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 
 	return 0;
 }
-#endif
-
-#ifdef CONFIG_RUN_ST_TESTS
 
 int wifi_con_stability_ble_con_interference(bool test_wlan, bool test_ble, bool is_ble_central,
 	bool is_ant_mode_sep)
@@ -2577,8 +2582,7 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 
 	return 0;
 }
-#endif
-#ifdef CONFIG_RUN_WST_TESTS
+
 int ble_con_wifi_shutdown(bool is_ble_central)
 {
 	uint64_t test_start_time = 0;
@@ -2792,4 +2796,3 @@ int ble_tput_wifi_shutdown(bool is_ble_central)
 
 	return 0;
 }
-#endif

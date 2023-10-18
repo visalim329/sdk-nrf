@@ -80,7 +80,6 @@ int main(void)
 	}
 #endif /* CONFIG_NRF700X_BT_COEX */
 
-#ifdef CONFIG_RUN_SPT_TESTS
 	if (IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_CENTRAL) ||
 	IS_ENABLED(CONFIG_WIFI_CON_SCAN_BLE_CON_CENTRAL) ||
 	IS_ENABLED(CONFIG_WIFI_SCAN_BLE_CON_PERIPH) ||
@@ -125,8 +124,7 @@ int main(void)
 		ret = wifi_tput_ble_tput(test_wlan, is_ant_mode_sep,
 		test_ble, is_ble_central, is_wlan_server, is_zperf_udp);
 	}
-#endif
-#ifdef CONFIG_RUN_ST_TESTS
+
 	if (IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_CENTRAL_STABILITY) ||
 	IS_ENABLED(CONFIG_WIFI_CON_BLE_CON_PERIPH_STABILITY)) {
 		ret = wifi_con_stability_ble_con_interference(test_wlan, test_ble, is_ble_central,
@@ -169,8 +167,6 @@ int main(void)
 		ret = ble_con_stability_wifi_tput_interference(test_wlan, test_ble,
 		is_ble_central, is_wlan_server, is_ant_mode_sep, is_zperf_udp);
 	}
-#endif
-#ifdef CONFIG_RUN_WST_TESTS
 
 	if (IS_ENABLED(CONFIG_BLE_CON_CENTRAL_WIFI_SHUTDOWN) ||
 	IS_ENABLED(CONFIG_BLE_CON_PERIPHERAL_WIFI_SHUTDOWN)) {
@@ -181,7 +177,7 @@ int main(void)
 	IS_ENABLED(CONFIG_BLE_TP_PERIPH_WIFI_SHUTDOWN)) {
 		ret = ble_tput_wifi_shutdown(is_ble_central);
 	}
-#endif
+
 	/* common to all the above function calls */
 	if (ret != 0) {
 		LOG_INF("Test case failed");

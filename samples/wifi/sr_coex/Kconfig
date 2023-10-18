@@ -210,7 +210,7 @@ config TWT_INTERVAL
 	  The period for TWT that includes both wake and sleep durations, interval should be in us.
 	  Please note higher intervals can be rejected by AP or cause interoperability issues.
 	default 524000
-#--------------------------------- TWT
+
 config TWT_ENABLE
 	bool "Indicates test is to be run or not"
 	default n

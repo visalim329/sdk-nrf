@@ -197,7 +197,7 @@ config BLE_TP_CENTRAL_WIFI_SHUTDOWN
 config BLE_TP_PERIPH_WIFI_SHUTDOWN
 	bool "Indicates test is to be run or not"
 	default n
-
+#-------------------------------- Test groups
 config RUN_SPT_TESTS
 	bool "Indicates test is to be run or not"
 	default n
