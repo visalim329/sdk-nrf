@@ -74,7 +74,8 @@ int main(void)
 		LOG_INF("Test case failed");
 		goto err;
 	}
-
+	
+	return 0;
 err:
 	LOG_INF("Returning with error");
 	return ret;

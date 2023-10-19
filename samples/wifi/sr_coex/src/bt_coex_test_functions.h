@@ -46,6 +46,8 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 
 #define DEMARCATE_TEST_START
 
+#define KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC K_SECONDS(1)
+uint8_t wait4_peer_ble2_start_connection;
 static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
 static struct net_mgmt_event_callback net_addr_mgmt_cb;
 

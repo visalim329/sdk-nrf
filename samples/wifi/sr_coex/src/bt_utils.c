@@ -36,6 +36,7 @@ LOG_MODULE_REGISTER(bt_utils, CONFIG_LOG_DEFAULT_LEVEL);
 #define THROUGHPUT_CONFIG_TIMEOUT 20
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
+extern uint8_t wait4_peer_ble2_start_connection;
 
 static volatile bool data_length_req;
 static volatile bool test_ready;
@@ -249,7 +250,7 @@ void scan_init(void)
 	}
 }
 
-static void scan_start(void)
+void scan_start(void)
 {
 	int err;
 
@@ -260,13 +261,13 @@ static void scan_start(void)
 	}
 }
 
-static void adv_start(void)
+void adv_start(void)
 {
 	struct bt_le_adv_param *adv_param =
 		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE |
 				BT_LE_ADV_OPT_ONE_TIME,
-				BT_GAP_ADV_FAST_INT_MIN_2,
-				BT_GAP_ADV_FAST_INT_MAX_2,
+				CONFIG_BT_GAP_ADV_FAST_INT_MIN_2,
+				CONFIG_BT_GAP_ADV_FAST_INT_MAX_2,
 				NULL);
 	int err;
 
@@ -277,8 +278,7 @@ static void adv_start(void)
 		return;
 	}
 }
-
-static void disconnected(struct bt_conn *conn, uint8_t reason)
+void disconnected(struct bt_conn *conn, uint8_t reason)
 {
 	LOG_INF("Disconnected (reason 0x%02x)", reason);
 
@@ -345,20 +345,21 @@ static uint8_t throughput_read(const struct bt_throughput_metrics *met)
 	return BT_GATT_ITER_STOP;
 }
 
-static void throughput_received(const struct bt_throughput_metrics *met)
+void throughput_received(const struct bt_throughput_metrics *met)
 {
 	static uint32_t kb;
 
 	if (met->write_len == 0) {
 		kb = 0;
-		LOG_INF("");
+		wait4_peer_ble2_start_connection = 1;
+		printk("");
 
 		return;
 	}
 
 	if ((met->write_len / 1024) != kb) {
 		kb = (met->write_len / 1024);
-		LOG_INF("=");
+		//printk("=");
 	}
 }
 void throughput_send(const struct bt_throughput_metrics *met)
