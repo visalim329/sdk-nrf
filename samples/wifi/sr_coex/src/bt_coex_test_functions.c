@@ -144,7 +144,7 @@ void handle_wifi_connect_result(struct net_mgmt_event_callback *cb)
 		(const struct wifi_status *) cb->info;
 
 	if (status->status) {
-		LOG_ERR("Connection request failed (%d)", status->status);
+		LOG_ERR("Wi-Fi Connection request failed (%d)", status->status);
 	} else {
 		LOG_INF("Connected");
 		context.connected = true;
@@ -255,8 +255,7 @@ int parse_ipv4_addr(char *host, struct sockaddr_in *addr)
 		LOG_ERR("Invalid IPv4 address %s\n", host);
 		return -EINVAL;
 	}
-
-	LOG_INF("IPv4 address %s", host);
+	LOG_INF("Wi-Fi peer IPv4 address %s", host);
 
 	return 0;
 }
@@ -280,6 +279,53 @@ int wait_for_next_event(const char *event_name, int timeout)
 
 	return 0;
 }
+void udp_download_results_cb(enum zperf_status status, struct zperf_results *result,
+		void *user_data)
+{
+	switch (status) {
+	case ZPERF_SESSION_STARTED:
+		LOG_INF("New session started.");
+		wait4_peer_wifi_client_to_start_tp_test = 1;
+		break;
+
+	case ZPERF_SESSION_FINISHED: {
+		uint32_t rate_in_kbps;
+
+		/* Compute baud rate */
+		if (result->time_in_us != 0U) {
+			rate_in_kbps = (uint32_t)
+				(((uint64_t)result->total_len * 8ULL *
+				  (uint64_t)USEC_PER_SEC) /
+				 ((uint64_t)result->time_in_us * 1024ULL));
+		} else {
+			rate_in_kbps = 0U;
+		}
+
+		LOG_INF("End of session!");
+
+		LOG_INF("Download results:");
+		LOG_INF("%u bytes in %u ms",
+				(result->nb_packets_rcvd * result->packet_size),
+				(result->time_in_us / USEC_PER_MSEC));
+		/**
+		 *LOG_INF(" received packets:\t%u",
+		 *		  result->nb_packets_rcvd);
+		 *LOG_INF(" nb packets lost:\t%u",
+		 *		  result->nb_packets_lost);
+		 *LOG_INF(" nb packets outorder:\t%u",
+		 *		  result->nb_packets_outorder);
+		 */
+		LOG_INF("\nThroughput:%u kbps", rate_in_kbps);
+		LOG_INF("");
+		k_sem_give(&udp_tcp_callback);
+		break;
+	}
+
+	case ZPERF_SESSION_ERROR:
+		LOG_INF("UDP session error.");
+		break;
+	}
+}
 void udp_upload_results_cb(enum zperf_status status,
 			  struct zperf_results *result,
 			  void *user_data)
@@ -289,6 +335,7 @@ void udp_upload_results_cb(enum zperf_status status,
 	switch (status) {
 	case ZPERF_SESSION_STARTED:
 		LOG_INF("New UDP session started");
+		wait4_peer_wifi_client_to_start_tp_test = 1;
 		break;
 	case ZPERF_SESSION_FINISHED:
 		LOG_INF("Wi-Fi benchmark: Upload completed!");
@@ -334,6 +381,17 @@ int run_wifi_traffic_udp(void)
 {
 	int ret = 0;
 
+#ifdef CONFIG_WIFI_ZPERF_SERVER
+	struct zperf_download_params params = {0};
+
+	params.port = CONFIG_NET_CONFIG_PEER_IPV4_PORT;
+
+	ret = zperf_udp_download(&params, udp_download_results_cb, NULL);
+	if (ret != 0) {
+		LOG_ERR("Failed to start UDP server session: %d", ret);
+		return ret;
+	}
+#else
 	struct zperf_upload_params params = {0};;
 
 	/* Start Wi-Fi UDP traffic */
@@ -350,6 +408,8 @@ int run_wifi_traffic_udp(void)
 		LOG_ERR("Failed to start Wi-Fi UDP benchmark: %d", ret);
 		return ret;
 	}
+#endif
+
 	return 0;
 }
 
@@ -488,12 +548,20 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 {
 	int ret = 0;
 	int64_t test_start_time = 0;
-	
 	LOG_INF(" Test case: wifi_tput_ble_tput");
+	
 	if (is_ble_central) {
-		LOG_INF(" BLE central, Wi-Fi UDP client");
-	} else {		
-		LOG_INF(" BLE peripheral, Wi-Fi UDP client");
+		if (is_wlan_server) {				
+			LOG_INF(" BLE central, Wi-Fi UDP server");
+		} else {
+			LOG_INF(" BLE central, Wi-Fi UDP client");
+		}
+	} else {
+		if (is_wlan_server) {
+			LOG_INF(" BLE peripheral, Wi-Fi UDP server");
+		} else {
+			LOG_INF(" BLE peripheral, Wi-Fi UDP client");
+		}
 	}
 
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
@@ -525,21 +593,22 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 			LOG_ERR("Failed to BT throughput init: %d", ret);
 			return ret;
 		}
-				
-		if (is_ble_central) {
-			/* nothing */
-		} else {
-			if (test_wlan && test_ble) {
-				while (!wait4_peer_ble2_start_connection) {
-					/* Peer BLE starts the the test. */
-					LOG_INF("Run BLE central on peer");
-					k_sleep(K_SECONDS(1));
+		
+		if (!is_wlan_server) {
+			if (is_ble_central) {
+				/* nothing */
+			} else {
+				if (test_wlan && test_ble) {
+					while (!wait4_peer_ble2_start_connection) {
+						/* Peer BLE starts the the test. */
+						LOG_INF("Run BLE central on peer");
+						k_sleep(K_SECONDS(1));
+					}
+				wait4_peer_ble2_start_connection = 0;
 				}
-			wait4_peer_ble2_start_connection = 0;
 			}
 		}
 	}
-	
 	if (!is_wlan_server) {
 #ifdef DEMARCATE_TEST_START
 		LOG_INF("-------------------------start");
@@ -550,13 +619,27 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 	}
 	if (test_wlan) {
 		if (is_zperf_udp) {
-			ret = run_wifi_traffic_udp();
-		
+			ret = run_wifi_traffic_udp();		
 			if (ret != 0) {
 				LOG_ERR("Failed to start Wi-Fi benchmark: %d", ret);
 				return ret;
 			}
 		}
+			
+		if (is_wlan_server) {
+			while (!wait4_peer_wifi_client_to_start_tp_test) {
+				LOG_INF("start WiFi client on peer");
+				k_sleep(K_SECONDS(1));
+			}
+			wait4_peer_wifi_client_to_start_tp_test = 0;
+			test_start_time = k_uptime_get_32();
+		}
+	}
+	
+	if (is_wlan_server) {
+#ifdef DEMARCATE_TEST_START
+		LOG_INF("-------------------------start");
+#endif
 	}
 
 	if (test_ble) {

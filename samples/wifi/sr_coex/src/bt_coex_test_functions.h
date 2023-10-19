@@ -47,6 +47,7 @@ LOG_MODULE_REGISTER(bt_coex_test_func, CONFIG_LOG_DEFAULT_LEVEL);
 #define DEMARCATE_TEST_START
 
 #define KSLEEP_WHILE_ONLY_TEST_DUR_CHECK_1SEC K_SECONDS(1)
+static uint8_t wait4_peer_wifi_client_to_start_tp_test;
 uint8_t wait4_peer_ble2_start_connection;
 static struct net_mgmt_event_callback wifi_sta_mgmt_cb;
 static struct net_mgmt_event_callback net_addr_mgmt_cb;
@@ -190,6 +191,14 @@ int parse_ipv4_addr(char *host, struct sockaddr_in *addr);
  * @return Zero on success or (negative) error code otherwise.
  */
 int wait_for_next_event(const char *event_name, int timeout);
+/**
+ * @brief Callback for UDP download results
+ *
+ * @return Zero on success or (negative) error code otherwise.
+ */
+void udp_download_results_cb(enum zperf_status status,
+							struct zperf_results *result,
+							void *user_data);
 /**
  * @brief Callback for UDP upload results
  *
