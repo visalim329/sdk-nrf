@@ -103,11 +103,26 @@ int config_pta(bool is_ant_mode_sep, bool is_ble_central,
 int run_wifi_traffic_udp(void);
 
 /**
+ * @brief Start wi-fi traffic for zperf tcp upload or configure
+ * zperf traffic for tcp download
+ *
+ * @return Zero on success or (negative) error code otherwise.
+ */
+int run_wifi_traffic_tcp(void);
+
+/**
  * @brief start BLE connection/traffic using thread start
  *
  * @return None
  */
 void start_ble_activity(void);
+
+/**
+ * @brief start Wi-Fi scan using thread start
+ *
+ * @return None
+ */
+void start_wifi_activity(void);
 
 /**
  * @brief check if iperf traffic is complete
@@ -141,7 +156,7 @@ static struct {
 } context;
 
 K_SEM_DEFINE(wait_for_next, 0, 1);
-K_SEM_DEFINE(udp_callback, 0, 1);
+K_SEM_DEFINE(udp_tcp_callback, 0, 1);
 
 struct wifi_iface_status status = { 0 };
 
@@ -208,6 +223,22 @@ void udp_upload_results_cb(enum zperf_status status,
 							struct zperf_results *result,
 							void *user_data);
 /**
+ * @brief Callback for TCP download results
+ *
+ * @return Zero on success or (negative) error code otherwise.
+ */
+void tcp_download_results_cb(enum zperf_status status,
+							struct zperf_results *result,
+							void *user_data);
+/**
+ * @brief Callback for TCP upload results
+ *
+ * @return Zero on success or (negative) error code otherwise.
+ */
+void tcp_upload_results_cb(enum zperf_status status,
+							struct zperf_results *result,
+							void *user_data);
+/**
  * @brief Callback for Wi-Fi DHCP IP address
  *
  * @return None
@@ -227,10 +258,8 @@ void handle_wifi_connect_result(struct net_mgmt_event_callback *cb);
  */
 void handle_wifi_disconnect_result(struct net_mgmt_event_callback *cb);
 /**
- * @brief Print common test parameters info
- *
- * @return None
- */
+
 void print_common_test_params(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 	bool is_ble_central);
+#endif /* BT_COEX_TEST_FUNCTIONS_ */
 #endif /* BT_COEX_TEST_FUNCTIONS_ */
