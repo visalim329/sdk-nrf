@@ -317,7 +317,7 @@ void udp_download_results_cb(enum zperf_status status, struct zperf_results *res
 		 */
 		LOG_INF("\nThroughput:%u kbps", rate_in_kbps);
 		LOG_INF("");
-		k_sem_give(&udp_tcp_callback);
+		k_sem_give(&udp_callback);
 		break;
 	}
 
