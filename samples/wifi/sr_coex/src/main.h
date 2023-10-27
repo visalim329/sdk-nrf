@@ -36,12 +36,6 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep, bool test_ble,
 		bool is_ble_central, bool is_wlan_server, bool is_zperf_udp);
 
 /**
- * @brief memset_context
- *
- * @return No return value.
- */
-void memset_context(void);
-/**
  * @brief Handle net management callbacks
  *
  * @return No return value.
