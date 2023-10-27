@@ -107,6 +107,7 @@ static int is_calback_from_loop = 0;
 #define SCAN_START_CONFIG_TIMEOUT K_SECONDS(10)
 #define WAIT_TIME_FOR_BLE_CON K_SECONDS(4)
 #define WAIT_TIME_FOR_BLE_DISCON K_SECONDS(5)
+#define K_SLEEP_DUR_FOR_BLE_CONN K_SECONDS(3)
 
 
 static K_SEM_DEFINE(throughput_sem, 0, 1);
@@ -239,13 +240,13 @@ void discovery_complete(struct bt_gatt_dm *dm,
 	err = bt_gatt_exchange_mtu(default_conn, &exchange_params);
 
 	if (err) {
-		#ifdef PRINT_BLE_UPDATES
+#ifdef PRINT_BLE_UPDATES
 		LOG_ERR("MTU exchange failed (err %d)", err);
-		#endif
+#endif
 	} else {
-		#ifdef PRINT_BLE_UPDATES
+#ifdef PRINT_BLE_UPDATES
 		LOG_INF("MTU exchange pending");
-		#endif
+#endif
 	}
 }
 
@@ -431,10 +432,10 @@ void adv_start(void)
 }
 void disconnected(struct bt_conn *conn, uint8_t reason)
 {
-	#ifdef BLE_ITERATIVE_CONNECTION
+#ifdef BLE_ITERATIVE_CONNECTION
 	struct bt_conn_info info = {0};
 	int err = 0;
-	#endif 
+#endif 
 
 #ifdef PRINT_BLE_UPDATES
 	LOG_INF("Disconnected (reason 0x%02x)", reason);
@@ -448,7 +449,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 		default_conn = NULL;
 	}
 
-	#ifdef BLE_ITERATIVE_CONNECTION
+#ifdef BLE_ITERATIVE_CONNECTION
 	/* Disconnection count for central is available in bt_disconnect_central() */
 	if (!IS_ENABLED(CONFIG_BT_ROLE_CENTRAL)) {
 		ble_disconnection_success_cnt++;
@@ -467,7 +468,7 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 			adv_start();
 		}
 		k_sem_give(&disconnected_sem);
-	#endif
+#endif
 }
 
 static bool le_param_req(struct bt_conn *conn, struct bt_le_conn_param *param)
@@ -534,10 +535,10 @@ void throughput_received(const struct bt_throughput_metrics *met)
 
 	if (met->write_len == 0) {
 		kb = 0;
-		#ifdef CONFIG_PRINTS_FOR_AUTOMATION
-			wait4_peer_ble2_start_connection = 1;
-			LOG_INF("");
-		#endif
+#ifdef CONFIG_PRINTS_FOR_AUTOMATION
+		wait4_peer_ble2_start_connection = 1;
+		LOG_INF("");
+#endif
 
 		return;
 	}
@@ -795,6 +796,7 @@ void bt_conn_test_run(void)
 		}
 		/* Scan for next iteration starts in the disconnected() function.*/ 
 		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
+		k_sleep(K_SLEEP_DUR_FOR_BLE_CONN);
 	}
 }
 

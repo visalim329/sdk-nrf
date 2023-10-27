@@ -30,8 +30,9 @@
 #define DEVICE_NAME	CONFIG_BT_DEVICE_NAME
 #define DEVICE_NAME_LEN (sizeof(DEVICE_NAME) - 1)
 
-#define WAIT_TIME_FOR_BLE_CON K_SECONDS(3)
+#define WAIT_TIME_FOR_BLE_CON K_SECONDS(4)
 #define WAIT_TIME_FOR_BLE_DISCON K_SECONDS(5)
+#define K_SLEEP_DUR_FOR_BLE_CONN K_SECONDS(3)
 
 //#define THROUGHPUT_CONFIG_TIMEOUT K_SECONDS(20)
 #define THROUGHPUT_CONFIG_TIMEOUT 20
@@ -793,7 +794,7 @@ void ble_iterative_conn_central(void)
 		ble_disconnection_attempt_cnt++;
 		bt_disconnect_central();
 		err = k_sem_take(&disconnected_sem, WAIT_TIME_FOR_BLE_DISCON);
-		k_yield();
+		k_sleep(K_SLEEP_DUR_FOR_BLE_CONN);
 	}
 	
 	/* to stop scan after the results are printed */
