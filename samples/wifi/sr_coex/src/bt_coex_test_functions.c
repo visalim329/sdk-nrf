@@ -1036,9 +1036,6 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 	if (test_wlan) {
 		if (is_wifi_conn_scan) {
 			/* for connected scan */
-			#ifndef CHECK_WIFI_CONN_STATUS
-			wifi_connection();
-			#else
 			int ret = 0;
 
 			ret = wifi_connection();
@@ -1048,7 +1045,6 @@ int wifi_scan_ble_connection(bool is_ant_mode_sep, bool test_ble, bool test_wlan
 				LOG_ERR("further is not meaningful. So, exiting the test");
 				return ret;
 			}
-			#endif
 		}
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
@@ -1299,9 +1295,6 @@ int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 
 	if (test_wlan) {
 		if (is_wifi_conn_scan) {
-		#ifndef CHECK_WIFI_CONN_STATUS
-			wifi_connection(); /* for connected scan */
-		#else
 			ret = wifi_connection(); /* for connected scan */
 			k_sleep(K_SECONDS(3));
 			if (ret != 0) {
@@ -1309,7 +1302,6 @@ int wifi_scan_ble_tput(bool is_ant_mode_sep, bool test_ble, bool test_wlan,
 				LOG_ERR("further is not meaningful. So, exiting the test");
 				return ret;
 			}
-		#endif
 		}
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
@@ -1551,17 +1543,13 @@ int wifi_tput_ble_con(bool test_wlan, bool test_ble, bool is_ble_central,
 	print_ble_connection_test_params(is_ble_central);
 
 	if (test_wlan) {
-		#ifndef CHECK_WIFI_CONN_STATUS
-			wifi_connection(); /* for connected scan */
-		#else
-			ret = wifi_connection(); /* for connected scan */
-			k_sleep(K_SECONDS(3));
-			if (ret != 0) {
-				LOG_ERR("Wi-Fi connection failed. Running the test");
-				LOG_ERR("further is not meaningful. So, exiting the test");
-				return ret;
-			}
-		#endif
+		ret = wifi_connection();
+		k_sleep(K_SECONDS(3));
+		if (ret != 0) {
+			LOG_ERR("Wi-Fi connection failed. Running the test");
+			LOG_ERR("further is not meaningful. So, exiting the test");
+			return ret;
+		}
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
@@ -1752,17 +1740,13 @@ int wifi_tput_ble_tput(bool test_wlan, bool is_ant_mode_sep,
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
 
 	if (test_wlan) {
-		#ifndef CHECK_WIFI_CONN_STATUS
-			wifi_connection(); /* for connected scan */
-		#else
-			ret = wifi_connection(); /* for connected scan */
-			k_sleep(K_SECONDS(3));
-			if (ret != 0) {
-				LOG_ERR("Wi-Fi connection failed. Running the test");
-				LOG_ERR("further is not meaningful. So, exiting the test");
-				return ret;
-			}
-		#endif
+		ret = wifi_connection();
+		k_sleep(K_SECONDS(3));
+		if (ret != 0) {
+			LOG_ERR("Wi-Fi connection failed. Running the test");
+			LOG_ERR("further is not meaningful. So, exiting the test");
+			return ret;
+		}
 		#if defined(CONFIG_NRF700X_BT_COEX)
 			config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
@@ -2044,10 +2028,6 @@ int wifi_con_stability_ble_tput_interference(bool test_wlan, bool is_ant_mode_se
 	print_common_test_params(is_ant_mode_sep, test_ble, test_wlan, is_ble_central);
 
 	if (test_wlan) {
-		/* Wi-Fi connection done only once */
-		#ifndef CHECK_WIFI_CONN_STATUS
-		wifi_connection();
-		#else
 		ret = wifi_connection();
 		k_sleep(K_SECONDS(3));
 		if (ret != 0) {
@@ -2055,7 +2035,6 @@ int wifi_con_stability_ble_tput_interference(bool test_wlan, bool is_ant_mode_se
 			LOG_ERR("further is not meaningful. So, exiting the test");
 			return ret;
 		}
-		#endif
 		#if defined(CONFIG_NRF700X_BT_COEX)
 		config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
@@ -2482,9 +2461,7 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 	}
 
 	if (test_wlan) {
-		#ifndef CHECK_WIFI_CONN_STATUS
-		wifi_connection();
-		#else
+
 		ret = wifi_connection();
 		k_sleep(K_SECONDS(3));
 		if (ret != 0) {
@@ -2492,8 +2469,6 @@ int ble_con_stability_wifi_tput_interference(bool test_wlan, bool test_ble,
 			LOG_ERR("further is not meaningful. So, exiting the test");
 			return ret;
 		}
-		#endif
-
 		#if defined(CONFIG_NRF700X_BT_COEX)
 		config_pta(is_ant_mode_sep, is_ble_central, is_wlan_server);
 		#endif/* CONFIG_NRF700X_BT_COEX */
